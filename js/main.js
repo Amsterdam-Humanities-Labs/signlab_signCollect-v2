@@ -71,6 +71,7 @@ async function init() {
   setupStudioModal();
   setupPhonologyModal();
   setupOverscrollPaging();
+  setupNavDrawer();
   $('#addGlossBtn').addEventListener('click', () => openAddModal());
 
   document.addEventListener('click', closeOpenDetails);
@@ -845,6 +846,42 @@ function closeStudioModal() {
   cleanupStudioCards();
   studioCurrentRow = null;
   $('#studioModal').classList.add('hidden');
+}
+
+/* ---------- Navigation drawer ---------- */
+
+function setupNavDrawer() {
+  const drawer  = $('#navDrawer');
+  const overlay = $('#navDrawerOverlay');
+
+  // Conditional sections
+  if ((state.user.role || '').toLowerCase() === 'admin') {
+    document.querySelectorAll('.nav-drawer .admin-only').forEach(s => s.hidden = false);
+  }
+  if ((state.user.username || '').toLowerCase() === 'gomer' || String(state.user.userId) === '1') {
+    document.querySelectorAll('.nav-drawer .gomer-only').forEach(s => s.hidden = false);
+  }
+
+  const open = () => {
+    drawer.classList.remove('hidden');
+    overlay.classList.remove('hidden');
+    drawer.setAttribute('aria-hidden', 'false');
+  };
+  const close = () => {
+    drawer.classList.add('hidden');
+    overlay.classList.add('hidden');
+    drawer.setAttribute('aria-hidden', 'true');
+  };
+
+  $('#burgerBtn').addEventListener('click', open);
+  overlay.addEventListener('click', close);
+  drawer.querySelectorAll('[data-drawer-close]').forEach(b => b.addEventListener('click', close));
+  window.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Escape' && !drawer.classList.contains('hidden')) close();
+  });
+
+  // Default closed
+  close();
 }
 
 /* ---------- Phonology modal ---------- */

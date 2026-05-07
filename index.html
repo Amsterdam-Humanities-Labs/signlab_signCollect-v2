@@ -15,6 +15,9 @@
 <body>
 
 <header class="app-header">
+  <button class="btn-burger" id="burgerBtn" aria-label="Menu" title="Menu">
+    <i class="fas fa-bars"></i>
+  </button>
   <div class="brand">
     <i class="fas fa-hands-asl-interpreting"></i>
     <span>signCollect</span>
@@ -25,6 +28,64 @@
     <a class="btn-logout" href="/login.html" title="Uitloggen"><i class="fas fa-sign-out-alt"></i></a>
   </div>
 </header>
+
+<aside class="nav-drawer hidden" id="navDrawer" aria-hidden="true">
+  <header class="nav-drawer-head">
+    <span><i class="fas fa-compass"></i> Navigatie</span>
+    <button class="close" data-drawer-close>&times;</button>
+  </header>
+  <nav class="nav-drawer-body">
+    <section>
+      <h4>Meldingen &amp; Fixes</h4>
+      <a href="https://signcollect.nl/viewWarnings.html"><i class="fas fa-triangle-exclamation"></i> Glos Meldingen</a>
+      <a href="https://signcollect.nl/viewWarningsRefilm.html"><i class="fas fa-redo"></i> Nog te refilmen</a>
+      <a href="https://signcollect.nl/viewWarningsSenses.html"><i class="fas fa-list"></i> Senses Meldingen</a>
+      <a href="https://signcollect.nl/viewWarningsFono.html"><i class="fas fa-circle-exclamation"></i> Fonologie Meldingen</a>
+      <a href="https://signcollect.nl/videoFix/index.html"><i class="fas fa-crop"></i> Video Crop fix</a>
+      <a href="https://signcollect.nl/glosses_not_in_webDic.html"><i class="fas fa-book-open"></i> Glosses webDic Fixer</a>
+      <a href="https://signcollect.nl/processedYet.html"><i class="fas fa-hourglass-half"></i> Nog te postprocessen</a>
+      <a href="https://signcollect.nl/signbankVideosFailed.html"><i class="fas fa-bug"></i> Signbank API errors</a>
+    </section>
+
+    <section>
+      <h4>Video tools</h4>
+      <a href="https://signcollect.nl/studioIndex/index.html"><i class="fas fa-clapperboard"></i> Studio Videos</a>
+      <a href="https://signcollect.nl/freemocap/index.html"><i class="fas fa-person-walking"></i> Freemocap Videos</a>
+      <a href="https://signcollect.nl/mocap/index.html"><i class="fas fa-bullseye"></i> Motion capture Videos</a>
+      <a href="https://signcollect.nl/videoMuxer/index.html"><i class="fas fa-layer-group"></i> Video Mixer</a>
+      <a href="https://signcollect.nl/downloadVideos/downloadThemaVideo.html"><i class="fas fa-download"></i> Video Downloader</a>
+      <a href="https://signcollect.nl/animMIDI/public/index.php"><i class="fas fa-cubes-stacked"></i> Motion Capture Postprocessing</a>
+      <a href="https://signcollect.nl/renderServer/index.html"><i class="fas fa-server"></i> Video Render Management</a>
+    </section>
+
+    <section>
+      <h4>Andere interfaces</h4>
+      <a href="https://signcollect.nl/zin/zinnen.html"><i class="fas fa-comment"></i> Zinnen Interface</a>
+      <a href="https://signcollect.nl/nmm/fastView.html"><i class="fas fa-face-smile"></i> NMM Site</a>
+      <a href="https://signcollect.nl/menu.html?extern=1"><i class="fas fa-arrow-up-right-from-square"></i> TYD-Interface</a>
+      <a href="https://signcollect.nl/hh/index.html"><i class="fas fa-heart-pulse"></i> Health Holland Interface</a>
+      <a href="https://signcollect.nl/josBoard/index.html"><i class="fas fa-table-list"></i> Josje Board</a>
+    </section>
+
+    <section>
+      <h4>Beheer</h4>
+      <a href="https://signcollect.nl/labels_add.html"><i class="fas fa-tags"></i> Labels toevoegen</a>
+      <a href="https://signcollect.nl/batch_add.html"><i class="fas fa-stream"></i> Batch toevoegen</a>
+      <a href="https://signcollect.nl/themas.html"><i class="fas fa-folder-tree"></i> Themas Aanpassen</a>
+    </section>
+
+    <section class="admin-only" hidden>
+      <h4>Admin</h4>
+      <a href="https://signcollect.nl/users.html"><i class="fas fa-users-gear"></i> Gebruikers Beheren</a>
+    </section>
+
+    <section class="gomer-only" hidden>
+      <h4>Statistieken</h4>
+      <a href="https://signcollect.nl/stats/"><i class="fas fa-chart-line"></i> Gebruikersactiviteit</a>
+    </section>
+  </nav>
+</aside>
+<div class="nav-drawer-overlay hidden" id="navDrawerOverlay"></div>
 
 <main>
   <section class="filter-bar">
