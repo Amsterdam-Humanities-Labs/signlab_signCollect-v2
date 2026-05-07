@@ -139,6 +139,28 @@ if ($ids) {
     }
 }
 
+// Look up duplicates by glos for the current page.
+$duplicatesByGlos = [];
+$pageGlosValues = array_unique(array_filter(array_map(fn($r) => $r['glos'], $rows)));
+if ($pageGlosValues && $ids) {
+    $glosPh = implode(',', array_fill(0, count($pageGlosValues), '?'));
+    $idPh   = implode(',', array_fill(0, count($ids), '?'));
+    $dupStmt = $pdo->prepare(
+        "SELECT id, glos, extern, glosZichtbaar, wie
+         FROM form_data
+         WHERE glos IN ($glosPh) AND id NOT IN ($idPh)"
+    );
+    $dupStmt->execute([...array_values($pageGlosValues), ...$ids]);
+    foreach ($dupStmt->fetchAll() as $d) {
+        $duplicatesByGlos[$d['glos']][] = [
+            'id'            => (int)$d['id'],
+            'extern'        => $d['extern'],
+            'glosZichtbaar' => (int)$d['glosZichtbaar'],
+            'wie'           => parse_json_array($d['wie']),
+        ];
+    }
+}
+
 $out = [];
 foreach ($rows as $r) {
     $id  = (int)$r['id'];
@@ -158,6 +180,7 @@ foreach ($rows as $r) {
         'fonologie_fase2' => $r['fonologie_fase2'],
         'studio_videos'  => $videosByGloss[$id] ?? [],
         'thumbnail_video' => $thumbnailByGloss[$id] ?? null,
+        'duplicates'     => $duplicatesByGlos[$r['glos']] ?? [],
     ];
 }
 

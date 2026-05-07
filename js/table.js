@@ -145,6 +145,26 @@ function renderMainCol(row, ctx) {
   );
   col.appendChild(fields);
 
+  if (row.duplicates && row.duplicates.length) {
+    const dupBlock = el('div', { class: 'duplicate-hint' });
+    dupBlock.appendChild(el('i', { class: 'fas fa-clone' }));
+    dupBlock.appendChild(el('span', { class: 'duplicate-label' }, 'Duplicaat van: '));
+    row.duplicates.forEach((d, i) => {
+      if (i > 0) dupBlock.appendChild(document.createTextNode(', '));
+      const ownerNames = d.wie.map(uid => ctx.userName(uid)).filter(Boolean).join(' / ') || '—';
+      const externFlag = String(d.extern || '') === '1' ? ' · extern' : '';
+      const hiddenFlag = d.glosZichtbaar === 1 ? ' · verborgen' : '';
+      const chip = el('span', {
+        class: 'duplicate-chip',
+        title: `id ${d.id} (${ownerNames})${externFlag}${hiddenFlag}`,
+      },
+        `id ${d.id} — ${ownerNames}${externFlag}${hiddenFlag}`
+      );
+      dupBlock.appendChild(chip);
+    });
+    col.appendChild(dupBlock);
+  }
+
   const themaBlock = el('div', { class: 'meta-block' });
   themaBlock.append(
     el('span', { class: 'meta-label' }, 'Thema'),
