@@ -43,11 +43,15 @@ $statusMap = [
     'no_studio_video'  => 'NOT EXISTS (SELECT 1 FROM matched_transcriptions mt
                             WHERE mt.m_transcription REGEXP \'^[0-9]+$\'
                               AND CAST(mt.m_transcription AS UNSIGNED) = form_data.id
-                              AND (mt.added IS NULL OR UPPER(mt.added) <> \'DELETE\'))',
+                              AND (mt.added IS NULL OR UPPER(mt.added) <> \'DELETE\')
+                              AND ((form_data.extern = \'1\'   AND mt.zOg IN (\'labels\',\'extern\'))
+                                OR (form_data.extern IS NULL AND mt.zOg = \'Glos\')))',
     'has_studio_video' => 'EXISTS (SELECT 1 FROM matched_transcriptions mt
                             WHERE mt.m_transcription REGEXP \'^[0-9]+$\'
                               AND CAST(mt.m_transcription AS UNSIGNED) = form_data.id
-                              AND (mt.added IS NULL OR UPPER(mt.added) <> \'DELETE\'))',
+                              AND (mt.added IS NULL OR UPPER(mt.added) <> \'DELETE\')
+                              AND ((form_data.extern = \'1\'   AND mt.zOg IN (\'labels\',\'extern\'))
+                                OR (form_data.extern IS NULL AND mt.zOg = \'Glos\')))',
     'extern_duplicate' => 'extern = \'1\' AND glos IS NOT NULL AND glos <> \'\'
                             AND glos IN (
                               SELECT glos FROM form_data
@@ -104,16 +108,25 @@ if ($ids) {
     $placeholders = implode(',', array_fill(0, count($ids), '?'));
     $stringIds = array_map('strval', $ids);
 
-    // Modal list: zOg in (Glos, labels, extern), latest first, all `added` states
+    // Modal list: zOg depends on gloss's extern flag.
+    //   - extern = '1'   → zOg IN ('labels', 'extern')
+    //   - otherwise      → zOg = 'Glos'
     $videoStmt = $pdo->prepare(
-        "SELECT id, m_transcription, m_file, l_file, r_file,
-                thumbnail, post_processed, definitive_outcome, date, zOg, added
-         FROM matched_transcriptions
-         WHERE m_transcription IN ($placeholders)
-           AND zOg IN ('labels','extern')
-         ORDER BY m_transcription, id DESC"
+        "SELECT mt.id, mt.m_transcription, mt.m_file, mt.l_file, mt.r_file,
+                mt.thumbnail, mt.post_processed, mt.definitive_outcome, mt.date,
+                mt.zOg, mt.added
+         FROM matched_transcriptions mt
+         INNER JOIN form_data fd
+                 ON mt.m_transcription REGEXP '^[0-9]+$'
+                AND CAST(mt.m_transcription AS UNSIGNED) = fd.id
+         WHERE fd.id IN ($placeholders)
+           AND (
+                  (fd.extern = '1'   AND mt.zOg IN ('labels', 'extern'))
+               OR (fd.extern IS NULL AND mt.zOg = 'Glos')
+               )
+         ORDER BY mt.m_transcription, mt.id DESC"
     );
-    $videoStmt->execute($stringIds);
+    $videoStmt->execute($ids);
     foreach ($videoStmt->fetchAll() as $v) {
         $key = (int)$v['m_transcription'];
         $videosByGloss[$key][] = [
@@ -131,19 +144,26 @@ if ($ids) {
         ];
     }
 
-    // Row thumbnail: latest non-deleted entry (any zOg)
+    // Row thumbnail: latest non-deleted entry, with same zOg/extern rule as the modal list.
     $thumbStmt = $pdo->prepare(
         "SELECT mt.m_transcription, mt.m_file, mt.post_processed
          FROM matched_transcriptions mt
          INNER JOIN (
-           SELECT m_transcription, MAX(id) AS max_id
-           FROM matched_transcriptions
-           WHERE m_transcription IN ($placeholders)
-             AND (added IS NULL OR UPPER(added) <> 'DELETE')
-           GROUP BY m_transcription
+           SELECT mt2.m_transcription, MAX(mt2.id) AS max_id
+           FROM matched_transcriptions mt2
+           INNER JOIN form_data fd
+                   ON mt2.m_transcription REGEXP '^[0-9]+$'
+                  AND CAST(mt2.m_transcription AS UNSIGNED) = fd.id
+           WHERE fd.id IN ($placeholders)
+             AND (mt2.added IS NULL OR UPPER(mt2.added) <> 'DELETE')
+             AND (
+                    (fd.extern = '1'   AND mt2.zOg IN ('labels', 'extern'))
+                 OR (fd.extern IS NULL AND mt2.zOg = 'Glos')
+                 )
+           GROUP BY mt2.m_transcription
          ) latest ON mt.id = latest.max_id"
     );
-    $thumbStmt->execute($stringIds);
+    $thumbStmt->execute($ids);
     foreach ($thumbStmt->fetchAll() as $t) {
         $thumbnailByGloss[(int)$t['m_transcription']] = [
             'm_file'         => $t['m_file'],

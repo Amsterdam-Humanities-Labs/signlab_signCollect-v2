@@ -12,7 +12,7 @@ $pdo = db();
 $stmt = $pdo->prepare(
     "UPDATE matched_transcriptions
      SET added = 'DELETE'
-     WHERE id = ? AND zOg IN ('labels', 'extern')"
+     WHERE id = ? AND zOg IN ('labels', 'extern', 'Glos')"
 );
 $stmt->execute([$id]);
 
