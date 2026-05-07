@@ -156,6 +156,7 @@ if ($pageGlosValues && $ids) {
     foreach ($dupStmt->fetchAll() as $d) {
         $duplicatesByGlos[$d['glos']][] = [
             'id'            => (int)$d['id'],
+            'glos'          => $d['glos'],
             'extern'        => $d['extern'],
             'glosZichtbaar' => (int)$d['glosZichtbaar'],
             'wie'           => parse_json_array($d['wie']),
