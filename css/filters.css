@@ -12,47 +12,12 @@
 .filter-bar > * { min-width: 0; }
 .filter-bar .search       { flex: 2 1 220px; }
 .filter-bar .filter-group { flex: 1 1 170px; }
-.filter-bar .toggle-group { flex: 0 1 auto;  }
 .filter-bar .btn-add      { flex: 0 0 auto; margin-left: auto; }
 
 @media (max-width: 720px) {
   .filter-bar .btn-add { margin-left: 0; width: 100%; justify-content: center; }
 }
 
-.toggle-group { display: flex; flex-direction: column; gap: 4px; min-width: 200px; }
-.toggle {
-  display: inline-flex; align-items: center; gap: 8px;
-  cursor: pointer;
-  user-select: none;
-  padding: 8px 4px;
-  font-size: 13px;
-  text-transform: none !important;
-  letter-spacing: 0 !important;
-  font-weight: 500 !important;
-  color: var(--text) !important;
-  margin: 0 !important;
-}
-.toggle input { position: absolute; opacity: 0; pointer-events: none; }
-.toggle .toggle-track {
-  width: 36px; height: 20px;
-  background: var(--border-strong);
-  border-radius: 999px;
-  position: relative;
-  transition: background .15s;
-  flex: 0 0 auto;
-}
-.toggle .toggle-thumb {
-  position: absolute;
-  top: 2px; left: 2px;
-  width: 16px; height: 16px;
-  background: #fff;
-  border-radius: 50%;
-  box-shadow: 0 1px 2px rgba(0,0,0,.25);
-  transition: transform .15s;
-}
-.toggle input:checked + .toggle-track { background: var(--primary); }
-.toggle input:checked + .toggle-track .toggle-thumb { transform: translateX(16px); }
-.toggle-label { white-space: nowrap; flex: 0 1 auto; }
 
 .filter-bar label {
   display: block;

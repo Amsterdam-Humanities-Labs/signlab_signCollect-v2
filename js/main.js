@@ -10,7 +10,7 @@ const state = {
   thema: '',
   labels: [],
   statuses: [],
-  mineOnly: true,
+  ownerUserId: '',          // '' = Iedereen; '<userId>' = filter to that user
   page: 1,
   total: 0,
   pageSize: 25,
@@ -31,14 +31,15 @@ async function init() {
   state.options = await api.filterOptions();
   state.options.users.forEach(u => userNameMap.set(String(u.userId), u.user));
 
+  state.ownerUserId = String(state.user.userId);
+
   populateThemaSelect();
+  populateOwnerSelect();
   populateLabelsMulti('#labelsMulti', state.options.labels.map(l => l.label), v => { state.labels = v; refresh(); });
   populateStatusMulti();
 
-  const mineToggle = $('#mineOnlyToggle');
-  mineToggle.checked = state.mineOnly;
-  mineToggle.addEventListener('change', () => {
-    state.mineOnly = mineToggle.checked;
+  $('#ownerSelect').addEventListener('change', (e) => {
+    state.ownerUserId = e.target.value;
     state.page = 1;
     refresh();
   });
@@ -58,7 +59,8 @@ async function init() {
     state.thema = '';  $('#themaSelect').value = '';
     state.labels = []; resetMulti('#labelsMulti');
     state.statuses = []; resetMulti('#statusMulti');
-    state.mineOnly = true; mineToggle.checked = true;
+    state.ownerUserId = String(state.user.userId);
+    $('#ownerSelect').value = state.ownerUserId;
     state.page = 1;
     refresh();
   });
@@ -83,6 +85,20 @@ function closeOpenDetails(ev) {
 }
 
 function clearChildren(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+
+function populateOwnerSelect() {
+  const sel = $('#ownerSelect');
+  clearChildren(sel);
+  const myId = String(state.user.userId);
+  const myName = state.user.username || userNameMap.get(myId) || myId;
+  sel.appendChild(el('option', { value: myId }, `${myName} (jij)`));
+  sel.appendChild(el('option', { value: '' }, 'Iedereen'));
+  state.options.users
+    .filter(u => String(u.userId) !== myId)
+    .sort((a, b) => Number(a.userId) - Number(b.userId))
+    .forEach(u => sel.appendChild(el('option', { value: String(u.userId) }, u.user)));
+  sel.value = state.ownerUserId;
+}
 
 function populateThemaSelect() {
   const sel = $('#themaSelect');
@@ -150,7 +166,7 @@ async function refresh() {
       thema:  state.thema,
       labels: state.labels,
       statuses: state.statuses,
-      mineOnly: state.mineOnly,
+      ownerUserId: state.ownerUserId,
       page: state.page,
     });
   } catch (e) {

@@ -4,15 +4,15 @@ require_once __DIR__ . '/session.php';
 
 $session = require_session();
 
-$body     = json_body();
-$search   = trim((string)($body['search']   ?? ''));
-$thema    = trim((string)($body['thema']    ?? ''));
-$labels   = is_array($body['labels'] ?? null)   ? $body['labels']   : [];
-$statuses = is_array($body['statuses'] ?? null) ? $body['statuses'] : [];
-$mineOnly = !empty($body['mineOnly']);
-$page     = max(1, (int)($body['page'] ?? 1));
-$pageSize = 25;
-$offset   = ($page - 1) * $pageSize;
+$body         = json_body();
+$search       = trim((string)($body['search']   ?? ''));
+$thema        = trim((string)($body['thema']    ?? ''));
+$labels       = is_array($body['labels'] ?? null)   ? $body['labels']   : [];
+$statuses     = is_array($body['statuses'] ?? null) ? $body['statuses'] : [];
+$ownerUserId  = isset($body['ownerUserId']) ? trim((string)$body['ownerUserId']) : '';
+$page         = max(1, (int)($body['page'] ?? 1));
+$pageSize     = 25;
+$offset       = ($page - 1) * $pageSize;
 
 $where = [];
 $args  = [];
@@ -50,10 +50,9 @@ if (!in_array('hidden', $statuses, true)) {
     $where[] = '(glosZichtbaar = 0 OR glosZichtbaar IS NULL)';
 }
 
-if ($mineOnly) {
-    $uid = (string)$session['userId'];
+if ($ownerUserId !== '') {
     $where[] = 'wie LIKE ?';
-    $args[]  = '%"' . $uid . '"%';
+    $args[]  = '%"' . $ownerUserId . '"%';
 }
 
 $whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
