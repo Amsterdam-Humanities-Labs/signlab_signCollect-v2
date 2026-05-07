@@ -12,6 +12,24 @@
   transition: box-shadow .15s, transform .05s;
   position: relative;
 }
+.gloss-row.dup-group-start {
+  border-top: 3px solid var(--warning);
+  margin-top: 6px;
+}
+.gloss-row.dup-grouped {
+  border-left: 3px solid var(--warning);
+  background: linear-gradient(90deg, #fff8e6 0%, var(--surface) 14px);
+}
+.gloss-row.dup-grouped + .gloss-row.dup-grouped {
+  margin-top: -10px;
+  border-top: 1px dashed var(--warning);
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+.gloss-row.dup-grouped:has(+ .gloss-row.dup-grouped) {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
 .gloss-row:hover { box-shadow: var(--shadow); }
 .gloss-row.hidden-row { opacity: .55; }
 .gloss-row.hidden-row::after {

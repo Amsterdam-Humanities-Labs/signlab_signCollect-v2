@@ -185,7 +185,18 @@ async function refresh() {
     $('#emptyState').style.display = '';
   } else {
     const ctx = makeCtx();
-    res.rows.forEach(r => list.appendChild(renderRow(r, ctx)));
+    const groupByGlos = state.statuses.includes('extern_duplicate');
+    res.rows.forEach((r, i) => {
+      const node = renderRow(r, ctx);
+      if (groupByGlos) {
+        node.classList.add('dup-grouped');
+        const prev = res.rows[i - 1];
+        if (!prev || (prev.glos || '') !== (r.glos || '')) {
+          node.classList.add('dup-group-start');
+        }
+      }
+      list.appendChild(node);
+    });
   }
 
   const meta = $('#resultMeta');
