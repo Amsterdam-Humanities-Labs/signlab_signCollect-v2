@@ -220,6 +220,16 @@
 }
 .gec-state.klaar { background: #e8f5ec; color: var(--success); }
 .gec-state.bezig { background: #fff5e0; color: #b87a00; }
+.gec-toggle {
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  font-size: 11.5px;
+  transition: filter .12s, transform .05s;
+}
+.gec-toggle:hover { filter: brightness(.96); }
+.gec-toggle:active { transform: translateY(1px); }
 .gec-control summary {
   list-style: none; cursor: pointer;
 }

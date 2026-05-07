@@ -195,40 +195,22 @@ function renderMetaCol(row, ctx) {
 
   const gecBlock = el('div', { class: 'meta-block' });
   gecBlock.append(el('span', { class: 'meta-label' }, 'Gecontroleerd'));
-  if (!row.wie.length) {
-    gecBlock.appendChild(el('span', { class: 'gec-state klaar' }, el('i', { class: 'fas fa-check' }), 'klaar'));
-  } else {
-    const allKlaar = row.control_nodig.length === 0;
-    const summary = el('summary', {},
-      el('span', {
-        class: 'gec-state ' + (allKlaar ? 'klaar' : 'bezig')
-      },
-        el('i', { class: 'fas ' + (allKlaar ? 'fa-check' : 'fa-clock') }),
-        allKlaar ? 'klaar' : `niet klaar (${row.control_nodig.length})`
-      )
-    );
-    const opts = el('div', { class: 'gec-options' });
-    row.wie.forEach(uid => {
-      const checked = row.control_nodig.includes(uid);
-      const opt = el('label', {},
-        el('input', {
-          type: 'checkbox',
-          checked,
-          onchange: (ev) => {
-            const set = new Set(row.control_nodig);
-            if (ev.target.checked) set.add(uid); else set.delete(uid);
-            row.control_nodig = Array.from(set);
-            save(row, { control_nodig: row.control_nodig });
-            ctx.refreshRow(row);
-          }
-        }),
-        ctx.userName(uid) + (checked ? ' — moet nog' : ' — klaar')
-      );
-      opts.appendChild(opt);
-    });
-    const det = el('details', { class: 'gec-control' }, summary, opts);
-    gecBlock.appendChild(det);
-  }
+  const isKlaar = String(row.fonologie_fase1 ?? '') === '1';
+  const toggle = el('button', {
+    type: 'button',
+    class: 'gec-state gec-toggle ' + (isKlaar ? 'klaar' : 'bezig'),
+    title: 'Klik om te wisselen tussen klaar / niet klaar',
+    onclick: () => {
+      const next = isKlaar ? '0' : '1';
+      row.fonologie_fase1 = next;
+      save(row, { fonologie_fase1: next });
+      ctx.refreshRow(row);
+    },
+  },
+    el('i', { class: 'fas ' + (isKlaar ? 'fa-check' : 'fa-clock') }),
+    isKlaar ? 'klaar' : 'niet klaar',
+  );
+  gecBlock.appendChild(toggle);
   col.appendChild(gecBlock);
 
   return col;

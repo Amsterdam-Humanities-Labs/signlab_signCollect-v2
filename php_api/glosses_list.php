@@ -70,7 +70,8 @@ $countStmt->execute($args);
 $total = (int)$countStmt->fetch()['c'];
 
 $listSql = "SELECT id, glos, glos_engels, wie, thema, labels, glosZichtbaar,
-                   zelfopname, senses, sensesEngels, control_nodig
+                   zelfopname, senses, sensesEngels, control_nodig,
+                   fonologie_fase1, fonologie_fase2
             FROM form_data {$whereSql}
             ORDER BY id DESC
             LIMIT {$pageSize} OFFSET {$offset}";
@@ -149,6 +150,8 @@ foreach ($rows as $r) {
         'senses'         => parse_json_array($r['senses']),
         'sensesEngels'   => parse_json_array($r['sensesEngels']),
         'control_nodig'  => parse_json_array($r['control_nodig']),
+        'fonologie_fase1' => $r['fonologie_fase1'],
+        'fonologie_fase2' => $r['fonologie_fase2'],
         'studio_videos'  => $videosByGloss[$id] ?? [],
         'thumbnail_video' => $thumbnailByGloss[$id] ?? null,
     ];
