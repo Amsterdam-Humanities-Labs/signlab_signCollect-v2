@@ -1,0 +1,924 @@
+import { api } from './api.js';
+import { el, debounce, toast, fmtCount } from './util.js';
+import { renderRow } from './table.js';
+import { renderSenses } from './senses.js';
+import { VideoRecorder, fmtTime } from './recorder.js';
+import { buildPhonologyForm } from './phonology.js';
+
+const state = {
+  search: '',
+  thema: '',
+  labels: [],
+  statuses: [],
+  mineOnly: true,
+  page: 1,
+  total: 0,
+  pageSize: 25,
+  rows: [],
+  options: { themas: [], labels: [], users: [] },
+  user: null,
+};
+
+const $ = sel => document.querySelector(sel);
+
+const userNameMap = new Map();
+const userName = uid => userNameMap.get(String(uid)) || `#${uid}`;
+
+async function init() {
+  state.user = await api.currentUser();
+  $('#userBadge').textContent = state.user.username;
+
+  state.options = await api.filterOptions();
+  state.options.users.forEach(u => userNameMap.set(String(u.userId), u.user));
+
+  populateThemaSelect();
+  populateLabelsMulti('#labelsMulti', state.options.labels.map(l => l.label), v => { state.labels = v; refresh(); });
+  populateStatusMulti();
+
+  const mineToggle = $('#mineOnlyToggle');
+  mineToggle.checked = state.mineOnly;
+  mineToggle.addEventListener('change', () => {
+    state.mineOnly = mineToggle.checked;
+    state.page = 1;
+    refresh();
+  });
+
+  $('#searchInput').addEventListener('input', debounce(e => {
+    state.search = e.target.value.trim();
+    state.page = 1;
+    refresh();
+  }, 300));
+  $('#themaSelect').addEventListener('change', e => {
+    state.thema = e.target.value;
+    state.page = 1;
+    refresh();
+  });
+  $('#resetFiltersBtn').addEventListener('click', () => {
+    state.search = ''; $('#searchInput').value = '';
+    state.thema = '';  $('#themaSelect').value = '';
+    state.labels = []; resetMulti('#labelsMulti');
+    state.statuses = []; resetMulti('#statusMulti');
+    state.mineOnly = true; mineToggle.checked = true;
+    state.page = 1;
+    refresh();
+  });
+
+  setupAddModal();
+  setupRecordModal();
+  setupConfirmModal();
+  setupStudioModal();
+  setupPhonologyModal();
+  setupOverscrollPaging();
+  $('#addGlossBtn').addEventListener('click', () => openAddModal());
+
+  document.addEventListener('click', closeOpenDetails);
+
+  await refresh();
+}
+
+function closeOpenDetails(ev) {
+  document.querySelectorAll('details[open]').forEach(d => {
+    if (!d.contains(ev.target)) d.removeAttribute('open');
+  });
+}
+
+function clearChildren(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+
+function populateThemaSelect() {
+  const sel = $('#themaSelect');
+  clearChildren(sel);
+  sel.appendChild(el('option', { value: '' }, '— alle —'));
+  for (const t of state.options.themas) {
+    sel.appendChild(el('option', { value: t }, t));
+  }
+  const list = $('#themaList');
+  clearChildren(list);
+  for (const t of state.options.themas) {
+    list.appendChild(el('option', { value: t }));
+  }
+}
+
+function populateLabelsMulti(root, items, onChange) {
+  const container = document.querySelector(`${root} .multi-list`);
+  clearChildren(container);
+  for (const item of items) {
+    const lbl = el('label', {},
+      el('input', { type: 'checkbox', value: item, onchange: () => syncMulti(root, onChange) }),
+      ' ', item
+    );
+    container.appendChild(lbl);
+  }
+}
+
+function populateStatusMulti() {
+  const root = '#statusMulti';
+  document.querySelectorAll(`${root} .multi-list input`).forEach(inp => {
+    inp.addEventListener('change', () => syncMulti(root, v => { state.statuses = v; state.page = 1; refresh(); }));
+  });
+}
+
+function syncMulti(root, onChange) {
+  const inputs = document.querySelectorAll(`${root} .multi-list input:checked`);
+  const values = Array.from(inputs).map(i => i.value);
+  const summary = document.querySelector(`${root} .multi-summary`);
+  if (values.length === 0) {
+    summary.textContent = '— alle —'; summary.classList.add('placeholder');
+  } else if (values.length <= 2) {
+    summary.textContent = values.join(', '); summary.classList.remove('placeholder');
+  } else {
+    summary.textContent = `${values.length} geselecteerd`; summary.classList.remove('placeholder');
+  }
+  onChange(values);
+}
+
+function resetMulti(root) {
+  document.querySelectorAll(`${root} .multi-list input`).forEach(i => i.checked = false);
+  const summary = document.querySelector(`${root} .multi-summary`);
+  summary.textContent = '— alle —'; summary.classList.add('placeholder');
+}
+
+async function refresh() {
+  const list = $('#glossList');
+  clearChildren(list);
+  for (let i = 0; i < 6; i++) list.appendChild(el('div', { class: 'gloss-row skeleton', style: 'height:130px;' }));
+  $('#emptyState').style.display = 'none';
+
+  let res;
+  try {
+    res = await api.list({
+      search: state.search,
+      thema:  state.thema,
+      labels: state.labels,
+      statuses: state.statuses,
+      mineOnly: state.mineOnly,
+      page: state.page,
+    });
+  } catch (e) {
+    toast('Lijst laden mislukt: ' + e.message, 'error');
+    clearChildren(list);
+    return;
+  }
+  state.rows = res.rows;
+  state.total = res.total;
+  state.page = res.page;
+  state.pageSize = res.pageSize;
+
+  clearChildren(list);
+  if (!res.rows.length) {
+    $('#emptyState').style.display = '';
+  } else {
+    const ctx = makeCtx();
+    res.rows.forEach(r => list.appendChild(renderRow(r, ctx)));
+  }
+
+  const meta = $('#resultMeta');
+  clearChildren(meta);
+  if (res.total === 0) {
+    meta.textContent = 'Geen resultaten';
+  } else {
+    const from = (res.page - 1) * res.pageSize + 1;
+    const to   = Math.min(res.page * res.pageSize, res.total);
+    meta.append(
+      'Toont ',
+      el('strong', {}, String(from)), '–',
+      el('strong', {}, String(to)), ' van ',
+      el('strong', {}, fmtCount(res.total)),
+    );
+  }
+
+  renderPager(res.page, Math.ceil(res.total / res.pageSize));
+}
+
+function makeCtx() {
+  return {
+    userName,
+    themaOptions: () => state.options.themas,
+    labelOptions: () => state.options.labels,
+    userOptions:  () => state.options.users.map(u => ({
+      value: String(u.userId),
+      label: u.user,
+    })),
+    refreshRow: (row) => {
+      const old = document.querySelector(`.gloss-row[data-id="${row.id}"]`);
+      if (!old) return;
+      const fresh = renderRow(row, makeCtx());
+      old.replaceWith(fresh);
+    },
+    openRecord:  (row)        => openRecordModal(row),
+    openConfirm: (msg, onYes) => openConfirmModal(msg, onYes),
+    openStudio:  (row, video) => openStudioModal(row, video),
+    openPhonology: (row)      => openPhonologyModal(row),
+    deleteAllZelfopname: (row) => deleteAllZelfopname(row),
+  };
+}
+
+async function deleteAllZelfopname(row) {
+  if (!row.zelfopname.length) return;
+  const count = row.zelfopname.length;
+  const msg = count === 1
+    ? `Zelfopname "${row.zelfopname[0]}" verwijderen?`
+    : `Alle ${count} zelfopnames van deze glos verwijderen?`;
+  openConfirmModal(msg, async () => {
+    const filenames = [...row.zelfopname];
+    for (const fn of filenames) {
+      const upd = await api.deleteVideo(row.id, fn);
+      row.zelfopname = upd.zelfopname;
+    }
+    makeCtx().refreshRow(row);
+    toast(count === 1 ? 'Zelfopname verwijderd' : `${count} zelfopnames verwijderd`, 'success');
+  });
+}
+
+function renderPager(current, totalPages) {
+  const pager = $('#pager');
+  clearChildren(pager);
+  if (totalPages <= 1) return;
+
+  const btn = (label, page, opts = {}) => el('button', {
+    onclick: () => { state.page = page; refresh(); window.scrollTo({ top: 0, behavior: 'smooth' }); },
+    ...(opts.disabled ? { disabled: true } : {}),
+    class: opts.active ? 'active' : '',
+  }, label);
+
+  pager.appendChild(btn('«', Math.max(1, current - 1), { disabled: current === 1 }));
+
+  const window_ = 2;
+  const pages = new Set([1, totalPages, current]);
+  for (let i = current - window_; i <= current + window_; i++) {
+    if (i >= 1 && i <= totalPages) pages.add(i);
+  }
+  const sorted = [...pages].sort((a, b) => a - b);
+  let prev = 0;
+  for (const p of sorted) {
+    if (p - prev > 1) pager.appendChild(el('span', { class: 'ellipsis' }, '…'));
+    pager.appendChild(btn(String(p), p, { active: p === current }));
+    prev = p;
+  }
+  pager.appendChild(btn('»', Math.min(totalPages, current + 1), { disabled: current === totalPages }));
+}
+
+/* ---------- Add gloss modal ---------- */
+
+const sensesEditors = {};
+
+function setupAddModal() {
+  populateLabelsMulti('#addLabelsMulti', state.options.labels.map(l => l.label), () => {});
+
+  document.querySelectorAll('#addForm .senses-editor').forEach(node => {
+    const name = node.dataset.name;
+    let arr = [];
+    const editor = renderSenses([], { onChange: v => { arr = v; }, placeholder: name === 'sensesEngels' ? 'Sense (EN)…' : 'Sense…' });
+    node.appendChild(editor);
+    sensesEditors[name] = () => arr;
+    sensesEditors[`__reset_${name}`] = () => {
+      clearChildren(node);
+      arr = [];
+      const editor2 = renderSenses([], { onChange: v => { arr = v; }, placeholder: name === 'sensesEngels' ? 'Sense (EN)…' : 'Sense…' });
+      node.appendChild(editor2);
+      sensesEditors[name] = () => arr;
+    };
+  });
+
+  $('#addModal').addEventListener('click', ev => {
+    if (ev.target.matches('[data-close]') || ev.target === $('#addModal')) closeModal('#addModal');
+  });
+
+  $('#addForm').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const fd = new FormData(ev.target);
+    const labels = Array.from(document.querySelectorAll('#addLabelsMulti .multi-list input:checked'))
+      .map(i => i.value);
+    const payload = {
+      glos: fd.get('glos').toString().trim(),
+      glos_engels: fd.get('glos_engels').toString().trim(),
+      thema: fd.get('thema').toString().trim(),
+      labels,
+      senses: sensesEditors.senses(),
+      sensesEngels: sensesEditors.sensesEngels(),
+    };
+    try {
+      await api.create(payload);
+      closeModal('#addModal');
+      ev.target.reset();
+      document.querySelectorAll('#addLabelsMulti .multi-list input').forEach(i => i.checked = false);
+      sensesEditors.__reset_senses();
+      sensesEditors.__reset_sensesEngels();
+      toast('Glos aangemaakt', 'success');
+      state.page = 1;
+      refresh();
+    } catch (e) {
+      toast('Aanmaken mislukt: ' + e.message, 'error');
+    }
+  });
+}
+
+function openAddModal() {
+  $('#addModal').classList.remove('hidden');
+  setTimeout(() => $('#addForm input[name="glos"]').focus(), 50);
+}
+
+function closeModal(sel) { $(sel).classList.add('hidden'); }
+
+/* ---------- Record modal ---------- */
+
+let recorder = null;
+let recordingForRow = null;
+let recordingState = 'idle';
+
+function setupRecordModal() {
+  const modal = $('#recordModal');
+  modal.addEventListener('click', ev => {
+    if (ev.target.matches('[data-close]') || ev.target === modal) closeRecordModal();
+  });
+  $('#recordToggle').addEventListener('click', toggleRecording);
+}
+
+async function openRecordModal(row) {
+  recordingForRow = row;
+  recordingState = 'idle';
+  $('#recordModal').classList.remove('hidden');
+  $('#recordStatus').textContent = 'Klaar';
+  $('#recordTimer').textContent = '0:00';
+  setRecordToggleLabel('start');
+  $('#recordToggle').classList.remove('recording');
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    $('#recordPreview').srcObject = stream;
+    $('#recordPreview').play().catch(() => {});
+    recorder = new VideoRecorder($('#recordPreview'));
+    recorder.stream = stream;
+  } catch (e) {
+    toast('Camera-toegang geweigerd: ' + e.message, 'error');
+    closeRecordModal();
+  }
+}
+
+function setRecordToggleLabel(mode) {
+  const btn = $('#recordToggle');
+  clearChildren(btn);
+  if (mode === 'start') {
+    btn.appendChild(el('i', { class: 'fas fa-circle' }));
+    btn.append(' Opname starten');
+  } else {
+    btn.appendChild(el('i', { class: 'fas fa-stop' }));
+    btn.append(' Stoppen & opslaan');
+  }
+}
+
+async function toggleRecording() {
+  if (!recorder) return;
+  if (recordingState === 'idle') {
+    try {
+      const mimeCandidates = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
+      const mime = mimeCandidates.find(t => MediaRecorder.isTypeSupported(t)) || '';
+      recorder.recorder = new MediaRecorder(recorder.stream, mime ? { mimeType: mime } : undefined);
+      recorder.chunks = [];
+      recorder.recorder.addEventListener('dataavailable', e => {
+        if (e.data && e.data.size > 0) recorder.chunks.push(e.data);
+      });
+      recorder.recorder.start();
+      recorder.startTime = Date.now();
+      recorder.timerInterval = setInterval(
+        () => $('#recordTimer').textContent = fmtTime(Math.floor((Date.now() - recorder.startTime) / 1000)),
+        250
+      );
+      recordingState = 'recording';
+      $('#recordStatus').textContent = 'Opname loopt…';
+      setRecordToggleLabel('stop');
+      $('#recordToggle').classList.add('recording');
+    } catch (e) {
+      toast('Kon niet starten: ' + e.message, 'error');
+    }
+  } else if (recordingState === 'recording') {
+    $('#recordStatus').textContent = 'Bezig met opslaan…';
+    $('#recordToggle').disabled = true;
+    const blob = await recorder.stop();
+    try {
+      const upd = await api.uploadVideo(recordingForRow.id, blob);
+      recordingForRow.zelfopname = upd.zelfopname;
+      makeCtx().refreshRow(recordingForRow);
+      toast('Zelfopname opgeslagen', 'success');
+      closeRecordModal();
+    } catch (e) {
+      toast('Uploaden mislukt: ' + e.message, 'error');
+    } finally {
+      $('#recordToggle').disabled = false;
+    }
+  }
+}
+
+function closeRecordModal() {
+  if (recorder) recorder.cleanup();
+  recorder = null;
+  recordingState = 'idle';
+  recordingForRow = null;
+  $('#recordModal').classList.add('hidden');
+}
+
+/* ---------- Overscroll-to-paginate ---------- */
+
+const OVERSCROLL_THRESHOLD   = 1100;  // pixels of overscroll to fully fill drop
+const OVERSCROLL_HOLD_MS     = 500;   // after full: keep scrolling this long before committing
+const OVERSCROLL_FADE_MS     = 1100;  // safety reset if no scroll activity at all
+const OVERSCROLL_MAX_DELTA   = 50;    // per-event clamp so trackpad inertia can't insta-fill
+const OVERSCROLL_GAP_MS      = 300;   // wheel-event gap that resets buildup
+const OVERSCROLL_DRAIN_PER_S = 1300;  // idle drain rate (px/s) when not yet committing
+
+let overscroll = {
+  dir: 0,
+  amount: 0,
+  ready: false,
+  fullSince: 0,
+  decayId: null,
+  cooldown: false,
+  lastEventAt: 0,
+  drainRaf: 0,
+};
+
+function modalOpen() {
+  return !!document.querySelector('.modal-backdrop:not(.hidden)');
+}
+
+function totalPages() {
+  return Math.max(1, Math.ceil(state.total / state.pageSize));
+}
+
+function updateOverscrollUI() {
+  const top = $('#overscrollTop');
+  const bot = $('#overscrollBottom');
+  const pct = Math.min(1, overscroll.amount / OVERSCROLL_THRESHOLD);
+  const ready = pct >= 1;
+  overscroll.ready = ready;
+  const setActive = (drop, label, page) => {
+    drop.classList.add('active');
+    drop.classList.toggle('ready', ready);
+    drop.style.setProperty('--fill', pct);
+    drop.querySelector('.drop-label-text').textContent = label;
+    drop.querySelector('.drop-page').textContent = `pagina ${page} / ${totalPages()}`;
+  };
+  if (overscroll.dir === -1) {
+    setActive(top, overscroll.ready ? 'Loslaten…' : 'Vorige pagina', state.page - 1);
+    bot.classList.remove('active', 'ready');
+    bot.style.removeProperty('--fill');
+  } else if (overscroll.dir === 1) {
+    setActive(bot, overscroll.ready ? 'Loslaten…' : 'Volgende pagina', state.page + 1);
+    top.classList.remove('active', 'ready');
+    top.style.removeProperty('--fill');
+  } else {
+    top.classList.remove('active', 'ready');
+    bot.classList.remove('active', 'ready');
+    top.style.removeProperty('--fill');
+    bot.style.removeProperty('--fill');
+  }
+}
+
+function resetOverscroll() {
+  overscroll.dir = 0;
+  overscroll.amount = 0;
+  overscroll.ready = false;
+  overscroll.fullSince = 0;
+  clearTimeout(overscroll.decayId);
+  cancelAnimationFrame(overscroll.drainRaf);
+  overscroll.drainRaf = 0;
+  updateOverscrollUI();
+}
+
+function scheduleFade() {
+  clearTimeout(overscroll.decayId);
+  overscroll.decayId = setTimeout(resetOverscroll, OVERSCROLL_FADE_MS);
+}
+
+function startDrainLoop() {
+  if (overscroll.drainRaf) return;
+  let last = performance.now();
+  const tick = (now) => {
+    const dt = now - last;
+    last = now;
+    // Once ready (click pending), do not drain — let user click or fade-timer reset.
+    if (overscroll.amount > 0 && !overscroll.ready) {
+      const idle = now - overscroll.lastEventAt;
+      if (idle > 60) {
+        overscroll.amount = Math.max(0, overscroll.amount - (OVERSCROLL_DRAIN_PER_S * dt) / 1000);
+        updateOverscrollUI();
+      }
+    }
+    if (overscroll.amount > 0) {
+      overscroll.drainRaf = requestAnimationFrame(tick);
+    } else {
+      overscroll.drainRaf = 0;
+      resetOverscroll();
+    }
+  };
+  overscroll.drainRaf = requestAnimationFrame(tick);
+}
+
+async function commitOverscrollNav(dir) {
+  if (overscroll.cooldown) return;
+  overscroll.cooldown = true;
+  const goingNext = dir === 1;
+  state.page += dir;
+  const doc = document.documentElement;
+  await refresh();
+  if (goingNext) window.scrollTo({ top: 0, behavior: 'auto' });
+  else requestAnimationFrame(() => window.scrollTo({ top: doc.scrollHeight, behavior: 'auto' }));
+  setTimeout(() => { overscroll.cooldown = false; }, 600);
+  resetOverscroll();
+}
+
+function setupOverscrollPaging() {
+  // Esc dismisses if drop is sitting in ready state.
+  window.addEventListener('keydown', (e) => {
+    if (!overscroll.ready || modalOpen()) return;
+    if (e.key === 'Escape') resetOverscroll();
+  });
+
+  window.addEventListener('wheel', (e) => {
+    if (modalOpen() || overscroll.cooldown) return;
+
+    const doc = document.documentElement;
+    const atTop    = window.scrollY <= 0;
+    const atBottom = (window.scrollY + window.innerHeight) >= (doc.scrollHeight - 2);
+
+    const canPrev = state.page > 1;
+    const canNext = state.page < totalPages();
+
+    let dir = 0;
+    if (atBottom && e.deltaY > 0 && canNext) dir = 1;
+    else if (atTop && e.deltaY < 0 && canPrev) dir = -1;
+
+    if (dir === 0) {
+      if (overscroll.amount > 0) resetOverscroll();
+      return;
+    }
+
+    const now = performance.now();
+    const gap = now - overscroll.lastEventAt;
+    if (overscroll.dir !== dir || gap > OVERSCROLL_GAP_MS) {
+      overscroll.amount = 0;
+      overscroll.fullSince = 0;
+    }
+    overscroll.dir = dir;
+    overscroll.lastEventAt = now;
+    overscroll.amount = Math.min(
+      OVERSCROLL_THRESHOLD,
+      overscroll.amount + Math.min(OVERSCROLL_MAX_DELTA, Math.abs(e.deltaY))
+    );
+    if (overscroll.amount >= OVERSCROLL_THRESHOLD) {
+      if (!overscroll.fullSince) overscroll.fullSince = now;
+    } else {
+      overscroll.fullSince = 0;
+    }
+    updateOverscrollUI();
+    scheduleFade();
+    startDrainLoop();
+
+    if (overscroll.fullSince && (now - overscroll.fullSince) >= OVERSCROLL_HOLD_MS) {
+      commitOverscrollNav(dir);
+    }
+  }, { passive: true });
+
+  // touch fallback (pull gesture on mobile)
+  let touchStartY = null;
+  window.addEventListener('touchstart', (e) => {
+    if (modalOpen()) return;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  window.addEventListener('touchmove', (e) => {
+    if (modalOpen() || overscroll.cooldown || touchStartY == null) return;
+    const y = e.touches[0].clientY;
+    const dy = touchStartY - y;
+    const doc = document.documentElement;
+    const atTop    = window.scrollY <= 0;
+    const atBottom = (window.scrollY + window.innerHeight) >= (doc.scrollHeight - 2);
+    const canPrev = state.page > 1;
+    const canNext = state.page < totalPages();
+
+    let dir = 0;
+    if (atBottom && dy > 0 && canNext) dir = 1;
+    else if (atTop && dy < 0 && canPrev) dir = -1;
+
+    if (dir === 0) return;
+    if (overscroll.dir !== dir) overscroll.amount = 0;
+    overscroll.dir = dir;
+    overscroll.lastEventAt = performance.now();
+    overscroll.amount = Math.min(OVERSCROLL_THRESHOLD, Math.abs(dy));
+    updateOverscrollUI();
+    scheduleFade();
+  }, { passive: true });
+  window.addEventListener('touchend', () => {
+    if (overscroll.ready) commitOverscrollNav(overscroll.dir);
+    else if (overscroll.amount && !overscroll.cooldown) resetOverscroll();
+    touchStartY = null;
+  }, { passive: true });
+}
+
+/* ---------- Studio video modal (list of entries) ---------- */
+
+const STUDIO_BASE = 'https://signcollect.nl/gebarenoverleg_media/studioFilesMini';
+let studioCards = []; // each: { id, players[], rafId, master }
+let studioCurrentRow = null;
+
+function setupStudioModal() {
+  const modal = $('#studioModal');
+  modal.addEventListener('click', ev => {
+    if (ev.target.matches('[data-close]') || ev.target === modal) closeStudioModal();
+  });
+}
+
+function studioVideoUrl(basename, postProcessed) {
+  if (!basename) return null;
+  const stem = basename.replace(/\.\w+$/, '');
+  const folder = postProcessed === 1 ? 'post' : 'raw';
+  return `${STUDIO_BASE}/${folder}/${encodeURIComponent(stem)}.mp4`;
+}
+
+function openStudioModal(row) {
+  studioCurrentRow = row;
+  $('#studioTitle').textContent = `Studio video's — ${row.glos || '#' + row.id}`;
+  renderStudioList();
+  $('#studioModal').classList.remove('hidden');
+}
+
+function renderStudioList() {
+  cleanupStudioCards();
+  const list = $('#studioList');
+  clearChildren(list);
+
+  const videos = studioCurrentRow?.studio_videos || [];
+  const liveCount    = videos.filter(v => !v.deleted).length;
+  const deletedCount = videos.length - liveCount;
+  $('#studioCount').textContent = videos.length === 0
+    ? 'Geen studio-opnames'
+    : `${videos.length} opname${videos.length === 1 ? '' : 's'}${deletedCount ? ` (waarvan ${deletedCount} verwijderd)` : ''}`;
+
+  if (!videos.length) {
+    list.appendChild(el('div', { class: 'empty-state' },
+      el('i', { class: 'fas fa-clapperboard' }),
+      el('p', {}, 'Geen studio-opnames voor deze glos.')
+    ));
+    return;
+  }
+
+  videos.forEach(v => list.appendChild(renderStudioCard(v)));
+}
+
+function renderStudioCard(video) {
+  const isDeleted = !!video.deleted;
+  const card = el('div', {
+    class: 'studio-card open' + (isDeleted ? ' deleted' : ''),
+    dataset: { id: video.id },
+  });
+
+  const head = el('div', { class: 'studio-card-head' });
+  head.append(
+    el('span', { class: 'filename' }, (video.m_file || '').replace(/\.\w+$/, '')),
+    el('div', { class: 'badges' },
+      el('span', { class: 'badge ' + (video.post_processed === 1 ? 'post' : 'raw') },
+        el('i', { class: 'fas ' + (video.post_processed === 1 ? 'fa-check-circle' : 'fa-circle-half-stroke') }),
+        video.post_processed === 1 ? 'post' : 'raw'),
+      video.zOg ? el('span', { class: 'badge zog' }, video.zOg) : null,
+      video.date ? el('span', { class: 'badge' }, el('i', { class: 'fas fa-calendar-day' }), video.date) : null,
+      isDeleted ? el('span', { class: 'badge deleted' }, el('i', { class: 'fas fa-trash' }), 'verwijderd') : null,
+    ),
+  );
+  card.appendChild(head);
+
+  const body = el('div', { class: 'studio-card-body' });
+
+  const cameras = [
+    { letter: 'L', label: 'Links',  file: video.l_file },
+    { letter: 'M', label: 'Midden', file: video.m_file },
+    { letter: 'R', label: 'Rechts', file: video.r_file },
+  ].filter(c => c.file);
+
+  const grid = el('div', { class: 'studio-grid' });
+  const players = [];
+  cameras.forEach(cam => {
+    const cell = el('div', { class: 'cam-cell cam-' + cam.letter });
+    const tag  = el('span', { class: 'cam-tag' }, cam.letter, ' ', cam.label);
+    const v    = el('video', {
+      muted: true, playsinline: true, preload: 'none', loop: true,
+      'data-src': studioVideoUrl(cam.file, video.post_processed),
+    });
+    cell.append(v, tag);
+    grid.appendChild(cell);
+    players.push(v);
+  });
+
+  const playBtn  = el('button', { class: 'btn-icon', title: 'Afspelen / pauzeren' }, el('i', { class: 'fas fa-play' }));
+  const resetBtn = el('button', { class: 'btn-icon', title: 'Opnieuw' }, el('i', { class: 'fas fa-rotate-left' }));
+  const scrub    = el('input', { type: 'range', min: '0', max: '0', step: '0.05', value: '0' });
+  const time     = el('span', { class: 'time-display' }, '0:00 / 0:00');
+  const controls = el('div', { class: 'studio-controls' },
+    playBtn, resetBtn,
+    el('div', { class: 'scrub' }, scrub),
+    time
+  );
+
+  const cardState = { players, master: players[0] || null, rafId: null };
+  studioCards.push(cardState);
+
+  const updatePlay = () => {
+    const i = playBtn.querySelector('i');
+    i.className = 'fas ' + (cardState.master && !cardState.master.paused ? 'fa-pause' : 'fa-play');
+  };
+  const updateTime = () => {
+    if (!cardState.master) return;
+    const cur = cardState.master.currentTime || 0;
+    const dur = cardState.master.duration   || 0;
+    time.textContent = `${fmtTime(Math.floor(cur))} / ${fmtTime(Math.floor(dur))}`;
+  };
+
+  playBtn.addEventListener('click', () => {
+    if (!cardState.master) return;
+    if (cardState.master.paused) cardState.players.forEach(v => v.play().catch(() => {}));
+    else                         cardState.players.forEach(v => v.pause());
+    updatePlay();
+  });
+  resetBtn.addEventListener('click', () => {
+    cardState.players.forEach(v => { v.currentTime = 0; v.play().catch(() => {}); });
+    updatePlay();
+  });
+  scrub.addEventListener('input', ev => {
+    const t = parseFloat(ev.target.value);
+    cardState.players.forEach(v => { try { v.currentTime = t; } catch {} });
+    updateTime();
+  });
+
+  if (cardState.master) {
+    cardState.master.addEventListener('loadedmetadata', () => {
+      scrub.max = String(cardState.master.duration || 0);
+      updateTime();
+    });
+    cardState.master.addEventListener('play',  updatePlay);
+    cardState.master.addEventListener('pause', updatePlay);
+  }
+
+  // Always open: attach sources and start sync loop immediately.
+  cardState.players.forEach(v => {
+    if (!v.src && v.dataset.src) v.src = v.dataset.src;
+  });
+  requestAnimationFrame(() => {
+    cardState.players.forEach(v => v.play().catch(() => {}));
+    startSyncLoop(cardState, scrub, updateTime);
+  });
+
+  body.appendChild(grid);
+  body.appendChild(controls);
+
+  if (!isDeleted) {
+    const delBtn = el('button', {
+      class: 'btn btn-danger btn-sm',
+      onclick: async (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        openConfirmModal(`Studio-opname "${(video.m_file || '#' + video.id).replace(/\.\w+$/, '')}" verwijderen?`, async () => {
+          try {
+            await api.deleteStudioVideo(video.id);
+            video.added = 'DELETE';
+            video.deleted = true;
+            renderStudioList();
+            // also refresh the underlying gloss row
+            makeCtx().refreshRow(studioCurrentRow);
+            toast('Studio-opname verwijderd', 'success');
+          } catch (e) {
+            toast('Verwijderen mislukt: ' + e.message, 'error');
+          }
+        });
+      }
+    },
+      el('i', { class: 'fas fa-trash' }), ' Verwijderen'
+    );
+    body.appendChild(el('div', { class: 'delete-row' }, delBtn));
+  }
+
+  card.appendChild(body);
+  return card;
+}
+
+function startSyncLoop(cardState, scrub, updateTime) {
+  cancelAnimationFrame(cardState.rafId);
+  const tick = () => {
+    if (!cardState.master) return;
+    const t = cardState.master.currentTime || 0;
+    cardState.players.forEach(v => {
+      if (v === cardState.master) return;
+      if (Math.abs((v.currentTime || 0) - t) > 0.2) {
+        try { v.currentTime = t; } catch {}
+      }
+    });
+    if (!cardState.master.paused && !cardState.master.ended) {
+      scrub.value = String(t);
+      updateTime();
+    }
+    cardState.rafId = requestAnimationFrame(tick);
+  };
+  cardState.rafId = requestAnimationFrame(tick);
+}
+
+function cleanupStudioCards() {
+  studioCards.forEach(c => {
+    cancelAnimationFrame(c.rafId);
+    c.players.forEach(v => { try { v.pause(); v.removeAttribute('src'); v.load(); } catch {} });
+  });
+  studioCards = [];
+}
+
+function closeStudioModal() {
+  cleanupStudioCards();
+  studioCurrentRow = null;
+  $('#studioModal').classList.add('hidden');
+}
+
+/* ---------- Phonology modal ---------- */
+
+function setupPhonologyModal() {
+  const modal = $('#phonologyModal');
+  modal.addEventListener('click', (ev) => {
+    if (ev.target.matches('[data-close]') || ev.target === modal) closePhonologyModal();
+  });
+}
+
+let phonologySaveTimer = null;
+
+async function openPhonologyModal(row) {
+  $('#phonologyTitle').textContent = `Fonologie — ${row.glos || '#' + row.id}`;
+  const body = $('#phonologyBody');
+  clearChildren(body);
+  body.appendChild(el('div', { class: 'empty-state' }, el('i', { class: 'fas fa-spinner fa-spin' }), el('p', {}, 'Laden…')));
+  $('#phonologyStatus').textContent = '';
+  $('#phonologyModal').classList.remove('hidden');
+
+  try {
+    const form = await buildPhonologyForm({
+      row,
+      onSave: (fields) => savePhonologyDebounced(row, fields),
+    });
+    clearChildren(body);
+    body.appendChild(form);
+  } catch (e) {
+    clearChildren(body);
+    body.appendChild(el('div', { class: 'empty-state' }, `Fout bij laden: ${e.message}`));
+  }
+}
+
+function savePhonologyDebounced(row, fields) {
+  const status = $('#phonologyStatus');
+  status.className = 'phono-status saving';
+  status.textContent = 'Opslaan…';
+  clearTimeout(phonologySaveTimer);
+  phonologySaveTimer = setTimeout(async () => {
+    try {
+      await api.save(row.id, fields);
+      status.className = 'phono-status saved';
+      status.textContent = 'Opgeslagen ✓';
+      setTimeout(() => {
+        if (status.classList.contains('saved')) {
+          status.className = 'phono-status';
+          status.textContent = '';
+        }
+      }, 1800);
+    } catch (e) {
+      status.className = 'phono-status';
+      status.textContent = '';
+      toast('Opslaan mislukt: ' + e.message, 'error');
+    }
+  }, 250);
+}
+
+function closePhonologyModal() {
+  clearTimeout(phonologySaveTimer);
+  $('#phonologyModal').classList.add('hidden');
+}
+
+/* ---------- Confirm modal ---------- */
+
+let confirmCallback = null;
+
+function setupConfirmModal() {
+  const modal = $('#confirmModal');
+  modal.addEventListener('click', ev => {
+    if (ev.target.matches('[data-close]') || ev.target === modal) closeModal('#confirmModal');
+  });
+  $('#confirmOk').addEventListener('click', async () => {
+    const cb = confirmCallback;
+    confirmCallback = null;
+    closeModal('#confirmModal');
+    if (cb) {
+      try { await cb(); } catch (e) { toast(e.message, 'error'); }
+    }
+  });
+}
+
+function openConfirmModal(msg, onYes) {
+  $('#confirmBody').textContent = msg;
+  confirmCallback = onYes;
+  $('#confirmModal').classList.remove('hidden');
+}
+
+init().catch(e => {
+  const pre = el('pre', { style: 'padding:24px;color:#b00' }, 'Init failed: ' + e.message);
+  clearChildren(document.body);
+  document.body.appendChild(pre);
+});

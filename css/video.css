@@ -1,0 +1,81 @@
+.thumb-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4/3;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: #1a1a2e;
+  cursor: zoom-in;
+  transition: width .25s cubic-bezier(.4,1.4,.5,1),
+              aspect-ratio .25s cubic-bezier(.4,1.4,.5,1),
+              box-shadow .2s;
+  z-index: 1;
+}
+.thumb-wrap.zoomed {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 300%;
+  max-width: 80vw;
+  aspect-ratio: var(--natural-aspect, 4/3);
+  max-height: 80vh;
+  z-index: 100;
+  cursor: zoom-out;
+  box-shadow: 0 22px 60px rgba(15,23,42,.55);
+}
+.thumb-wrap.zoomed video { object-fit: contain; }
+.thumb-wrap video, .thumb-wrap img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.thumb-wrap.empty {
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: 22px;
+}
+.thumb-wrap .play-overlay {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(255,255,255,.85);
+  font-size: 32px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .15s;
+}
+.thumb-wrap:hover .play-overlay { opacity: 1; }
+
+.thumb-files {
+  display: flex; flex-wrap: wrap; gap: 4px; align-items: center;
+  font-size: 11px;
+}
+.thumb-files .file-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px;
+  background: var(--surface-2);
+  border-radius: 999px;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+.thumb-files .file-pill .x {
+  cursor: pointer; color: var(--danger); margin-left: 2px;
+  border: 0; background: transparent;
+  font-size: 11px;
+}
+.thumb-files .file-pill.active { background: var(--primary); color: #fff; }
+
+#recordPreview {
+  width: 100%;
+  background: #000;
+  border-radius: var(--radius-sm);
+  aspect-ratio: 4/3;
+  object-fit: cover;
+}
+.record-meta {
+  display: flex; justify-content: space-between;
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+#recordToggle.recording { background: #1f2328; border-color: #1f2328; }
+#recordToggle.recording i { color: var(--danger); animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1 } 50% { opacity: .4 } }

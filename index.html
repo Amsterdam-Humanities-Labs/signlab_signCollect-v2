@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>signCollect — menu beta</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/filters.css">
+  <link rel="stylesheet" href="css/table.css">
+  <link rel="stylesheet" href="css/modals.css">
+  <link rel="stylesheet" href="css/video.css">
+</head>
+<body>
+
+<header class="app-header">
+  <div class="brand">
+    <i class="fas fa-hands-asl-interpreting"></i>
+    <span>signCollect</span>
+    <span class="tag">menu beta</span>
+  </div>
+  <div class="user">
+    <span id="userBadge"></span>
+    <a class="btn-logout" href="/login.html" title="Uitloggen"><i class="fas fa-sign-out-alt"></i></a>
+  </div>
+</header>
+
+<main>
+  <section class="filter-bar">
+    <div class="search">
+      <i class="fas fa-search"></i>
+      <input type="text" id="searchInput" placeholder="Zoek op glos, EN, of senses…" autocomplete="off">
+    </div>
+    <div class="filter-group toggle-group">
+      <label>Eigenaar</label>
+      <label class="toggle">
+        <input type="checkbox" id="mineOnlyToggle" checked>
+        <span class="toggle-track"><span class="toggle-thumb"></span></span>
+        <span class="toggle-label">Alleen mijn glossen</span>
+      </label>
+    </div>
+    <div class="filter-group">
+      <label>Thema</label>
+      <select id="themaSelect"><option value="">— alle —</option></select>
+    </div>
+    <div class="filter-group multi">
+      <label>Labels</label>
+      <details class="multi-select" id="labelsMulti">
+        <summary><span class="multi-summary">— alle —</span></summary>
+        <div class="multi-list"></div>
+      </details>
+    </div>
+    <div class="filter-group multi">
+      <label>Status</label>
+      <details class="multi-select" id="statusMulti">
+        <summary><span class="multi-summary">— alle —</span></summary>
+        <div class="multi-list">
+          <label><input type="checkbox" value="hidden"> Verborgen</label>
+          <label><input type="checkbox" value="no_label"> Geen label</label>
+          <label><input type="checkbox" value="no_thema"> Geen thema</label>
+          <label><input type="checkbox" value="no_zelfopname"> Geen zelfopname</label>
+          <label><input type="checkbox" value="no_studio_video"> Geen studio video</label>
+        </div>
+      </details>
+    </div>
+    <button class="btn btn-primary btn-add" id="addGlossBtn"><i class="fas fa-plus"></i> Nieuwe glos</button>
+  </section>
+
+  <section class="result-meta">
+    <span id="resultMeta">Laden…</span>
+    <span class="spacer"></span>
+    <button class="btn btn-link btn-sm" id="resetFiltersBtn"><i class="fas fa-rotate-left"></i> Reset filters</button>
+  </section>
+
+  <section class="table-wrap">
+    <div id="glossList" class="gloss-list"></div>
+    <div class="empty-state" id="emptyState" style="display:none">
+      <i class="fas fa-folder-open"></i>
+      <p>Geen glossen gevonden voor deze filters.</p>
+    </div>
+  </section>
+
+  <nav class="pager" id="pager"></nav>
+</main>
+
+<!-- Add gloss modal -->
+<div class="modal-backdrop hidden" id="addModal">
+  <div class="modal">
+    <header><h3>Nieuwe glos</h3><button class="close" data-close>&times;</button></header>
+    <form id="addForm">
+      <label>Glos NL <span class="req">*</span><input name="glos" required maxlength="255"></label>
+      <label>Glos EN<input name="glos_engels" maxlength="255"></label>
+      <label>Thema<input name="thema" list="themaList" maxlength="255"><datalist id="themaList"></datalist></label>
+      <label>Labels<details class="multi-select compact" id="addLabelsMulti">
+        <summary><span class="multi-summary">— geen —</span></summary>
+        <div class="multi-list"></div>
+      </details></label>
+      <label>Senses NL<div class="senses-editor" data-name="senses"></div></label>
+      <label>Senses EN<div class="senses-editor" data-name="sensesEngels"></div></label>
+      <footer>
+        <button type="button" class="btn" data-close>Annuleren</button>
+        <button type="submit" class="btn btn-primary">Aanmaken</button>
+      </footer>
+    </form>
+  </div>
+</div>
+
+<!-- Record video modal -->
+<div class="modal-backdrop hidden" id="recordModal">
+  <div class="modal">
+    <header><h3>Zelfopname</h3><button class="close" data-close>&times;</button></header>
+    <div class="record-body">
+      <video id="recordPreview" autoplay muted playsinline></video>
+      <div class="record-meta"><span id="recordStatus">Klaar</span><span id="recordTimer">0:00</span></div>
+    </div>
+    <footer>
+      <button type="button" class="btn" data-close>Annuleren</button>
+      <button type="button" class="btn btn-danger" id="recordToggle"><i class="fas fa-circle"></i> Opname starten</button>
+    </footer>
+  </div>
+</div>
+
+<!-- Phonology editor modal -->
+<div class="modal-backdrop hidden" id="phonologyModal">
+  <div class="modal large">
+    <header>
+      <h3 id="phonologyTitle">Fonologie</h3>
+      <button class="close" data-close>&times;</button>
+    </header>
+    <div id="phonologyBody"></div>
+    <footer>
+      <span class="phono-status" id="phonologyStatus"></span>
+      <button type="button" class="btn" data-close>Sluiten</button>
+    </footer>
+  </div>
+</div>
+
+<!-- Studio video viewer modal -->
+<div class="modal-backdrop hidden" id="studioModal">
+  <div class="modal large">
+    <header>
+      <h3 id="studioTitle">Studio video's</h3>
+      <button class="close" data-close>&times;</button>
+    </header>
+    <div class="studio-list" id="studioList"></div>
+    <footer>
+      <span class="studio-count" id="studioCount"></span>
+      <button type="button" class="btn" data-close>Sluiten</button>
+    </footer>
+  </div>
+</div>
+
+<!-- Confirm delete modal -->
+<div class="modal-backdrop hidden" id="confirmModal">
+  <div class="modal small">
+    <header><h3 id="confirmTitle">Weet je het zeker?</h3><button class="close" data-close>&times;</button></header>
+    <div class="confirm-body" id="confirmBody"></div>
+    <footer>
+      <button type="button" class="btn" data-close>Annuleren</button>
+      <button type="button" class="btn btn-danger" id="confirmOk">Ja, doorgaan</button>
+    </footer>
+  </div>
+</div>
+
+<button type="button" class="overscroll-drop top" id="overscrollTop">
+  <div class="drop-shape">
+    <div class="drop-water"></div>
+    <i class="fas fa-arrow-up drop-icon"></i>
+  </div>
+  <div class="drop-label">
+    <span class="drop-label-text">Vorige pagina</span>
+    <span class="drop-page"></span>
+  </div>
+</button>
+<button type="button" class="overscroll-drop bottom" id="overscrollBottom">
+  <div class="drop-shape">
+    <div class="drop-water"></div>
+    <i class="fas fa-arrow-down drop-icon"></i>
+  </div>
+  <div class="drop-label">
+    <span class="drop-label-text">Volgende pagina</span>
+    <span class="drop-page"></span>
+  </div>
+</button>
+
+<div class="toast-stack" id="toastStack"></div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

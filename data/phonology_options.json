@@ -1,0 +1,2685 @@
+{
+    "Handeness": [
+        {
+            "value": "2",
+            "NL": "1",
+            "EN": "1"
+        },
+        {
+            "value": "4",
+            "NL": "2a",
+            "EN": "2a"
+        },
+        {
+            "value": "5",
+            "NL": "2s",
+            "EN": "2s"
+        },
+        {
+            "value": "7",
+            "NL": "2t",
+            "EN": "2t"
+        },
+        {
+            "value": "6",
+            "NL": "X",
+            "EN": "X"
+        }
+    ],
+    "strongHand": [
+        {
+            "value": "15",
+            "NL": "1",
+            "EN": "1"
+        },
+        {
+            "value": "21",
+            "NL": "1_krom",
+            "EN": "1_curved"
+        },
+        {
+            "value": "37",
+            "NL": "3",
+            "EN": "3"
+        },
+        {
+            "value": "191",
+            "NL": "3 > O",
+            "EN": "3 > O"
+        },
+        {
+            "value": "200",
+            "NL": "3_krom",
+            "EN": "3_curved"
+        },
+        {
+            "value": "35",
+            "NL": "4",
+            "EN": "4"
+        },
+        {
+            "value": "201",
+            "NL": "4 > 5",
+            "EN": "4 > 5"
+        },
+        {
+            "value": "192",
+            "NL": "4 > O",
+            "EN": "4 > O"
+        },
+        {
+            "value": "3",
+            "NL": "5",
+            "EN": "5"
+        },
+        {
+            "value": "205",
+            "NL": "5_klauw",
+            "EN": "5_claw"
+        },
+        {
+            "value": "203",
+            "NL": "5_ontspannen",
+            "EN": "5_lax"
+        },
+        {
+            "value": "30",
+            "NL": "5m",
+            "EN": "5m"
+        },
+        {
+            "value": "43",
+            "NL": "5m_gesloten",
+            "EN": "5m_closed"
+        },
+        {
+            "value": "19",
+            "NL": "5r",
+            "EN": "5r"
+        },
+        {
+            "value": "49",
+            "NL": "5r_gesloten",
+            "EN": "5r_closed"
+        },
+        {
+            "value": "207",
+            "NL": "5w",
+            "EN": "5i"
+        },
+        {
+            "value": "48",
+            "NL": "9",
+            "EN": "9"
+        },
+        {
+            "value": "24",
+            "NL": "A",
+            "EN": "A"
+        },
+        {
+            "value": "153",
+            "NL": "A > 5",
+            "EN": "A > 5"
+        },
+        {
+            "value": "195",
+            "NL": "A > O",
+            "EN": "A > O"
+        },
+        {
+            "value": "2",
+            "NL": "A > T",
+            "EN": "A > T"
+        },
+        {
+            "value": "6",
+            "NL": "B",
+            "EN": "B"
+        },
+        {
+            "value": "173",
+            "NL": "B > A",
+            "EN": "B > A"
+        },
+        {
+            "value": "174",
+            "NL": "B > L",
+            "EN": "B > L"
+        },
+        {
+            "value": "176",
+            "NL": "B > middelvinger",
+            "EN": "B > middlefinger"
+        },
+        {
+            "value": "138",
+            "NL": "B+1",
+            "EN": "B+1"
+        },
+        {
+            "value": "26",
+            "NL": "B_hoek",
+            "EN": "B_bent"
+        },
+        {
+            "value": "170",
+            "NL": "B_hoek > B",
+            "EN": "B_bent > B"
+        },
+        {
+            "value": "13",
+            "NL": "B_krom",
+            "EN": "B_curved"
+        },
+        {
+            "value": "62",
+            "NL": "Baby_C",
+            "EN": "Baby_C"
+        },
+        {
+            "value": "206",
+            "NL": "Baby_C_gestrekt",
+            "EN": "Baby_C_extended"
+        },
+        {
+            "value": "38",
+            "NL": "Baby_O",
+            "EN": "Baby_O"
+        },
+        {
+            "value": "29",
+            "NL": "Baby_snavel",
+            "EN": "Baby_beak"
+        },
+        {
+            "value": "155",
+            "NL": "Baby_snavel > A",
+            "EN": "Baby_beak > A"
+        },
+        {
+            "value": "83",
+            "NL": "Baby_snavel_open",
+            "EN": "Baby_beak_open"
+        },
+        {
+            "value": "197",
+            "NL": "Bloem",
+            "EN": "Flower"
+        },
+        {
+            "value": "199",
+            "NL": "Bloem > Snavel_open_spreid",
+            "EN": "Flower > Beak_open_spread"
+        },
+        {
+            "value": "27",
+            "NL": "C",
+            "EN": "C"
+        },
+        {
+            "value": "145",
+            "NL": "C > I",
+            "EN": "C > I"
+        },
+        {
+            "value": "136",
+            "NL": "C2_gesloten",
+            "EN": "C2_closed"
+        },
+        {
+            "value": "75",
+            "NL": "C2_spreid",
+            "EN": "C2_spread"
+        },
+        {
+            "value": "12",
+            "NL": "C_spreid",
+            "EN": "C_spread"
+        },
+        {
+            "value": "34",
+            "NL": "D",
+            "EN": "D"
+        },
+        {
+            "value": "172",
+            "NL": "E",
+            "EN": "E"
+        },
+        {
+            "value": "39",
+            "NL": "F",
+            "EN": "F"
+        },
+        {
+            "value": "177",
+            "NL": "F > L",
+            "EN": "F > L"
+        },
+        {
+            "value": "178",
+            "NL": "G",
+            "EN": "G"
+        },
+        {
+            "value": "4",
+            "NL": "Geld",
+            "EN": "Money"
+        },
+        {
+            "value": "59",
+            "NL": "Hoorn",
+            "EN": "Horns"
+        },
+        {
+            "value": "25",
+            "NL": "I",
+            "EN": "I"
+        },
+        {
+            "value": "181",
+            "NL": "I > L",
+            "EN": "I > L"
+        },
+        {
+            "value": "196",
+            "NL": "I > N",
+            "EN": "I > N"
+        },
+        {
+            "value": "182",
+            "NL": "I > W",
+            "EN": "I > W"
+        },
+        {
+            "value": "198",
+            "NL": "ILY",
+            "EN": "ILY"
+        },
+        {
+            "value": "179",
+            "NL": "K",
+            "EN": "K"
+        },
+        {
+            "value": "9",
+            "NL": "L",
+            "EN": "L"
+        },
+        {
+            "value": "193",
+            "NL": "L > O",
+            "EN": "L > O"
+        },
+        {
+            "value": "52",
+            "NL": "L2",
+            "EN": "L2"
+        },
+        {
+            "value": "40",
+            "NL": "M",
+            "EN": "M"
+        },
+        {
+            "value": "183",
+            "NL": "M > V",
+            "EN": "M > V"
+        },
+        {
+            "value": "202",
+            "NL": "MRP",
+            "EN": "MRP"
+        },
+        {
+            "value": "80",
+            "NL": "Middelvinger",
+            "EN": "Middle finger"
+        },
+        {
+            "value": "209",
+            "NL": "Middelvinger > I",
+            "EN": "Middle finger > I"
+        },
+        {
+            "value": "14",
+            "NL": "N",
+            "EN": "N"
+        },
+        {
+            "value": "142",
+            "NL": "N > B",
+            "EN": "N > B"
+        },
+        {
+            "value": "184",
+            "NL": "N > E",
+            "EN": "N > E"
+        },
+        {
+            "value": "32",
+            "NL": "O",
+            "EN": "O"
+        },
+        {
+            "value": "139",
+            "NL": "O > 5m",
+            "EN": "O > 5m"
+        },
+        {
+            "value": "185",
+            "NL": "O > K",
+            "EN": "O > K"
+        },
+        {
+            "value": "135",
+            "NL": "Overig",
+            "EN": "Other"
+        },
+        {
+            "value": "180",
+            "NL": "P",
+            "EN": "P"
+        },
+        {
+            "value": "18",
+            "NL": "Q",
+            "EN": "Q"
+        },
+        {
+            "value": "47",
+            "NL": "R",
+            "EN": "R"
+        },
+        {
+            "value": "8",
+            "NL": "S",
+            "EN": "S"
+        },
+        {
+            "value": "186",
+            "NL": "S > I",
+            "EN": "S > I"
+        },
+        {
+            "value": "204",
+            "NL": "S > L",
+            "EN": "S > L"
+        },
+        {
+            "value": "208",
+            "NL": "S > V",
+            "EN": "S > V"
+        },
+        {
+            "value": "22",
+            "NL": "Snavel",
+            "EN": "Beak"
+        },
+        {
+            "value": "17",
+            "NL": "Snavel2",
+            "EN": "Beak2"
+        },
+        {
+            "value": "85",
+            "NL": "Snavel2_open",
+            "EN": "Beak2_open"
+        },
+        {
+            "value": "152",
+            "NL": "Snavel2_open_spreid",
+            "EN": "Beak2_open_spread"
+        },
+        {
+            "value": "84",
+            "NL": "Snavel_open",
+            "EN": "Beak_open"
+        },
+        {
+            "value": "87",
+            "NL": "Snavel_open_spreid",
+            "EN": "Beak_open_spread"
+        },
+        {
+            "value": "86",
+            "NL": "Snavel_spreid",
+            "EN": "Beak_spread"
+        },
+        {
+            "value": "28",
+            "NL": "T",
+            "EN": "T"
+        },
+        {
+            "value": "187",
+            "NL": "T > L",
+            "EN": "T > L"
+        },
+        {
+            "value": "188",
+            "NL": "T > V",
+            "EN": "T > V"
+        },
+        {
+            "value": "154",
+            "NL": "T_open",
+            "EN": "T_open"
+        },
+        {
+            "value": "5",
+            "NL": "V",
+            "EN": "V"
+        },
+        {
+            "value": "20",
+            "NL": "V_krom",
+            "EN": "V_curved"
+        },
+        {
+            "value": "190",
+            "NL": "Variabel",
+            "EN": "Variable"
+        },
+        {
+            "value": "16",
+            "NL": "W",
+            "EN": "W"
+        },
+        {
+            "value": "194",
+            "NL": "W > Beak2",
+            "EN": "W > Beak2"
+        },
+        {
+            "value": "7",
+            "NL": "Y",
+            "EN": "Y"
+        },
+        {
+            "value": "189",
+            "NL": "Y > R",
+            "EN": "Y > R"
+        },
+        {
+            "value": "175",
+            "NL": "b > S",
+            "EN": "B > S"
+        }
+    ],
+    "weakHand": [
+        {
+            "value": "15",
+            "NL": "1",
+            "EN": "1"
+        },
+        {
+            "value": "21",
+            "NL": "1_krom",
+            "EN": "1_curved"
+        },
+        {
+            "value": "37",
+            "NL": "3",
+            "EN": "3"
+        },
+        {
+            "value": "191",
+            "NL": "3 > O",
+            "EN": "3 > O"
+        },
+        {
+            "value": "200",
+            "NL": "3_krom",
+            "EN": "3_curved"
+        },
+        {
+            "value": "35",
+            "NL": "4",
+            "EN": "4"
+        },
+        {
+            "value": "201",
+            "NL": "4 > 5",
+            "EN": "4 > 5"
+        },
+        {
+            "value": "192",
+            "NL": "4 > O",
+            "EN": "4 > O"
+        },
+        {
+            "value": "3",
+            "NL": "5",
+            "EN": "5"
+        },
+        {
+            "value": "205",
+            "NL": "5_klauw",
+            "EN": "5_claw"
+        },
+        {
+            "value": "203",
+            "NL": "5_ontspannen",
+            "EN": "5_lax"
+        },
+        {
+            "value": "30",
+            "NL": "5m",
+            "EN": "5m"
+        },
+        {
+            "value": "43",
+            "NL": "5m_gesloten",
+            "EN": "5m_closed"
+        },
+        {
+            "value": "19",
+            "NL": "5r",
+            "EN": "5r"
+        },
+        {
+            "value": "49",
+            "NL": "5r_gesloten",
+            "EN": "5r_closed"
+        },
+        {
+            "value": "207",
+            "NL": "5w",
+            "EN": "5i"
+        },
+        {
+            "value": "48",
+            "NL": "9",
+            "EN": "9"
+        },
+        {
+            "value": "24",
+            "NL": "A",
+            "EN": "A"
+        },
+        {
+            "value": "153",
+            "NL": "A > 5",
+            "EN": "A > 5"
+        },
+        {
+            "value": "195",
+            "NL": "A > O",
+            "EN": "A > O"
+        },
+        {
+            "value": "2",
+            "NL": "A > T",
+            "EN": "A > T"
+        },
+        {
+            "value": "6",
+            "NL": "B",
+            "EN": "B"
+        },
+        {
+            "value": "173",
+            "NL": "B > A",
+            "EN": "B > A"
+        },
+        {
+            "value": "174",
+            "NL": "B > L",
+            "EN": "B > L"
+        },
+        {
+            "value": "176",
+            "NL": "B > middelvinger",
+            "EN": "B > middlefinger"
+        },
+        {
+            "value": "138",
+            "NL": "B+1",
+            "EN": "B+1"
+        },
+        {
+            "value": "26",
+            "NL": "B_hoek",
+            "EN": "B_bent"
+        },
+        {
+            "value": "170",
+            "NL": "B_hoek > B",
+            "EN": "B_bent > B"
+        },
+        {
+            "value": "13",
+            "NL": "B_krom",
+            "EN": "B_curved"
+        },
+        {
+            "value": "62",
+            "NL": "Baby_C",
+            "EN": "Baby_C"
+        },
+        {
+            "value": "206",
+            "NL": "Baby_C_gestrekt",
+            "EN": "Baby_C_extended"
+        },
+        {
+            "value": "38",
+            "NL": "Baby_O",
+            "EN": "Baby_O"
+        },
+        {
+            "value": "29",
+            "NL": "Baby_snavel",
+            "EN": "Baby_beak"
+        },
+        {
+            "value": "155",
+            "NL": "Baby_snavel > A",
+            "EN": "Baby_beak > A"
+        },
+        {
+            "value": "83",
+            "NL": "Baby_snavel_open",
+            "EN": "Baby_beak_open"
+        },
+        {
+            "value": "197",
+            "NL": "Bloem",
+            "EN": "Flower"
+        },
+        {
+            "value": "199",
+            "NL": "Bloem > Snavel_open_spreid",
+            "EN": "Flower > Beak_open_spread"
+        },
+        {
+            "value": "27",
+            "NL": "C",
+            "EN": "C"
+        },
+        {
+            "value": "145",
+            "NL": "C > I",
+            "EN": "C > I"
+        },
+        {
+            "value": "136",
+            "NL": "C2_gesloten",
+            "EN": "C2_closed"
+        },
+        {
+            "value": "75",
+            "NL": "C2_spreid",
+            "EN": "C2_spread"
+        },
+        {
+            "value": "12",
+            "NL": "C_spreid",
+            "EN": "C_spread"
+        },
+        {
+            "value": "34",
+            "NL": "D",
+            "EN": "D"
+        },
+        {
+            "value": "172",
+            "NL": "E",
+            "EN": "E"
+        },
+        {
+            "value": "39",
+            "NL": "F",
+            "EN": "F"
+        },
+        {
+            "value": "177",
+            "NL": "F > L",
+            "EN": "F > L"
+        },
+        {
+            "value": "178",
+            "NL": "G",
+            "EN": "G"
+        },
+        {
+            "value": "4",
+            "NL": "Geld",
+            "EN": "Money"
+        },
+        {
+            "value": "59",
+            "NL": "Hoorn",
+            "EN": "Horns"
+        },
+        {
+            "value": "25",
+            "NL": "I",
+            "EN": "I"
+        },
+        {
+            "value": "181",
+            "NL": "I > L",
+            "EN": "I > L"
+        },
+        {
+            "value": "196",
+            "NL": "I > N",
+            "EN": "I > N"
+        },
+        {
+            "value": "182",
+            "NL": "I > W",
+            "EN": "I > W"
+        },
+        {
+            "value": "198",
+            "NL": "ILY",
+            "EN": "ILY"
+        },
+        {
+            "value": "179",
+            "NL": "K",
+            "EN": "K"
+        },
+        {
+            "value": "9",
+            "NL": "L",
+            "EN": "L"
+        },
+        {
+            "value": "193",
+            "NL": "L > O",
+            "EN": "L > O"
+        },
+        {
+            "value": "52",
+            "NL": "L2",
+            "EN": "L2"
+        },
+        {
+            "value": "40",
+            "NL": "M",
+            "EN": "M"
+        },
+        {
+            "value": "183",
+            "NL": "M > V",
+            "EN": "M > V"
+        },
+        {
+            "value": "202",
+            "NL": "MRP",
+            "EN": "MRP"
+        },
+        {
+            "value": "80",
+            "NL": "Middelvinger",
+            "EN": "Middle finger"
+        },
+        {
+            "value": "209",
+            "NL": "Middelvinger > I",
+            "EN": "Middle finger > I"
+        },
+        {
+            "value": "14",
+            "NL": "N",
+            "EN": "N"
+        },
+        {
+            "value": "142",
+            "NL": "N > B",
+            "EN": "N > B"
+        },
+        {
+            "value": "184",
+            "NL": "N > E",
+            "EN": "N > E"
+        },
+        {
+            "value": "32",
+            "NL": "O",
+            "EN": "O"
+        },
+        {
+            "value": "139",
+            "NL": "O > 5m",
+            "EN": "O > 5m"
+        },
+        {
+            "value": "185",
+            "NL": "O > K",
+            "EN": "O > K"
+        },
+        {
+            "value": "135",
+            "NL": "Overig",
+            "EN": "Other"
+        },
+        {
+            "value": "180",
+            "NL": "P",
+            "EN": "P"
+        },
+        {
+            "value": "18",
+            "NL": "Q",
+            "EN": "Q"
+        },
+        {
+            "value": "47",
+            "NL": "R",
+            "EN": "R"
+        },
+        {
+            "value": "8",
+            "NL": "S",
+            "EN": "S"
+        },
+        {
+            "value": "186",
+            "NL": "S > I",
+            "EN": "S > I"
+        },
+        {
+            "value": "204",
+            "NL": "S > L",
+            "EN": "S > L"
+        },
+        {
+            "value": "208",
+            "NL": "S > V",
+            "EN": "S > V"
+        },
+        {
+            "value": "22",
+            "NL": "Snavel",
+            "EN": "Beak"
+        },
+        {
+            "value": "17",
+            "NL": "Snavel2",
+            "EN": "Beak2"
+        },
+        {
+            "value": "85",
+            "NL": "Snavel2_open",
+            "EN": "Beak2_open"
+        },
+        {
+            "value": "152",
+            "NL": "Snavel2_open_spreid",
+            "EN": "Beak2_open_spread"
+        },
+        {
+            "value": "84",
+            "NL": "Snavel_open",
+            "EN": "Beak_open"
+        },
+        {
+            "value": "87",
+            "NL": "Snavel_open_spreid",
+            "EN": "Beak_open_spread"
+        },
+        {
+            "value": "86",
+            "NL": "Snavel_spreid",
+            "EN": "Beak_spread"
+        },
+        {
+            "value": "28",
+            "NL": "T",
+            "EN": "T"
+        },
+        {
+            "value": "187",
+            "NL": "T > L",
+            "EN": "T > L"
+        },
+        {
+            "value": "188",
+            "NL": "T > V",
+            "EN": "T > V"
+        },
+        {
+            "value": "154",
+            "NL": "T_open",
+            "EN": "T_open"
+        },
+        {
+            "value": "5",
+            "NL": "V",
+            "EN": "V"
+        },
+        {
+            "value": "20",
+            "NL": "V_krom",
+            "EN": "V_curved"
+        },
+        {
+            "value": "190",
+            "NL": "Variabel",
+            "EN": "Variable"
+        },
+        {
+            "value": "16",
+            "NL": "W",
+            "EN": "W"
+        },
+        {
+            "value": "194",
+            "NL": "W > Beak2",
+            "EN": "W > Beak2"
+        },
+        {
+            "value": "7",
+            "NL": "Y",
+            "EN": "Y"
+        },
+        {
+            "value": "189",
+            "NL": "Y > R",
+            "EN": "Y > R"
+        },
+        {
+            "value": "175",
+            "NL": "b > S",
+            "EN": "B > S"
+        }
+    ],
+    "HandshapeChange": [
+        {
+            "value": "7",
+            "NL": "Buigen",
+            "EN": "Bending"
+        },
+        {
+            "value": "53",
+            "NL": "Een voor een openen",
+            "EN": "Consecutive opening"
+        },
+        {
+            "value": "51",
+            "NL": "Een voor een sluiten",
+            "EN": "Consecutive closing"
+        },
+        {
+            "value": "52",
+            "NL": "Geen > spreiding",
+            "EN": "None > spreading"
+        },
+        {
+            "value": "8",
+            "NL": "Krommen",
+            "EN": "Curving"
+        },
+        {
+            "value": "10",
+            "NL": "On-spreiden",
+            "EN": "Unspreading"
+        },
+        {
+            "value": "5",
+            "NL": "Openen",
+            "EN": "Opening"
+        },
+        {
+            "value": "49",
+            "NL": "Openen + spreiden",
+            "EN": "Opening + spreading"
+        },
+        {
+            "value": "47",
+            "NL": "Openen + wiebelen",
+            "EN": "Opening + wiggling"
+        },
+        {
+            "value": "45",
+            "NL": "Openen + wrijven",
+            "EN": "Opening + rubbing"
+        },
+        {
+            "value": "38",
+            "NL": "Openen > sluiten",
+            "EN": "Opening > closing"
+        },
+        {
+            "value": "6",
+            "NL": "Sluiten",
+            "EN": "Closing"
+        },
+        {
+            "value": "44",
+            "NL": "Sluiten + wiebelen",
+            "EN": "Closing + wiggling"
+        },
+        {
+            "value": "48",
+            "NL": "Sluiten + wrijven",
+            "EN": "Closing + rubbing"
+        },
+        {
+            "value": "32",
+            "NL": "Sluiten > openen",
+            "EN": "Closing > opening"
+        },
+        {
+            "value": "21",
+            "NL": "Spreiden",
+            "EN": "Spreading"
+        },
+        {
+            "value": "46",
+            "NL": "Strekken",
+            "EN": "Uncurving"
+        },
+        {
+            "value": "50",
+            "NL": "Strekken (MCP)",
+            "EN": "Unbending"
+        },
+        {
+            "value": "42",
+            "NL": "Wiebelen",
+            "EN": "Wiggling"
+        },
+        {
+            "value": "39",
+            "NL": "Wrijven",
+            "EN": "Rubbing"
+        }
+    ],
+    "RelationArticulators": [
+        {
+            "value": "43",
+            "NL": "Achter",
+            "EN": "Back"
+        },
+        {
+            "value": "45",
+            "NL": "Boven",
+            "EN": "Above"
+        },
+        {
+            "value": "47",
+            "NL": "Boven/onder",
+            "EN": "Above/below"
+        },
+        {
+            "value": "48",
+            "NL": "Erin",
+            "EN": "Inside"
+        },
+        {
+            "value": "41",
+            "NL": "Gekruist",
+            "EN": "Cross"
+        },
+        {
+            "value": "27",
+            "NL": "In elkaar",
+            "EN": "Interlocked"
+        },
+        {
+            "value": "49",
+            "NL": "Naast",
+            "EN": "Next-to"
+        },
+        {
+            "value": "46",
+            "NL": "Onder",
+            "EN": "Below"
+        },
+        {
+            "value": "50",
+            "NL": "Rondom",
+            "EN": "Around"
+        },
+        {
+            "value": "40",
+            "NL": "Verweven",
+            "EN": "Interwoven"
+        },
+        {
+            "value": "42",
+            "NL": "Voor",
+            "EN": "Front"
+        },
+        {
+            "value": "44",
+            "NL": "Voor/achter",
+            "EN": "Front/back"
+        }
+    ],
+    "handLocation": [
+        {
+            "value": "37",
+            "NL": "Achterkant van het hoofd",
+            "EN": "Back of head"
+        },
+        {
+            "value": "21",
+            "NL": "Arm",
+            "EN": "Arm"
+        },
+        {
+            "value": "45",
+            "NL": "Been",
+            "EN": "Leg"
+        },
+        {
+            "value": "151",
+            "NL": "Benen > middel",
+            "EN": "Leg > waist"
+        },
+        {
+            "value": "149",
+            "NL": "Billen/kruis",
+            "EN": "Bottom/crotch"
+        },
+        {
+            "value": "8",
+            "NL": "Borst",
+            "EN": "Chest"
+        },
+        {
+            "value": "35",
+            "NL": "Borst > bovenlichaam",
+            "EN": "Chest > trunk"
+        },
+        {
+            "value": "74",
+            "NL": "Borst contra",
+            "EN": "Chest contra"
+        },
+        {
+            "value": "135",
+            "NL": "Borsten",
+            "EN": "Breasts"
+        },
+        {
+            "value": "136",
+            "NL": "Borsten_ipsi",
+            "EN": "Breasts_ipsi"
+        },
+        {
+            "value": "54",
+            "NL": "Bovenarm",
+            "EN": "Upper arm"
+        },
+        {
+            "value": "97",
+            "NL": "Bovenlichaam",
+            "EN": "Trunk"
+        },
+        {
+            "value": "63",
+            "NL": "Bovenlip",
+            "EN": "Upper lip"
+        },
+        {
+            "value": "26",
+            "NL": "Buik",
+            "EN": "Belly"
+        },
+        {
+            "value": "14",
+            "NL": "Buik + voorhoofd",
+            "EN": "Belly + forehead"
+        },
+        {
+            "value": "132",
+            "NL": "Buik > borst",
+            "EN": "Belly > chest"
+        },
+        {
+            "value": "215",
+            "NL": "Buik contra",
+            "EN": "Belly contra"
+        },
+        {
+            "value": "214",
+            "NL": "Buik ipsi",
+            "EN": "Belly ipsi"
+        },
+        {
+            "value": "79",
+            "NL": "Duim",
+            "EN": "Thumb"
+        },
+        {
+            "value": "77",
+            "NL": "Elleboog",
+            "EN": "Elbow"
+        },
+        {
+            "value": "17",
+            "NL": "Gezicht",
+            "EN": "Face"
+        },
+        {
+            "value": "110",
+            "NL": "Gezicht > hoofd",
+            "EN": "Face > head"
+        },
+        {
+            "value": "94",
+            "NL": "Heup",
+            "EN": "Hip"
+        },
+        {
+            "value": "10",
+            "NL": "Hoofd",
+            "EN": "Head"
+        },
+        {
+            "value": "119",
+            "NL": "Hoofd + neutrale ruimte",
+            "EN": "Head + neutral space"
+        },
+        {
+            "value": "113",
+            "NL": "Hoofd > borst",
+            "EN": "Head > chest"
+        },
+        {
+            "value": "127",
+            "NL": "Hoofd > borst > schouder",
+            "EN": "Head > chest > shoulder"
+        },
+        {
+            "value": "69",
+            "NL": "Hoofd > neutrale ruimte",
+            "EN": "Head > neutral space"
+        },
+        {
+            "value": "32",
+            "NL": "Hoofd > schouder",
+            "EN": "Head > shoulder"
+        },
+        {
+            "value": "107",
+            "NL": "Hoofd > zwakke hand: palm",
+            "EN": "Head > weak hand: palm"
+        },
+        {
+            "value": "150",
+            "NL": "Hoofd contra",
+            "EN": "Head contra"
+        },
+        {
+            "value": "30",
+            "NL": "Hoofd ipsi",
+            "EN": "Head ipsi"
+        },
+        {
+            "value": "92",
+            "NL": "Horizontaal vlak",
+            "EN": "Horizontal plane"
+        },
+        {
+            "value": "16",
+            "NL": "Jukbeen",
+            "EN": "Cheekbone"
+        },
+        {
+            "value": "12",
+            "NL": "Kin",
+            "EN": "Chin"
+        },
+        {
+            "value": "213",
+            "NL": "Kin > Voorhoofd",
+            "EN": "Chin > Forehead"
+        },
+        {
+            "value": "70",
+            "NL": "Kin > borst",
+            "EN": "Chin > chest"
+        },
+        {
+            "value": "28",
+            "NL": "Kin > neutrale ruimte",
+            "EN": "Chin > neutral space"
+        },
+        {
+            "value": "117",
+            "NL": "Kin > zwakke hand: duimkant",
+            "EN": "Chin > weak hand: thumb side"
+        },
+        {
+            "value": "33",
+            "NL": "Kin > zwakke hand: palm",
+            "EN": "Chin > weak hand: palm"
+        },
+        {
+            "value": "102",
+            "NL": "Kin > zwakke hand: wijsvinger",
+            "EN": "Chin > weak hand: index finger"
+        },
+        {
+            "value": "133",
+            "NL": "Kin contra",
+            "EN": "Chin contra"
+        },
+        {
+            "value": "85",
+            "NL": "Knie",
+            "EN": "Knee"
+        },
+        {
+            "value": "144",
+            "NL": "Kruis",
+            "EN": "Crotch"
+        },
+        {
+            "value": "19",
+            "NL": "Mond",
+            "EN": "Mouth"
+        },
+        {
+            "value": "48",
+            "NL": "Mond > borst",
+            "EN": "Mouth > chest"
+        },
+        {
+            "value": "13",
+            "NL": "Mond > kin",
+            "EN": "Mouth > chin"
+        },
+        {
+            "value": "212",
+            "NL": "Mond > neutrale ruimte",
+            "EN": "Mouth > neutral space"
+        },
+        {
+            "value": "114",
+            "NL": "Mond > wang",
+            "EN": "Mouth > cheek"
+        },
+        {
+            "value": "58",
+            "NL": "Mond > zwakke hand",
+            "EN": "Mouth > weak hand"
+        },
+        {
+            "value": "112",
+            "NL": "Mond > zwakke hand: palm",
+            "EN": "Mouth > weak hand: palm"
+        },
+        {
+            "value": "152",
+            "NL": "Mond contra",
+            "EN": "Mouth contra"
+        },
+        {
+            "value": "137",
+            "NL": "Mond ipsi",
+            "EN": "Mouth ipsi"
+        },
+        {
+            "value": "75",
+            "NL": "Neck contra",
+            "EN": "Neck contra"
+        },
+        {
+            "value": "9",
+            "NL": "Nek",
+            "EN": "Neck"
+        },
+        {
+            "value": "52",
+            "NL": "Nek > borst",
+            "EN": "Neck > chest"
+        },
+        {
+            "value": "22",
+            "NL": "Neus",
+            "EN": "Nose"
+        },
+        {
+            "value": "103",
+            "NL": "Neus > kin",
+            "EN": "Nose > chin"
+        },
+        {
+            "value": "122",
+            "NL": "Neus > neutrale ruimte",
+            "EN": "Nose > neutral space"
+        },
+        {
+            "value": "130",
+            "NL": "Neusbrug",
+            "EN": "Bridge of the nose"
+        },
+        {
+            "value": "3",
+            "NL": "Neutrale ruimte",
+            "EN": "Neutral space"
+        },
+        {
+            "value": "2",
+            "NL": "Neutrale ruimte > hoofd",
+            "EN": "Neutral space > head"
+        },
+        {
+            "value": "121",
+            "NL": "Neutrale ruimte > neus",
+            "EN": "Neutral space > nose"
+        },
+        {
+            "value": "29",
+            "NL": "Neutrale ruimte/zwakke hand: voor",
+            "EN": "Neutral space/weak hand: front"
+        },
+        {
+            "value": "128",
+            "NL": "Oksel",
+            "EN": "Armpit"
+        },
+        {
+            "value": "95",
+            "NL": "Onderarm",
+            "EN": "Lower arm"
+        },
+        {
+            "value": "15",
+            "NL": "Oog",
+            "EN": "Eye"
+        },
+        {
+            "value": "120",
+            "NL": "Oog > neutrale ruimte",
+            "EN": "Eye > neutral space"
+        },
+        {
+            "value": "18",
+            "NL": "Oor",
+            "EN": "Ear"
+        },
+        {
+            "value": "124",
+            "NL": "Oor > borst",
+            "EN": "Ear > chest"
+        },
+        {
+            "value": "84",
+            "NL": "Oor > wang",
+            "EN": "Ear > cheek"
+        },
+        {
+            "value": "140",
+            "NL": "Oorlel",
+            "EN": "Earlobe"
+        },
+        {
+            "value": "142",
+            "NL": "Oosten",
+            "EN": "East"
+        },
+        {
+            "value": "116",
+            "NL": "Parallel vlak",
+            "EN": "Parallel plane"
+        },
+        {
+            "value": "50",
+            "NL": "Pols",
+            "EN": "Wrist"
+        },
+        {
+            "value": "125",
+            "NL": "R-loc",
+            "EN": "R-loc"
+        },
+        {
+            "value": "126",
+            "NL": "R-loc > R-loc",
+            "EN": "R-loc > R-loc"
+        },
+        {
+            "value": "83",
+            "NL": "Rug",
+            "EN": "Back"
+        },
+        {
+            "value": "4",
+            "NL": "Schouder",
+            "EN": "Shoulder"
+        },
+        {
+            "value": "153",
+            "NL": "Schouder > borst",
+            "EN": "Shoulder > chest"
+        },
+        {
+            "value": "115",
+            "NL": "Schouder > schouder",
+            "EN": "Shoulder > shoulder"
+        },
+        {
+            "value": "123",
+            "NL": "Schouder > zwakke hand: palm",
+            "EN": "Shoulder > weak hand: palm"
+        },
+        {
+            "value": "55",
+            "NL": "Schouder contra",
+            "EN": "Shoulder contra"
+        },
+        {
+            "value": "43",
+            "NL": "Slaap",
+            "EN": "Temple"
+        },
+        {
+            "value": "78",
+            "NL": "Slaap > borst",
+            "EN": "Temple > chest"
+        },
+        {
+            "value": "146",
+            "NL": "Tanden",
+            "EN": "Teeth"
+        },
+        {
+            "value": "27",
+            "NL": "Tong",
+            "EN": "Tongue"
+        },
+        {
+            "value": "143",
+            "NL": "Tussen benen",
+            "EN": "Between legs"
+        },
+        {
+            "value": "147",
+            "NL": "Tussen sleutelbenen",
+            "EN": "Between collarbones"
+        },
+        {
+            "value": "148",
+            "NL": "Tussen vingers",
+            "EN": "Between fingers"
+        },
+        {
+            "value": "118",
+            "NL": "Variabel",
+            "EN": "Variable"
+        },
+        {
+            "value": "91",
+            "NL": "Virtueel object",
+            "EN": "Virtual object"
+        },
+        {
+            "value": "7",
+            "NL": "Voorhoofd",
+            "EN": "Forehead"
+        },
+        {
+            "value": "34",
+            "NL": "Voorhoofd > borst",
+            "EN": "Forehead > chest"
+        },
+        {
+            "value": "31",
+            "NL": "Voorhoofd > kin",
+            "EN": "Forehead > chin"
+        },
+        {
+            "value": "106",
+            "NL": "Voorhoofd > neutrale ruimte",
+            "EN": "Forehead > neutral space"
+        },
+        {
+            "value": "134",
+            "NL": "Voorhoofd > schouder",
+            "EN": "Forehead > shoulder"
+        },
+        {
+            "value": "104",
+            "NL": "Voorhoofd > zwakke hand: palm",
+            "EN": "Forehead > weak hand: palm"
+        },
+        {
+            "value": "64",
+            "NL": "Voorhoofd contra",
+            "EN": "Forehead contra"
+        },
+        {
+            "value": "23",
+            "NL": "Wang",
+            "EN": "Cheek"
+        },
+        {
+            "value": "108",
+            "NL": "Wang > kin",
+            "EN": "Cheek > chin"
+        },
+        {
+            "value": "216",
+            "NL": "Wang > neutrale ruimte",
+            "EN": "Cheek > neutral space"
+        },
+        {
+            "value": "138",
+            "NL": "Wang > wang",
+            "EN": "Cheek > cheek"
+        },
+        {
+            "value": "72",
+            "NL": "Wang contra",
+            "EN": "Cheek contra"
+        },
+        {
+            "value": "129",
+            "NL": "Wenkbrauw",
+            "EN": "Eyebrow"
+        },
+        {
+            "value": "141",
+            "NL": "Westen",
+            "EN": "West"
+        },
+        {
+            "value": "93",
+            "NL": "Zij",
+            "EN": "Flank"
+        },
+        {
+            "value": "145",
+            "NL": "Zij/hoofd",
+            "EN": "Flank/head"
+        },
+        {
+            "value": "5",
+            "NL": "Zwakke hand",
+            "EN": "Weak hand"
+        },
+        {
+            "value": "6",
+            "NL": "Zwakke hand > arm",
+            "EN": "Weak hand > arm"
+        },
+        {
+            "value": "109",
+            "NL": "Zwakke hand: basis",
+            "EN": "Weak hand: base"
+        },
+        {
+            "value": "59",
+            "NL": "Zwakke hand: duim",
+            "EN": "Weak hand: thumb"
+        },
+        {
+            "value": "100",
+            "NL": "Zwakke hand: duimkant",
+            "EN": "Weak hand: thumb side"
+        },
+        {
+            "value": "111",
+            "NL": "Zwakke hand: duimkant > arm",
+            "EN": "Weak hand: thumb side > arm"
+        },
+        {
+            "value": "211",
+            "NL": "Zwakke hand: knokkels",
+            "EN": "Weak hand: knuckles"
+        },
+        {
+            "value": "98",
+            "NL": "Zwakke hand: middelvinger",
+            "EN": "Weak hand: middle finger"
+        },
+        {
+            "value": "36",
+            "NL": "Zwakke hand: palm",
+            "EN": "Weak hand: palm"
+        },
+        {
+            "value": "88",
+            "NL": "Zwakke hand: pink",
+            "EN": "Weak hand: pinkie"
+        },
+        {
+            "value": "101",
+            "NL": "Zwakke hand: pinkkant",
+            "EN": "Weak hand: pinkie side"
+        },
+        {
+            "value": "99",
+            "NL": "Zwakke hand: ringvinger",
+            "EN": "Weak hand: ring finger"
+        },
+        {
+            "value": "11",
+            "NL": "Zwakke hand: rug",
+            "EN": "Weak hand: back"
+        },
+        {
+            "value": "139",
+            "NL": "Zwakke hand: thenar",
+            "EN": "Weak hand: thenar"
+        },
+        {
+            "value": "89",
+            "NL": "Zwakke hand: tussen duim en wijsvinger",
+            "EN": "Weak hand: web space"
+        },
+        {
+            "value": "210",
+            "NL": "Zwakke hand: vingers",
+            "EN": "Weak hand: fingers"
+        },
+        {
+            "value": "66",
+            "NL": "Zwakke hand: vingertoppen",
+            "EN": "Weak hand: finger tips"
+        },
+        {
+            "value": "90",
+            "NL": "Zwakke hand: voorkant",
+            "EN": "Weak hand: front"
+        },
+        {
+            "value": "96",
+            "NL": "Zwakke hand: wijsvinger",
+            "EN": "Weak hand: index finger"
+        }
+    ],
+    "ContactType": [
+        {
+            "value": "5",
+            "NL": "Begin",
+            "EN": "Initial"
+        },
+        {
+            "value": "2",
+            "NL": "Brush",
+            "EN": "Brush"
+        },
+        {
+            "value": "6",
+            "NL": "Continu",
+            "EN": "Continuous"
+        },
+        {
+            "value": "15",
+            "NL": "Continu > continu",
+            "EN": "Continuous > continuous"
+        },
+        {
+            "value": "8",
+            "NL": "Continu > eind",
+            "EN": "Continuous > final"
+        },
+        {
+            "value": "13",
+            "NL": "Continu > geen",
+            "EN": "Continuous > none"
+        },
+        {
+            "value": "12",
+            "NL": "Dubbel",
+            "EN": "Double"
+        },
+        {
+            "value": "17",
+            "NL": "Dubbel > geen",
+            "EN": "Double > none"
+        },
+        {
+            "value": "4",
+            "NL": "Eind",
+            "EN": "Final"
+        },
+        {
+            "value": "14",
+            "NL": "Eind > continu",
+            "EN": "Final > continuous"
+        },
+        {
+            "value": "16",
+            "NL": "Eind > geen",
+            "EN": "Final > none"
+        },
+        {
+            "value": "9",
+            "NL": "Geen > begin",
+            "EN": "None > initial"
+        },
+        {
+            "value": "11",
+            "NL": "Geen > eind",
+            "EN": "None > final"
+        }
+    ],
+    "MovementShape": [
+        {
+            "value": "4",
+            "NL": "Boog",
+            "EN": "Arc"
+        },
+        {
+            "value": "37",
+            "NL": "Cirkel",
+            "EN": "Circle"
+        },
+        {
+            "value": "44",
+            "NL": "Gemotiveerde vorm",
+            "EN": "Motivated shape"
+        },
+        {
+            "value": "46",
+            "NL": "Kruis",
+            "EN": "Cross"
+        },
+        {
+            "value": "6",
+            "NL": "Recht",
+            "EN": "Straight"
+        },
+        {
+            "value": "45",
+            "NL": "Spiraal",
+            "EN": "Spiral"
+        },
+        {
+            "value": "12",
+            "NL": "Zigzag",
+            "EN": "Zigzag"
+        }
+    ],
+    "MovementDirection": [
+        {
+            "value": "50",
+            "NL": "Contralateraal",
+            "EN": "Contralateral"
+        },
+        {
+            "value": "54",
+            "NL": "Contralateraal + naar voren",
+            "EN": "Contralateral + forwards"
+        },
+        {
+            "value": "52",
+            "NL": "Contralateraal + omhoog",
+            "EN": "Contralateral + upwards"
+        },
+        {
+            "value": "53",
+            "NL": "Contralateraal + omlaag",
+            "EN": "Contralateral + downwards"
+        },
+        {
+            "value": "102",
+            "NL": "Contralateraal > ipsilateraal",
+            "EN": "Contralateral > ipsilateral"
+        },
+        {
+            "value": "3",
+            "NL": "Contralateraal > naar voren",
+            "EN": "Contralateral > forwards"
+        },
+        {
+            "value": "98",
+            "NL": "Distaal",
+            "EN": "Distal"
+        },
+        {
+            "value": "46",
+            "NL": "Heen en weer",
+            "EN": "To and fro"
+        },
+        {
+            "value": "51",
+            "NL": "Ipsilateraal",
+            "EN": "Ipsilateral"
+        },
+        {
+            "value": "65",
+            "NL": "Ipsilateraal + omhoog",
+            "EN": "Ipsilateral + upwards"
+        },
+        {
+            "value": "91",
+            "NL": "Ipsilateraal + op en neer",
+            "EN": "Ipsilateral + up and down"
+        },
+        {
+            "value": "109",
+            "NL": "Ipsilateraal > Omlaag/omhoog",
+            "EN": "Ipsilateral > Upwards/downwards"
+        },
+        {
+            "value": "71",
+            "NL": "Ipsilateraal > contralateraal",
+            "EN": "Ipsilateral > contralateral"
+        },
+        {
+            "value": "111",
+            "NL": "Ipsilateraal > naar achteren",
+            "EN": "Ipsilateral > backwards"
+        },
+        {
+            "value": "110",
+            "NL": "Ipsilateraal > naar achteren > contralateraal",
+            "EN": "Ipsilateral > backwards > contralateral"
+        },
+        {
+            "value": "67",
+            "NL": "Ipsilateraal > omhoog",
+            "EN": "Ipsilateral > upwards"
+        },
+        {
+            "value": "68",
+            "NL": "Ipsilateraal > omlaag",
+            "EN": "Ipsilateral > downwards"
+        },
+        {
+            "value": "66",
+            "NL": "Ipsilateraal > omlaag > contralateraal",
+            "EN": "Ipsilateral > downwards > contralateral"
+        },
+        {
+            "value": "89",
+            "NL": "Ipsilateraal en contralateraal",
+            "EN": "Ipsilateral and contralateral"
+        },
+        {
+            "value": "88",
+            "NL": "Ipsilateraal/contralateraal",
+            "EN": "Ipsilateral/contralateral"
+        },
+        {
+            "value": "99",
+            "NL": "Lateraal",
+            "EN": "Lateral"
+        },
+        {
+            "value": "5",
+            "NL": "Naar achteren",
+            "EN": "Backwards"
+        },
+        {
+            "value": "103",
+            "NL": "Naar achteren + contralateraal",
+            "EN": "Backwards + contralateral"
+        },
+        {
+            "value": "93",
+            "NL": "Naar achteren + ipsilateraal",
+            "EN": "Backwards + ipsilateral"
+        },
+        {
+            "value": "72",
+            "NL": "Naar achteren + omhoog",
+            "EN": "Backwards + upwards"
+        },
+        {
+            "value": "87",
+            "NL": "Naar achteren + omlaag",
+            "EN": "Backwards + downwards"
+        },
+        {
+            "value": "2",
+            "NL": "Naar achteren > naar voren",
+            "EN": "Backwards > forwards"
+        },
+        {
+            "value": "6",
+            "NL": "Naar achteren > omlaag",
+            "EN": "Backwards > downwards"
+        },
+        {
+            "value": "15",
+            "NL": "Naar achteren/naar voren",
+            "EN": "Backwards/forwards"
+        },
+        {
+            "value": "96",
+            "NL": "Naar locatie toe",
+            "EN": "Towards location"
+        },
+        {
+            "value": "16",
+            "NL": "Naar voren",
+            "EN": "Forwards"
+        },
+        {
+            "value": "60",
+            "NL": "Naar voren + ipsilateraal",
+            "EN": "Forwards + ipsilateral"
+        },
+        {
+            "value": "61",
+            "NL": "Naar voren + omhoog",
+            "EN": "Forwards + upwards"
+        },
+        {
+            "value": "63",
+            "NL": "Naar voren > contralateraal",
+            "EN": "Forwards > contralateral"
+        },
+        {
+            "value": "62",
+            "NL": "Naar voren > ipsilateraal",
+            "EN": "Forwards > ipsilateral"
+        },
+        {
+            "value": "64",
+            "NL": "Naar voren > ipsilateraal > naar voren",
+            "EN": "Forwards > ipsilateral > forwards"
+        },
+        {
+            "value": "107",
+            "NL": "Naar voren > naar achteren",
+            "EN": "Forwards > backwards"
+        },
+        {
+            "value": "92",
+            "NL": "Naar voren > omhoog",
+            "EN": "Forwards > upwards"
+        },
+        {
+            "value": "17",
+            "NL": "Naar voren > omlaag",
+            "EN": "Forwards > downwards"
+        },
+        {
+            "value": "32",
+            "NL": "Omhoog",
+            "EN": "Upwards"
+        },
+        {
+            "value": "106",
+            "NL": "Omhoog > ipsilateraal",
+            "EN": "Upwards > ipsilateral"
+        },
+        {
+            "value": "73",
+            "NL": "Omhoog > naar voren > omlaag",
+            "EN": "Upwards > forwards > downwards"
+        },
+        {
+            "value": "33",
+            "NL": "Omhoog > omlaag",
+            "EN": "Upwards > downwards"
+        },
+        {
+            "value": "8",
+            "NL": "Omlaag",
+            "EN": "Downwards"
+        },
+        {
+            "value": "105",
+            "NL": "Omlaag + contralateraal",
+            "EN": "Downwards + contralateral"
+        },
+        {
+            "value": "57",
+            "NL": "Omlaag + ipsilateraal",
+            "EN": "Downwards + ipsilateral"
+        },
+        {
+            "value": "58",
+            "NL": "Omlaag + ipsilateraal > omlaag",
+            "EN": "Downwards + ipsilateral > downwards"
+        },
+        {
+            "value": "56",
+            "NL": "Omlaag + naar voren",
+            "EN": "Downwards + forwards"
+        },
+        {
+            "value": "59",
+            "NL": "Omlaag > contralateraal",
+            "EN": "Downwards > contralateral"
+        },
+        {
+            "value": "55",
+            "NL": "Omlaag > ipsilateraal",
+            "EN": "Downwards > ipsilateral"
+        },
+        {
+            "value": "4",
+            "NL": "Omlaag > naar voren",
+            "EN": "Downwards > forwards"
+        },
+        {
+            "value": "104",
+            "NL": "Omlaag > omhoog",
+            "EN": "Downwards > upwards"
+        },
+        {
+            "value": "94",
+            "NL": "Omlaag en naar locatie toe",
+            "EN": "Downwards + towards"
+        },
+        {
+            "value": "69",
+            "NL": "Omlaag/omhoog",
+            "EN": "Downwards/upwards"
+        },
+        {
+            "value": "90",
+            "NL": "Omlaag/omhoog + ipsilateraal",
+            "EN": "Downwards/upwards + ipsilateral"
+        },
+        {
+            "value": "108",
+            "NL": "Omlaag/omhoog > ipsilateraal",
+            "EN": "Downwards/upwards > ipsilateral"
+        },
+        {
+            "value": "70",
+            "NL": "Op en neer",
+            "EN": "Up and down"
+        },
+        {
+            "value": "95",
+            "NL": "Proximaal",
+            "EN": "Proximal"
+        },
+        {
+            "value": "100",
+            "NL": "Van locatie af",
+            "EN": "From location"
+        },
+        {
+            "value": "49",
+            "NL": "Variabel",
+            "EN": "Variable"
+        }
+    ],
+    "RepeatedMovement": [
+        {
+            "value": "0",
+            "NL": "-",
+            "EN": "-"
+        },
+        {
+            "value": "2",
+            "NL": "Ja",
+            "EN": "Yes"
+        },
+        {
+            "value": "3",
+            "NL": "Nee",
+            "EN": "No"
+        }
+    ],
+    "AlternatingMovement": [
+        {
+            "value": "0",
+            "NL": "-",
+            "EN": "-"
+        },
+        {
+            "value": "2",
+            "NL": "Ja",
+            "EN": "Yes"
+        },
+        {
+            "value": "3",
+            "NL": "Nee",
+            "EN": "No"
+        }
+    ],
+    "relativeOrienationMovement": [
+        {
+            "value": "5",
+            "NL": "Duim",
+            "EN": "Radial"
+        },
+        {
+            "value": "34",
+            "NL": "Duim > pink",
+            "EN": "Radial > ulnar"
+        },
+        {
+            "value": "32",
+            "NL": "Duim/pink",
+            "EN": "Radial/ulnar"
+        },
+        {
+            "value": "3",
+            "NL": "Palm",
+            "EN": "Palm"
+        },
+        {
+            "value": "49",
+            "NL": "Palm + duim",
+            "EN": "Palm + radial"
+        },
+        {
+            "value": "52",
+            "NL": "Palm + duim/pink",
+            "EN": "Palm + radial/ulnar"
+        },
+        {
+            "value": "40",
+            "NL": "Palm + pink",
+            "EN": "Palm + ulnar"
+        },
+        {
+            "value": "30",
+            "NL": "Palm > pols",
+            "EN": "Palm > base"
+        },
+        {
+            "value": "33",
+            "NL": "Palm > rug",
+            "EN": "Palm > back"
+        },
+        {
+            "value": "2",
+            "NL": "Pink",
+            "EN": "Ulnar"
+        },
+        {
+            "value": "51",
+            "NL": "Pink > duim",
+            "EN": "Ulnar > radial"
+        },
+        {
+            "value": "17",
+            "NL": "Pink > palm",
+            "EN": "Ulnar > palm"
+        },
+        {
+            "value": "19",
+            "NL": "Pink > palm > duim",
+            "EN": "Ulnar > palm > radial"
+        },
+        {
+            "value": "47",
+            "NL": "Pink > pols",
+            "EN": "Ulnar > base"
+        },
+        {
+            "value": "41",
+            "NL": "Pink > pols > duim",
+            "EN": "Ulnar > base > radial"
+        },
+        {
+            "value": "42",
+            "NL": "Pink > voor",
+            "EN": "Ulnar > front"
+        },
+        {
+            "value": "22",
+            "NL": "Pols",
+            "EN": "Base"
+        },
+        {
+            "value": "26",
+            "NL": "Pols + palm",
+            "EN": "Base + palm"
+        },
+        {
+            "value": "27",
+            "NL": "Pols + pink",
+            "EN": "Base + ulnar"
+        },
+        {
+            "value": "24",
+            "NL": "Pols + voor",
+            "EN": "Base + front"
+        },
+        {
+            "value": "37",
+            "NL": "Pols > palm",
+            "EN": "Base > palm"
+        },
+        {
+            "value": "29",
+            "NL": "Pols > pink",
+            "EN": "Base > ulnar"
+        },
+        {
+            "value": "28",
+            "NL": "Pols > pols",
+            "EN": "Base > base"
+        },
+        {
+            "value": "50",
+            "NL": "Pols > rug",
+            "EN": "Base > back"
+        },
+        {
+            "value": "39",
+            "NL": "Pols > voor",
+            "EN": "Base > front"
+        },
+        {
+            "value": "36",
+            "NL": "Pols/voor",
+            "EN": "Base/front"
+        },
+        {
+            "value": "7",
+            "NL": "Rug",
+            "EN": "Back"
+        },
+        {
+            "value": "55",
+            "NL": "Rug + duimkant",
+            "EN": "Back + radial"
+        },
+        {
+            "value": "31",
+            "NL": "Rug + pink",
+            "EN": "Back + ulnar"
+        },
+        {
+            "value": "25",
+            "NL": "Rug + pols",
+            "EN": "Back + base"
+        },
+        {
+            "value": "56",
+            "NL": "Rug > duimkant",
+            "EN": "Back > radial"
+        },
+        {
+            "value": "15",
+            "NL": "Rug > palm",
+            "EN": "Back > palm"
+        },
+        {
+            "value": "46",
+            "NL": "Rug > vingertoppen",
+            "EN": "Back > finger tips"
+        },
+        {
+            "value": "45",
+            "NL": "Rug > voor",
+            "EN": "Back > front"
+        },
+        {
+            "value": "23",
+            "NL": "Rug/palm",
+            "EN": "Back/palm"
+        },
+        {
+            "value": "38",
+            "NL": "Rug/pols",
+            "EN": "Back/base"
+        },
+        {
+            "value": "48",
+            "NL": "Rug/vingertoppen",
+            "EN": "Back/finger tips"
+        },
+        {
+            "value": "9",
+            "NL": "Variabel",
+            "EN": "Variable"
+        },
+        {
+            "value": "4",
+            "NL": "Vingertoppen",
+            "EN": "Finger tips"
+        },
+        {
+            "value": "43",
+            "NL": "Vingertoppen > palm",
+            "EN": "Finger tips > palm"
+        },
+        {
+            "value": "44",
+            "NL": "Vingertoppen > pols",
+            "EN": "Finger tips > base"
+        },
+        {
+            "value": "58",
+            "NL": "Vingertoppen > rug",
+            "EN": "Finger tips > back"
+        },
+        {
+            "value": "53",
+            "NL": "Vingertoppen/pink",
+            "EN": "Finger tips/ulnar"
+        },
+        {
+            "value": "35",
+            "NL": "Vingertoppen/pols",
+            "EN": "Finger tips/base"
+        },
+        {
+            "value": "6",
+            "NL": "Voor",
+            "EN": "Front"
+        },
+        {
+            "value": "10",
+            "NL": "Voor + pink",
+            "EN": "Front + ulnar"
+        },
+        {
+            "value": "54",
+            "NL": "Voor > achter",
+            "EN": "Front > back"
+        },
+        {
+            "value": "57",
+            "NL": "Voor/palm",
+            "EN": "Front/palm"
+        }
+    ],
+    "relativeOrienationLocation": [
+        {
+            "value": "41",
+            "NL": "AO: palm-naar-achteren",
+            "EN": "AO: palm-backwards"
+        },
+        {
+            "value": "32",
+            "NL": "AO: palm-naar-binnen",
+            "EN": "AO: palm-inwards"
+        },
+        {
+            "value": "33",
+            "NL": "AO: palm-naar-buiten",
+            "EN": "AO: palm-outwards"
+        },
+        {
+            "value": "40",
+            "NL": "AO: palm-naar-voren",
+            "EN": "AO: palm-forwards"
+        },
+        {
+            "value": "30",
+            "NL": "AO: palm-omhoog",
+            "EN": "AO: palm-up"
+        },
+        {
+            "value": "34",
+            "NL": "AO: palm-omhoog/omlaag",
+            "EN": "AO: palm-up/down"
+        },
+        {
+            "value": "31",
+            "NL": "AO: palm-omlaag",
+            "EN": "AO: palm-down"
+        },
+        {
+            "value": "42",
+            "NL": "AO: palm-omlaag > palm-omhoog",
+            "EN": "AO: palm-down > palm-up"
+        },
+        {
+            "value": "37",
+            "NL": "AO: vingers-contra",
+            "EN": "AO: fingers-contra"
+        },
+        {
+            "value": "35",
+            "NL": "AO: vingers-omhoog",
+            "EN": "AO: fingers-up"
+        },
+        {
+            "value": "36",
+            "NL": "AO: vingers-omlaag",
+            "EN": "AO: fingers-down"
+        },
+        {
+            "value": "5",
+            "NL": "Duim",
+            "EN": "Radial"
+        },
+        {
+            "value": "2",
+            "NL": "Duim/pink",
+            "EN": "Radial/ulnar"
+        },
+        {
+            "value": "7",
+            "NL": "Palm",
+            "EN": "Palm"
+        },
+        {
+            "value": "39",
+            "NL": "Palm > pink",
+            "EN": "Palm > ulnar"
+        },
+        {
+            "value": "6",
+            "NL": "Pink",
+            "EN": "Ulnar"
+        },
+        {
+            "value": "3",
+            "NL": "Pols",
+            "EN": "Base"
+        },
+        {
+            "value": "8",
+            "NL": "Rug",
+            "EN": "Back"
+        },
+        {
+            "value": "38",
+            "NL": "Rug > palm",
+            "EN": "Back > palm"
+        },
+        {
+            "value": "58",
+            "NL": "Rug > pink",
+            "EN": "Back > ulnar"
+        },
+        {
+            "value": "27",
+            "NL": "Rug/palm",
+            "EN": "Back/palm"
+        },
+        {
+            "value": "28",
+            "NL": "Rug/palm > palm",
+            "EN": "Back/palm > palm"
+        },
+        {
+            "value": "29",
+            "NL": "Tellen",
+            "EN": "Counting"
+        },
+        {
+            "value": "26",
+            "NL": "Vingerspellen",
+            "EN": "Fingerspelling"
+        },
+        {
+            "value": "4",
+            "NL": "Vingertoppen",
+            "EN": "Finger tips"
+        },
+        {
+            "value": "24",
+            "NL": "Vingertoppen/pols",
+            "EN": "Finger tips/base"
+        },
+        {
+            "value": "25",
+            "NL": "Voor",
+            "EN": "Front"
+        }
+    ],
+    "orientationChange": [
+        {
+            "value": "3",
+            "NL": "Extensie",
+            "EN": "Extension"
+        },
+        {
+            "value": "17",
+            "NL": "Extensie + pronatie",
+            "EN": "Extension + pronation"
+        },
+        {
+            "value": "13",
+            "NL": "Extensie > flectie",
+            "EN": "Extension > flexion"
+        },
+        {
+            "value": "14",
+            "NL": "Extensie/flectie",
+            "EN": "Extension/flexion"
+        },
+        {
+            "value": "4",
+            "NL": "Flectie",
+            "EN": "Flexion"
+        },
+        {
+            "value": "15",
+            "NL": "Flectie > extensie",
+            "EN": "Flexion > extension"
+        },
+        {
+            "value": "8",
+            "NL": "Pronatie",
+            "EN": "Pronation"
+        },
+        {
+            "value": "9",
+            "NL": "Pronatie/supinatie",
+            "EN": "Pronation/supination"
+        },
+        {
+            "value": "12",
+            "NL": "Radiale en ulnaire flectie",
+            "EN": "Radial and ulnar flexion"
+        },
+        {
+            "value": "5",
+            "NL": "Radiale flectie",
+            "EN": "Radial flexion"
+        },
+        {
+            "value": "2",
+            "NL": "Rotatie",
+            "EN": "Rotation"
+        },
+        {
+            "value": "7",
+            "NL": "Supinatie",
+            "EN": "Supination"
+        },
+        {
+            "value": "16",
+            "NL": "Supinatie > pronatie",
+            "EN": "Supination > pronation"
+        },
+        {
+            "value": "6",
+            "NL": "Ulnaire flectie",
+            "EN": "Ulnar flexion"
+        }
+    ]
+}

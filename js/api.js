@@ -1,0 +1,44 @@
+const BASE = 'php_api';
+
+async function call(path, opts = {}) {
+  const res = await fetch(`${BASE}/${path}`, {
+    credentials: 'same-origin',
+    ...opts,
+  });
+  if (res.status === 401) {
+    const here = encodeURIComponent(location.pathname);
+    location.href = `/login.html?redirect=${here}`;
+    throw new Error('unauthorized');
+  }
+  let data = null;
+  try { data = await res.json(); } catch { /* non-json */ }
+  if (!res.ok) {
+    const msg = (data && data.error) || res.statusText || 'request failed';
+    throw new Error(msg);
+  }
+  return data;
+}
+
+const post = (path, body) => call(path, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(body || {}),
+});
+
+export const api = {
+  currentUser:    ()      => call('current_user.php'),
+  filterOptions:  ()      => call('filters_options.php'),
+  list:           (q)     => post('glosses_list.php', q),
+  save:           (id, fields) => post('glosses_save.php', { id, fields }),
+  create:         (fields)     => post('glosses_create.php', fields),
+  remove:         (id)         => post('glosses_delete.php', { id }),
+  uploadVideo:    (id, blob) => {
+    const fd = new FormData();
+    fd.append('id', id);
+    fd.append('file', blob, 'recording.webm');
+    return call('upload_video.php', { method: 'POST', body: fd });
+  },
+  deleteVideo:    (id, filename) => post('delete_video.php', { id, filename }),
+  deleteStudioVideo: (id) => post('studio_video_delete.php', { id }),
+  getPhonology:   (id) => call(`phonology_get.php?id=${encodeURIComponent(id)}`),
+};
