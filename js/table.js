@@ -13,11 +13,6 @@ function studioMp4Url(basename, postProcessed) {
   return `${STUDIO_BASE}/${folder}/${encodeURIComponent(stem)}.mp4`;
 }
 
-function lazyAttachVideo(video, src) {
-  if (!src) return;
-  video.src = src;
-}
-
 export function renderRow(row, ctx) {
   const wrap = el('article', {
     class: 'gloss-row' + (row.glosZichtbaar === 1 ? ' hidden-row' : ''),
@@ -46,9 +41,9 @@ function renderThumbCol(row, ctx, rowWrap) {
   const thumbWrap = el('div', { class: videoSrc ? 'thumb-wrap' : 'thumb-wrap empty' });
   if (videoSrc) {
     const v = el('video', {
-      muted: true, playsinline: true, preload: 'none', loop: true,
+      src: videoSrc,
+      muted: true, playsinline: true, preload: 'metadata', loop: true,
     });
-    lazyAttachVideo(v, videoSrc);
     thumbWrap.appendChild(v);
     rowWrap.addEventListener('mouseenter', () => v.play().catch(() => {}));
     rowWrap.addEventListener('mouseleave', () => { v.pause(); v.currentTime = 0; });
