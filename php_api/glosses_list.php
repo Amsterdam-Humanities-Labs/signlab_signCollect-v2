@@ -50,7 +50,8 @@ $statusMap = [
     'extern_duplicate' => 'extern = \'1\' AND glos IS NOT NULL AND glos <> \'\'
                             AND EXISTS (SELECT 1 FROM form_data fd2
                                         WHERE fd2.id <> form_data.id
-                                          AND fd2.glos = form_data.glos)',
+                                          AND fd2.glos = form_data.glos
+                                          AND (fd2.glosZichtbaar = 0 OR fd2.glosZichtbaar IS NULL))',
 ];
 foreach ($statuses as $s) {
     if (isset($statusMap[$s])) $where[] = $statusMap[$s];
@@ -148,7 +149,8 @@ if ($pageGlosValues && $ids) {
     $dupStmt = $pdo->prepare(
         "SELECT id, glos, extern, glosZichtbaar, wie
          FROM form_data
-         WHERE glos IN ($glosPh) AND id NOT IN ($idPh)"
+         WHERE glos IN ($glosPh) AND id NOT IN ($idPh)
+           AND (glosZichtbaar = 0 OR glosZichtbaar IS NULL)"
     );
     $dupStmt->execute([...array_values($pageGlosValues), ...$ids]);
     foreach ($dupStmt->fetchAll() as $d) {

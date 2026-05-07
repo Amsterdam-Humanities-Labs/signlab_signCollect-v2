@@ -1,4 +1,4 @@
-import { el, debounce, toast } from './util.js';
+import { el, debounce, toast, extractUserTokens } from './util.js';
 import { api } from './api.js';
 import { renderSensesPair } from './sensesPair.js';
 import { renderLabelEditor } from './labelEditor.js';
@@ -151,15 +151,15 @@ function renderMainCol(row, ctx) {
     dupBlock.appendChild(el('span', { class: 'duplicate-label' }, 'Duplicaat van: '));
     row.duplicates.forEach((d, i) => {
       if (i > 0) dupBlock.appendChild(document.createTextNode(', '));
-      const ownerNames = d.wie.map(uid => ctx.userName(uid)).filter(Boolean).join(' / ') || '—';
+      const tokens     = extractUserTokens(d.wie);
+      const ownerNames = tokens.map(t => /^\d+$/.test(t) ? ctx.userName(t) : t)
+                              .filter(Boolean).join(', ') || '—';
       const externFlag = String(d.extern || '') === '1' ? ' · extern' : '';
-      const hiddenFlag = d.glosZichtbaar === 1 ? ' · verborgen' : '';
+      const glos = d.glos || '?';
       const chip = el('span', {
         class: 'duplicate-chip',
-        title: `id ${d.id} (${ownerNames})${externFlag}${hiddenFlag}`,
-      },
-        `id ${d.id} — ${ownerNames}${externFlag}${hiddenFlag}`
-      );
+        title: `id ${d.id}`,
+      }, `${glos} — ${ownerNames}${externFlag} (id ${d.id})`);
       dupBlock.appendChild(chip);
     });
     col.appendChild(dupBlock);

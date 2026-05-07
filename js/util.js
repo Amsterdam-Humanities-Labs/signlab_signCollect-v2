@@ -40,3 +40,27 @@ export function toast(msg, kind = 'info') {
 export function fmtCount(n) {
   return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
+
+// Best-effort extraction of userIds (or username strings) from the messy
+// legacy `wie` formats: `["1"]`, `[1]`, `['1']`, `["[\"1\"]"]`, `["annika"]`...
+export function extractUserTokens(wieArray) {
+  const out = [];
+  if (!Array.isArray(wieArray)) return out;
+  for (const raw of wieArray) {
+    if (raw == null) continue;
+    let s = String(raw).trim();
+    // unwrap one level of nested JSON-encoded array (e.g. `["1"]` stored as a single element)
+    if (/^\[.*\]$/.test(s)) {
+      try {
+        const inner = JSON.parse(s);
+        if (Array.isArray(inner)) { inner.forEach(v => out.push(cleanToken(v))); continue; }
+      } catch {}
+    }
+    out.push(cleanToken(s));
+  }
+  return out.filter(Boolean);
+}
+
+function cleanToken(v) {
+  return String(v ?? '').replace(/^['"\[\]\s]+|['"\[\]\s]+$/g, '').trim();
+}
