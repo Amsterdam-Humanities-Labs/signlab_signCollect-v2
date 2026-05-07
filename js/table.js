@@ -1,6 +1,6 @@
 import { el, debounce, toast } from './util.js';
 import { api } from './api.js';
-import { renderSenses } from './senses.js';
+import { renderSensesPair } from './sensesPair.js';
 import { renderLabelEditor } from './labelEditor.js';
 
 const UPLOADS_BASE = '/uploads';
@@ -11,6 +11,29 @@ function studioMp4Url(basename, postProcessed) {
   const stem = basename.replace(/\.\w+$/, '');
   const folder = postProcessed === 1 ? 'post' : 'raw';
   return `${STUDIO_BASE}/${folder}/${encodeURIComponent(stem)}.mp4`;
+}
+
+// Single shared observer: attach <video> sources only when the element is near the viewport.
+const lazyVideoObserver = (typeof IntersectionObserver !== 'undefined')
+  ? new IntersectionObserver((entries, observer) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        const v = entry.target;
+        const src = v.dataset.lazySrc;
+        if (src && !v.src) v.src = src;
+        observer.unobserve(v);
+      }
+    }, { rootMargin: '200px 0px' })
+  : null;
+
+function lazyAttachVideo(video, src) {
+  if (!src) return;
+  if (lazyVideoObserver) {
+    video.dataset.lazySrc = src;
+    lazyVideoObserver.observe(video);
+  } else {
+    video.src = src;
+  }
 }
 
 export function renderRow(row, ctx) {
@@ -41,11 +64,14 @@ function renderThumbCol(row, ctx, rowWrap) {
   const thumbWrap = el('div', { class: videoSrc ? 'thumb-wrap' : 'thumb-wrap empty' });
   if (videoSrc) {
     const v = el('video', {
-      src: videoSrc,
-      muted: true, playsinline: true, preload: 'metadata', loop: true,
+      muted: true, playsinline: true, preload: 'none', loop: true,
     });
+    lazyAttachVideo(v, videoSrc);
     thumbWrap.appendChild(v);
-    rowWrap.addEventListener('mouseenter', () => v.play().catch(() => {}));
+    rowWrap.addEventListener('mouseenter', () => {
+      if (!v.src && v.dataset.lazySrc) v.src = v.dataset.lazySrc;
+      v.play().catch(() => {});
+    });
     rowWrap.addEventListener('mouseleave', () => { v.pause(); v.currentTime = 0; });
 
     const applyAspect = () => {
@@ -114,8 +140,8 @@ function renderMainCol(row, ctx) {
 
   const fields = el('div', { class: 'glos-fields' });
   fields.append(
-    field('Glos NL', row.glos, val => save(row, { glos: val })),
-    field('Glos EN', row.glos_engels, val => save(row, { glos_engels: val })),
+    field('Glos NL', row.glos,        val => save(row, { glos: val }), { uppercase: true }),
+    field('Glos EN', row.glos_engels, val => save(row, { glos_engels: val }), { uppercase: true }),
   );
   col.appendChild(fields);
 
@@ -137,19 +163,20 @@ function renderMainCol(row, ctx) {
   );
   col.appendChild(labelsBlock);
 
-  const sensesPair = el('div', { class: 'senses-pair' });
-  const sensesNL = el('div', { class: 'meta-block' });
-  sensesNL.append(
-    el('span', { class: 'meta-label' }, 'Senses NL'),
-    renderSenses(row.senses, { onChange: arr => { row.senses = arr; save(row, { senses: arr }); } }),
+  const sensesBlock = el('div', { class: 'meta-block' });
+  sensesBlock.append(
+    el('span', { class: 'meta-label' }, 'Senses (NL / EN)'),
+    renderSensesPair({
+      nl: row.senses,
+      en: row.sensesEngels,
+      onChange: ({ nl, en }) => {
+        row.senses = nl;
+        row.sensesEngels = en;
+        save(row, { senses: nl, sensesEngels: en });
+      },
+    }),
   );
-  const sensesEN = el('div', { class: 'meta-block' });
-  sensesEN.append(
-    el('span', { class: 'meta-label' }, 'Senses EN'),
-    renderSenses(row.sensesEngels, { onChange: arr => { row.sensesEngels = arr; save(row, { sensesEngels: arr }); }, placeholder: 'Sense (EN)…' }),
-  );
-  sensesPair.append(sensesNL, sensesEN);
-  col.appendChild(sensesPair);
+  col.appendChild(sensesBlock);
 
   if (row.studio_videos.length) {
     const studio = el('div', { class: 'studio-videos' });
@@ -255,11 +282,13 @@ function renderActionsCol(row, ctx, rowWrap) {
   return col;
 }
 
-function field(label, value, onSave) {
+function field(label, value, onSave, opts = {}) {
   const input = el('input', { type: 'text', value: value || '' });
-  const commit = debounce(() => onSave(input.value.trim()), 400);
+  if (opts.uppercase) input.classList.add('field-uppercase');
+  const norm = (s) => opts.uppercase ? s.trim().toUpperCase() : s.trim();
+  const commit = debounce(() => onSave(norm(input.value)), 400);
   input.addEventListener('input', commit);
-  input.addEventListener('blur',  () => onSave(input.value.trim()));
+  input.addEventListener('blur',  () => onSave(norm(input.value)));
   return el('label', { class: 'field' }, label, input);
 }
 

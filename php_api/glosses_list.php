@@ -11,7 +11,7 @@ $labels       = is_array($body['labels'] ?? null)   ? $body['labels']   : [];
 $statuses     = is_array($body['statuses'] ?? null) ? $body['statuses'] : [];
 $ownerUserId  = isset($body['ownerUserId']) ? trim((string)$body['ownerUserId']) : '';
 $page         = max(1, (int)($body['page'] ?? 1));
-$pageSize     = 25;
+$pageSize     = 50;
 $offset       = ($page - 1) * $pageSize;
 
 $where = [];

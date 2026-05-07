@@ -13,7 +13,7 @@ const state = {
   ownerUserId: '',          // '' = Iedereen; '<userId>' = filter to that user
   page: 1,
   total: 0,
-  pageSize: 25,
+  pageSize: 50,
   rows: [],
   options: { themas: [], labels: [], users: [] },
   user: null,
