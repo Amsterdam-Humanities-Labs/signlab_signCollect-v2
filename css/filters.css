@@ -1,23 +1,25 @@
 .filter-bar {
-  display: grid;
-  grid-template-columns: 1.3fr auto 0.9fr 1fr 1fr auto;
-  gap: 12px;
-  align-items: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 14px;
+  align-items: flex-end;
   padding: 14px;
   background: var(--surface);
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
   margin-bottom: 14px;
 }
-@media (max-width: 1200px) {
-  .filter-bar { grid-template-columns: 1fr 1fr 1fr; }
-  .filter-bar .btn-add { grid-column: 1 / -1; justify-self: end; }
-}
-@media (max-width: 700px) {
-  .filter-bar { grid-template-columns: 1fr 1fr; }
+.filter-bar > * { min-width: 0; }
+.filter-bar .search       { flex: 2 1 220px; }
+.filter-bar .filter-group { flex: 1 1 170px; }
+.filter-bar .toggle-group { flex: 0 1 auto;  }
+.filter-bar .btn-add      { flex: 0 0 auto; margin-left: auto; }
+
+@media (max-width: 720px) {
+  .filter-bar .btn-add { margin-left: 0; width: 100%; justify-content: center; }
 }
 
-.toggle-group { display: flex; flex-direction: column; gap: 4px; }
+.toggle-group { display: flex; flex-direction: column; gap: 4px; min-width: 200px; }
 .toggle {
   display: inline-flex; align-items: center; gap: 8px;
   cursor: pointer;
@@ -50,7 +52,7 @@
 }
 .toggle input:checked + .toggle-track { background: var(--primary); }
 .toggle input:checked + .toggle-track .toggle-thumb { transform: translateX(16px); }
-.toggle-label { white-space: nowrap; }
+.toggle-label { white-space: nowrap; flex: 0 1 auto; }
 
 .filter-bar label {
   display: block;
