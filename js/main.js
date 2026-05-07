@@ -11,7 +11,7 @@ const state = {
   labels: [],
   statuses: [],
   ownerUserId: '',          // '' = Iedereen; '<userId>' = filter to that user
-  sort: 'newest',           // newest | oldest | glos_az | glos_za
+  sort: 'glos_az',          // glos_az | glos_za | newest | oldest
   page: 1,
   total: 0,
   pageSize: 50,
@@ -69,8 +69,8 @@ async function init() {
     state.statuses = []; resetMulti('#statusMulti');
     state.ownerUserId = String(state.user.userId);
     $('#ownerSelect').value = state.ownerUserId;
-    state.sort = 'newest';
-    $('#sortSelect').value = 'newest';
+    state.sort = 'glos_az';
+    $('#sortSelect').value = 'glos_az';
     state.page = 1;
     refresh();
   });

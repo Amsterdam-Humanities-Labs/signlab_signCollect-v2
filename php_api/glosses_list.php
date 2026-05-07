@@ -10,7 +10,7 @@ $thema        = trim((string)($body['thema']    ?? ''));
 $labels       = is_array($body['labels'] ?? null)   ? $body['labels']   : [];
 $statuses     = is_array($body['statuses'] ?? null) ? $body['statuses'] : [];
 $ownerUserId  = isset($body['ownerUserId']) ? trim((string)$body['ownerUserId']) : '';
-$sort         = isset($body['sort']) ? (string)$body['sort'] : 'newest';
+$sort         = isset($body['sort']) ? (string)$body['sort'] : 'glos_az';
 $page         = max(1, (int)($body['page'] ?? 1));
 $pageSize     = 50;
 $offset       = ($page - 1) * $pageSize;
@@ -88,7 +88,7 @@ $sortMap = [
     'glos_az' => '(glos IS NULL OR glos = \'\') ASC, glos ASC, id DESC',
     'glos_za' => '(glos IS NULL OR glos = \'\') ASC, glos DESC, id DESC',
 ];
-$orderBy = 'ORDER BY ' . ($externDupActive ? 'glos ASC, id DESC' : ($sortMap[$sort] ?? $sortMap['newest']));
+$orderBy = 'ORDER BY ' . ($externDupActive ? 'glos ASC, id DESC' : ($sortMap[$sort] ?? $sortMap['glos_az']));
 
 $listSql = "SELECT id, glos, glos_engels, wie, thema, labels, glosZichtbaar,
                    zelfopname, senses, sensesEngels, control_nodig,
