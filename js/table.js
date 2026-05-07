@@ -98,7 +98,11 @@ function renderThumbCol(row, ctx, rowWrap) {
     });
     thumbWrap.addEventListener('mouseleave', () => thumbWrap.classList.remove('zoomed'));
   } else {
+    thumbWrap.classList.add('record-prompt');
+    thumbWrap.title = 'Klik om zelfopname te maken';
     thumbWrap.appendChild(el('i', { class: 'fas fa-video-slash' }));
+    thumbWrap.appendChild(el('span', { class: 'record-prompt-label' }, 'Maak zelfopname'));
+    thumbWrap.addEventListener('click', () => ctx.openRecord(row));
   }
   col.appendChild(thumbWrap);
 
