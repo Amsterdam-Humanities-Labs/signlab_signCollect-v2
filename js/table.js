@@ -111,6 +111,11 @@ function renderThumbCol(row, ctx, rowWrap) {
     'Fonologie bewerken',
   ));
 
+  col.appendChild(el('div', { class: 'row-id' },
+    el('i', { class: 'fas fa-hashtag' }),
+    String(row.id),
+  ));
+
   return col;
 }
 

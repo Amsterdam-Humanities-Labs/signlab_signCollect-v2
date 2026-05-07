@@ -124,6 +124,16 @@
 }
 .thumb-action-btn i { font-size: 11px; }
 
+.row-id {
+  display: inline-flex; align-items: center; gap: 4px;
+  align-self: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .3px;
+}
+.row-id i { font-size: 10px; opacity: .7; }
+
 .studio-open-btn {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 6px 14px;
