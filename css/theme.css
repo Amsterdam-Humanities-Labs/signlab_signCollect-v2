@@ -280,6 +280,9 @@ main {
   flex-shrink: 0;
 }
 .nav-drawer-body a:hover i { color: var(--primary); }
+.nav-drawer-body a.logout { color: var(--danger); }
+.nav-drawer-body a.logout i { color: var(--danger); }
+.nav-drawer-body a.logout:hover { background: #fdecec; color: var(--danger); }
 
 .nav-drawer-overlay {
   position: fixed; inset: 0;

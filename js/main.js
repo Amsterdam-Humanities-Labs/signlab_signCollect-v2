@@ -880,6 +880,14 @@ function setupNavDrawer() {
     if (ev.key === 'Escape' && !drawer.classList.contains('hidden')) close();
   });
 
+  $('#navLogout').addEventListener('click', (ev) => {
+    ev.preventDefault();
+    // Clear the shared sessionObject cookie on the apex domain and the local path.
+    document.cookie = 'sessionObject=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.signcollect.nl';
+    document.cookie = 'sessionObject=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
+    location.href = '/login.html';
+  });
+
   // Default closed
   close();
 }
