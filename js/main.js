@@ -186,17 +186,28 @@ async function refresh() {
   } else {
     const ctx = makeCtx();
     const groupByGlos = state.statuses.includes('extern_duplicate');
-    res.rows.forEach((r, i) => {
-      const node = renderRow(r, ctx);
-      if (groupByGlos) {
-        node.classList.add('dup-grouped');
-        const prev = res.rows[i - 1];
-        if (!prev || (prev.glos || '') !== (r.glos || '')) {
-          node.classList.add('dup-group-start');
+    if (!groupByGlos) {
+      res.rows.forEach(r => list.appendChild(renderRow(r, ctx)));
+    } else {
+      // Bucket rows by glos so each duplicate group is its own visual unit.
+      const groups = new Map();
+      res.rows.forEach(r => {
+        const key = r.glos || `__id_${r.id}`;
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(r);
+      });
+      groups.forEach((rows, key) => {
+        const wrap = el('div', { class: 'dup-group' });
+        if (rows.length > 1) {
+          wrap.appendChild(el('div', { class: 'dup-banner' },
+            el('i', { class: 'fas fa-triangle-exclamation' }),
+            `Waarschuwing: duplicaat gedetecteerd voor "${rows[0].glos || '?'}". ${rows.length} rijen hieronder.`
+          ));
         }
-      }
-      list.appendChild(node);
-    });
+        rows.forEach(r => wrap.appendChild(renderRow(r, ctx)));
+        list.appendChild(wrap);
+      });
+    }
   }
 
   const meta = $('#resultMeta');

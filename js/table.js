@@ -13,27 +13,9 @@ function studioMp4Url(basename, postProcessed) {
   return `${STUDIO_BASE}/${folder}/${encodeURIComponent(stem)}.mp4`;
 }
 
-// Single shared observer: attach <video> sources only when the element is near the viewport.
-const lazyVideoObserver = (typeof IntersectionObserver !== 'undefined')
-  ? new IntersectionObserver((entries, observer) => {
-      for (const entry of entries) {
-        if (!entry.isIntersecting) continue;
-        const v = entry.target;
-        const src = v.dataset.lazySrc;
-        if (src && !v.src) v.src = src;
-        observer.unobserve(v);
-      }
-    }, { rootMargin: '200px 0px' })
-  : null;
-
 function lazyAttachVideo(video, src) {
   if (!src) return;
-  if (lazyVideoObserver) {
-    video.dataset.lazySrc = src;
-    lazyVideoObserver.observe(video);
-  } else {
-    video.src = src;
-  }
+  video.src = src;
 }
 
 export function renderRow(row, ctx) {
@@ -68,10 +50,7 @@ function renderThumbCol(row, ctx, rowWrap) {
     });
     lazyAttachVideo(v, videoSrc);
     thumbWrap.appendChild(v);
-    rowWrap.addEventListener('mouseenter', () => {
-      if (!v.src && v.dataset.lazySrc) v.src = v.dataset.lazySrc;
-      v.play().catch(() => {});
-    });
+    rowWrap.addEventListener('mouseenter', () => v.play().catch(() => {}));
     rowWrap.addEventListener('mouseleave', () => { v.pause(); v.currentTime = 0; });
 
     const applyAspect = () => {
