@@ -81,8 +81,8 @@ $externDupActive = in_array('extern_duplicate', $statuses, true);
 $sortMap = [
     'newest'  => 'id DESC',
     'oldest'  => 'id ASC',
-    'glos_az' => 'glos ASC, id DESC',
-    'glos_za' => 'glos DESC, id DESC',
+    'glos_az' => '(glos IS NULL OR glos = \'\') ASC, glos ASC, id DESC',
+    'glos_za' => '(glos IS NULL OR glos = \'\') ASC, glos DESC, id DESC',
 ];
 $orderBy = 'ORDER BY ' . ($externDupActive ? 'glos ASC, id DESC' : ($sortMap[$sort] ?? $sortMap['newest']));
 
