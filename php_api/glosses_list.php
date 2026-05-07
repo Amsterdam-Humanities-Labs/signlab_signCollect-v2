@@ -51,6 +51,7 @@ $statusMap = [
                             AND EXISTS (SELECT 1 FROM form_data fd2
                                         WHERE fd2.id <> form_data.id
                                           AND fd2.glos = form_data.glos
+                                          AND fd2.extern = \'1\'
                                           AND (fd2.glosZichtbaar = 0 OR fd2.glosZichtbaar IS NULL))',
 ];
 foreach ($statuses as $s) {
@@ -150,6 +151,7 @@ if ($pageGlosValues && $ids) {
         "SELECT id, glos, extern, glosZichtbaar, wie
          FROM form_data
          WHERE glos IN ($glosPh) AND id NOT IN ($idPh)
+           AND extern = '1'
            AND (glosZichtbaar = 0 OR glosZichtbaar IS NULL)"
     );
     $dupStmt->execute([...array_values($pageGlosValues), ...$ids]);
