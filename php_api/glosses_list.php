@@ -38,9 +38,15 @@ $statusMap = [
     'no_label'         => '(labels IS NULL OR labels = \'\' OR labels = \'[]\')',
     'no_thema'         => '(thema IS NULL OR thema = \'\')',
     'no_zelfopname'    => '(zelfopname IS NULL OR zelfopname = \'\' OR zelfopname = \'[]\')',
+    'has_zelfopname'   => '(zelfopname IS NOT NULL AND zelfopname <> \'\' AND zelfopname <> \'[]\')',
     'no_studio_video'  => 'NOT EXISTS (SELECT 1 FROM matched_transcriptions mt
                             WHERE mt.m_transcription REGEXP \'^[0-9]+$\'
-                              AND CAST(mt.m_transcription AS UNSIGNED) = form_data.id)',
+                              AND CAST(mt.m_transcription AS UNSIGNED) = form_data.id
+                              AND (mt.added IS NULL OR UPPER(mt.added) <> \'DELETE\'))',
+    'has_studio_video' => 'EXISTS (SELECT 1 FROM matched_transcriptions mt
+                            WHERE mt.m_transcription REGEXP \'^[0-9]+$\'
+                              AND CAST(mt.m_transcription AS UNSIGNED) = form_data.id
+                              AND (mt.added IS NULL OR UPPER(mt.added) <> \'DELETE\'))',
 ];
 foreach ($statuses as $s) {
     if (isset($statusMap[$s])) $where[] = $statusMap[$s];
