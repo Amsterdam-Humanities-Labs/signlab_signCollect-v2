@@ -11,6 +11,7 @@ const state = {
   labels: [],
   statuses: [],
   ownerUserId: '',          // '' = Iedereen; '<userId>' = filter to that user
+  sort: 'newest',           // newest | oldest | glos_az | glos_za
   page: 1,
   total: 0,
   pageSize: 50,
@@ -44,6 +45,13 @@ async function init() {
     refresh();
   });
 
+  $('#sortSelect').value = state.sort;
+  $('#sortSelect').addEventListener('change', (e) => {
+    state.sort = e.target.value;
+    state.page = 1;
+    refresh();
+  });
+
   $('#searchInput').addEventListener('input', debounce(e => {
     state.search = e.target.value.trim();
     state.page = 1;
@@ -61,6 +69,8 @@ async function init() {
     state.statuses = []; resetMulti('#statusMulti');
     state.ownerUserId = String(state.user.userId);
     $('#ownerSelect').value = state.ownerUserId;
+    state.sort = 'newest';
+    $('#sortSelect').value = 'newest';
     state.page = 1;
     refresh();
   });
@@ -168,6 +178,7 @@ async function refresh() {
       labels: state.labels,
       statuses: state.statuses,
       ownerUserId: state.ownerUserId,
+      sort: state.sort,
       page: state.page,
     });
   } catch (e) {
