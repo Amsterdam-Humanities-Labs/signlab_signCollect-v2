@@ -1,6 +1,6 @@
 import { api } from './api.js';
 import { el, debounce, toast, fmtCount } from './util.js';
-import { renderRow } from './table.js';
+import { renderRow, resetThumbQueue } from './table.js';
 import { renderSenses } from './senses.js';
 import { VideoRecorder, fmtTime } from './recorder.js';
 import { buildPhonologyForm } from './phonology.js';
@@ -166,6 +166,7 @@ function resetMulti(root) {
 
 async function refresh() {
   const list = $('#glossList');
+  resetThumbQueue();
   clearChildren(list);
   for (let i = 0; i < 6; i++) list.appendChild(el('div', { class: 'gloss-row skeleton', style: 'height:130px;' }));
   $('#emptyState').style.display = 'none';

@@ -13,6 +13,44 @@ function studioMp4Url(basename, postProcessed) {
   return `${STUDIO_BASE}/${folder}/${encodeURIComponent(stem)}.mp4`;
 }
 
+// FIFO loader with bounded concurrency. Sources attach in render order,
+// max N at a time so the browser doesn't stall fetching 50 videos at once.
+const THUMB_LOAD_CONCURRENCY = 4;
+const thumbQueue = [];
+let thumbActive = 0;
+let thumbQueueId = 0;
+
+function pumpThumbQueue() {
+  while (thumbActive < THUMB_LOAD_CONCURRENCY && thumbQueue.length) {
+    const job = thumbQueue.shift();
+    if (job.cancelled) continue;
+    thumbActive++;
+    const release = () => {
+      thumbActive--;
+      job.video.removeEventListener('loadedmetadata', release);
+      job.video.removeEventListener('error', release);
+      pumpThumbQueue();
+    };
+    job.video.addEventListener('loadedmetadata', release, { once: true });
+    job.video.addEventListener('error', release, { once: true });
+    job.video.src = job.src;
+  }
+}
+
+function queueThumbLoad(video, src) {
+  const job = { video, src, cancelled: false, id: ++thumbQueueId };
+  thumbQueue.push(job);
+  pumpThumbQueue();
+  return job;
+}
+
+function resetThumbQueue() {
+  thumbQueue.forEach(j => { j.cancelled = true; });
+  thumbQueue.length = 0;
+}
+
+export { resetThumbQueue };
+
 export function renderRow(row, ctx) {
   const wrap = el('article', {
     class: 'gloss-row' + (row.glosZichtbaar === 1 ? ' hidden-row' : ''),
@@ -41,9 +79,9 @@ function renderThumbCol(row, ctx, rowWrap) {
   const thumbWrap = el('div', { class: videoSrc ? 'thumb-wrap' : 'thumb-wrap empty' });
   if (videoSrc) {
     const v = el('video', {
-      src: videoSrc,
       muted: true, playsinline: true, preload: 'metadata', loop: true,
     });
+    queueThumbLoad(v, videoSrc);
     thumbWrap.appendChild(v);
     rowWrap.addEventListener('mouseenter', () => v.play().catch(() => {}));
     rowWrap.addEventListener('mouseleave', () => { v.pause(); v.currentTime = 0; });
