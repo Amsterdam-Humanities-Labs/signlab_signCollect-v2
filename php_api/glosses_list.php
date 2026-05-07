@@ -47,6 +47,10 @@ $statusMap = [
                             WHERE mt.m_transcription REGEXP \'^[0-9]+$\'
                               AND CAST(mt.m_transcription AS UNSIGNED) = form_data.id
                               AND (mt.added IS NULL OR UPPER(mt.added) <> \'DELETE\'))',
+    'extern_duplicate' => 'extern = \'1\' AND glos IS NOT NULL AND glos <> \'\'
+                            AND EXISTS (SELECT 1 FROM form_data fd2
+                                        WHERE fd2.id <> form_data.id
+                                          AND fd2.glos = form_data.glos)',
 ];
 foreach ($statuses as $s) {
     if (isset($statusMap[$s])) $where[] = $statusMap[$s];
