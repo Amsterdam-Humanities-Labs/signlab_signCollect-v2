@@ -160,6 +160,10 @@ function signbank_build_create_payload(array $row, array $cfg): array {
     $glosEn = (string)($row['glos_engels'] ?? '') ?: $glosNl;
     $sensesNl = signbank_decode_json_array($row['senses'] ?? null);
     $sensesEn = signbank_decode_json_array($row['sensesEngels'] ?? null);
+    // Drop empty strings on each side first, then pad to equal length so Signbank's
+    // "Sense arrays are not the same length" check passes.
+    $sensesNl = array_values(array_filter(array_map('trim', $sensesNl), fn($s) => $s !== ''));
+    $sensesEn = array_values(array_filter(array_map('trim', $sensesEn), fn($s) => $s !== ''));
     [$alignedNl, $alignedEn] = signbank_align_sense_pair($sensesNl, $sensesEn);
 
     return [
@@ -168,7 +172,14 @@ function signbank_build_create_payload(array $row, array $cfg): array {
         'Lemma ID Gloss (English)'      => $glosEn,
         'Annotation ID Gloss (Dutch)'   => $glosNl,
         'Annotation ID Gloss (English)' => $glosEn,
-        'Senses (Dutch)'                => signbank_format_senses($alignedNl),
-        'Senses (English)'              => signbank_format_senses($alignedEn),
+        'Senses (Dutch)'                => signbank_serialize_senses_aligned($alignedNl),
+        'Senses (English)'              => signbank_serialize_senses_aligned($alignedEn),
     ];
+}
+
+/** Serialize an already-aligned sense list to Signbank's `[["a"],["b"]]` shape, preserving empty slots. */
+function signbank_serialize_senses_aligned(array $senses): string {
+    if (!$senses) return "[]";
+    $rows = array_map(fn($s) => [(string)$s], $senses);
+    return json_encode($rows, JSON_UNESCAPED_UNICODE);
 }
