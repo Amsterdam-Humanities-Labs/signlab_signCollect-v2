@@ -18,8 +18,8 @@ $pdo = db();
 $stmt = $pdo->prepare(
     "INSERT INTO form_data
        (glos, glos_engels, thema, labels, senses, sensesEngels,
-        wie, control_nodig, zelfopname, glosZichtbaar, logboek)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)"
+        wie, control_nodig, zelfopname, glosZichtbaar, extern, logboek)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, '1', ?)"
 );
 $stmt->execute([
     $glos,
