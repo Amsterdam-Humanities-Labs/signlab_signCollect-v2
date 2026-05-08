@@ -900,7 +900,7 @@ async function pushGlossToSignbank(row) {
         if (res.ok) {
           toast('Gloss succesvol naar Signbank gepushed', 'success');
         } else {
-          const detail = res.curl_error
+          const detail = res.http_error
             || (res.response && res.response.error)
             || (typeof res.response === 'string' ? res.response : `HTTP ${res.status}`);
           toast('Signbank gaf een fout: ' + detail, 'error');

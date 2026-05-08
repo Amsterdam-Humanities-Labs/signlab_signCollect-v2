@@ -51,7 +51,7 @@ json_response([
     'ok'         => $res['ok'],
     'status'     => $res['status'],
     'response'   => $res['body'],
-    'curl_error' => $res['error'],
+    'http_error' => $res['error'],
     'sent'       => [
         'endpoint' => $path,
         'payload'  => $payload,
