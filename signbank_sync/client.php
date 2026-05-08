@@ -142,6 +142,16 @@ function signbank_format_senses(array $senses): string {
     return json_encode($rows, JSON_UNESCAPED_UNICODE);
 }
 
+/** Pad two parallel sense arrays to the same length using empty strings. */
+function signbank_align_sense_pair(array $nl, array $en): array {
+    $nl = array_values(array_map('strval', $nl));
+    $en = array_values(array_map('strval', $en));
+    $max = max(count($nl), count($en), 1);
+    while (count($nl) < $max) $nl[] = '';
+    while (count($en) < $max) $en[] = '';
+    return [$nl, $en];
+}
+
 /**
  * Builds the Signbank create-gloss payload from a /web/menu_beta form_data row.
  */
@@ -150,6 +160,7 @@ function signbank_build_create_payload(array $row, array $cfg): array {
     $glosEn = (string)($row['glos_engels'] ?? '') ?: $glosNl;
     $sensesNl = signbank_decode_json_array($row['senses'] ?? null);
     $sensesEn = signbank_decode_json_array($row['sensesEngels'] ?? null);
+    [$alignedNl, $alignedEn] = signbank_align_sense_pair($sensesNl, $sensesEn);
 
     return [
         'Dataset'                       => $cfg['dataset_acronym'],
@@ -157,7 +168,7 @@ function signbank_build_create_payload(array $row, array $cfg): array {
         'Lemma ID Gloss (English)'      => $glosEn,
         'Annotation ID Gloss (Dutch)'   => $glosNl,
         'Annotation ID Gloss (English)' => $glosEn,
-        'Senses (Dutch)'                => signbank_format_senses($sensesNl),
-        'Senses (English)'              => signbank_format_senses($sensesEn),
+        'Senses (Dutch)'                => signbank_format_senses($alignedNl),
+        'Senses (English)'              => signbank_format_senses($alignedEn),
     ];
 }
