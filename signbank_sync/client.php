@@ -32,8 +32,14 @@ function signbank_request(string $method, string $path, ?array $payload = null):
     $url = rtrim($cfg['base_url'], '/') . $path;
     $start = microtime(true);
 
+    $authScheme = strtolower((string)($cfg['auth_scheme'] ?? 'bearer'));
+    if ($authScheme === 'x-api-key') {
+        $authHeader = 'X-API-Key: ' . $cfg['api_key'];
+    } else {
+        $authHeader = 'Authorization: Bearer ' . $cfg['api_key'];
+    }
     $headers = [
-        'X-API-Key: ' . $cfg['api_key'],
+        $authHeader,
         'Accept: application/json',
     ];
     if ($payload !== null) $headers[] = 'Content-Type: application/json';
@@ -77,7 +83,10 @@ function signbank_request(string $method, string $path, ?array $payload = null):
         'request'      => [
             'method'  => $method,
             'url'     => $url,
-            'headers' => array_map(fn($h) => preg_replace('/(X-API-Key:\s*)\S+/i', '$1***', $h), $headers),
+            'headers' => array_map(
+                fn($h) => preg_replace('/(Authorization:\s*\S+\s+|X-API-Key:\s*)\S+/i', '$1***', $h),
+                $headers
+            ),
             'payload' => $payload,
         ],
     ];
