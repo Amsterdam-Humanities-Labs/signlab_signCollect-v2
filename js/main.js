@@ -11,6 +11,7 @@ const state = {
   labels: [],
   statuses: [],
   ownerUserId: '',          // '' = Iedereen; '<userId>' = filter to that user
+  context: 'signio',        // signio (extern=1) | signbank (extern IS NULL)
   sort: 'glos_az',          // glos_az | glos_za | newest | oldest
   page: 1,
   total: 0,
@@ -82,6 +83,7 @@ async function init() {
   setupPhonologyModal();
   setupOverscrollPaging();
   setupNavDrawer();
+  setupContextToggle();
   $('#addGlossBtn').addEventListener('click', () => openAddModal());
 
   document.addEventListener('click', closeOpenDetails);
@@ -179,6 +181,7 @@ async function refresh() {
       labels: state.labels,
       statuses: state.statuses,
       ownerUserId: state.ownerUserId,
+      context: state.context,
       sort: state.sort,
       page: state.page,
     });
@@ -347,6 +350,7 @@ function setupAddModal() {
       senses: sensesEditors.senses(),
       sensesEngels: sensesEditors.sensesEngels(),
     };
+    payload.context = state.context;
     try {
       await api.create(payload);
       closeModal('#addModal');
@@ -880,6 +884,29 @@ function closeStudioModal() {
   cleanupStudioCards();
   studioCurrentRow = null;
   $('#studioModal').classList.add('hidden');
+}
+
+/* ---------- Context toggle (Signbank / Signio) ---------- */
+
+function setupContextToggle() {
+  const opts = document.querySelectorAll('.context-toggle .ctx-opt');
+  applyContextClass();
+  opts.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const next = btn.dataset.ctx;
+      if (next === state.context) return;
+      state.context = next;
+      opts.forEach(b => b.classList.toggle('active', b.dataset.ctx === next));
+      $('#contextTag').textContent = next === 'signbank' ? 'Signbank' : 'Signio';
+      applyContextClass();
+      state.page = 1;
+      refresh();
+    });
+  });
+}
+
+function applyContextClass() {
+  document.body.classList.toggle('ctx-signbank', state.context === 'signbank');
 }
 
 /* ---------- Navigation drawer ---------- */

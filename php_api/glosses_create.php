@@ -13,13 +13,15 @@ $thema         = (string)($body['thema']        ?? '');
 $labels        = is_array($body['labels'] ?? null)       ? array_values($body['labels'])       : [];
 $senses        = is_array($body['senses'] ?? null)       ? array_values($body['senses'])       : [];
 $sensesEngels  = is_array($body['sensesEngels'] ?? null) ? array_values($body['sensesEngels']) : [];
+$context       = (string)($body['context'] ?? 'signio');
+$externValue   = $context === 'signbank' ? null : '1';
 
 $pdo = db();
 $stmt = $pdo->prepare(
     "INSERT INTO form_data
        (glos, glos_engels, thema, labels, senses, sensesEngels,
         wie, control_nodig, zelfopname, glosZichtbaar, extern, logboek)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, '1', ?)"
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)"
 );
 $stmt->execute([
     $glos,
@@ -31,6 +33,7 @@ $stmt->execute([
     json_encode([(string)$session['userId']]),
     json_encode([]),
     json_encode([]),
+    $externValue,
     "Aangemaakt op " . date('j/n/Y @ H:i') . " door: " . ($session['username'] ?: $session['userId']),
 ]);
 

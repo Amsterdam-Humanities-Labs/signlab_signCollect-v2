@@ -38,12 +38,46 @@ main {
 
 .app-header {
   position: sticky; top: 0; z-index: 50;
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex; align-items: center; gap: 14px;
   padding: 12px 24px;
   background: linear-gradient(90deg, #f75964 0%, #f99468 100%);
   color: #fff;
   box-shadow: 0 2px 8px rgba(0,0,0,.12);
+  transition: background .25s ease;
 }
+body.ctx-signbank .app-header {
+  background: linear-gradient(90deg, #1c7ed6 0%, #4dabf7 100%);
+}
+
+.context-toggle {
+  display: inline-flex;
+  background: rgba(0,0,0,.18);
+  border-radius: 999px;
+  padding: 3px;
+  position: relative;
+}
+.context-toggle .ctx-opt {
+  border: 0;
+  background: transparent;
+  color: rgba(255,255,255,.78);
+  padding: 6px 14px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: .3px;
+  cursor: pointer;
+  border-radius: 999px;
+  display: inline-flex; align-items: center; gap: 6px;
+  transition: background .18s ease, color .18s ease;
+}
+.context-toggle .ctx-opt i { font-size: 11px; }
+.context-toggle .ctx-opt:hover { color: #fff; }
+.context-toggle .ctx-opt.active {
+  background: #fff;
+  color: var(--accent);
+  box-shadow: 0 2px 8px rgba(0,0,0,.18);
+}
+body.ctx-signbank .context-toggle .ctx-opt.active { color: var(--primary); }
 .app-header .btn-burger {
   margin-right: 10px;
   width: 40px; height: 40px;
@@ -58,7 +92,8 @@ main {
 }
 .app-header .btn-burger:hover { background: rgba(255,255,255,.28); }
 .app-header .btn-burger:active { transform: translateY(1px); }
-.app-header .brand { display: flex; align-items: baseline; gap: 10px; font-weight: 700; font-size: 18px; letter-spacing: .3px; flex: 1; }
+.app-header .brand { display: flex; align-items: baseline; gap: 10px; font-weight: 700; font-size: 18px; letter-spacing: .3px; }
+.app-header .user { margin-left: auto; }
 .app-header .brand i { font-size: 22px; }
 .app-header .brand .tag {
   font-weight: 500; font-size: 11px; opacity: .85;

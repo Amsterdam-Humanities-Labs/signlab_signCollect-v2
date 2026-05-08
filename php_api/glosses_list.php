@@ -10,6 +10,7 @@ $thema        = trim((string)($body['thema']    ?? ''));
 $labels       = is_array($body['labels'] ?? null)   ? $body['labels']   : [];
 $statuses     = is_array($body['statuses'] ?? null) ? $body['statuses'] : [];
 $ownerUserId  = isset($body['ownerUserId']) ? trim((string)$body['ownerUserId']) : '';
+$context      = isset($body['context']) ? (string)$body['context'] : 'signio';
 $sort         = isset($body['sort']) ? (string)$body['sort'] : 'glos_az';
 $page         = max(1, (int)($body['page'] ?? 1));
 $pageSize     = 50;
@@ -66,6 +67,12 @@ foreach ($statuses as $s) {
 
 if (!in_array('hidden', $statuses, true)) {
     $where[] = '(glosZichtbaar = 0 OR glosZichtbaar IS NULL)';
+}
+
+if ($context === 'signbank') {
+    $where[] = 'extern IS NULL';
+} else {
+    $where[] = 'extern = \'1\'';
 }
 
 if ($ownerUserId !== '') {
