@@ -263,6 +263,8 @@ function makeCtx() {
     openStudio:  (row, video) => openStudioModal(row, video),
     openPhonology: (row)      => openPhonologyModal(row),
     deleteAllZelfopname: (row) => deleteAllZelfopname(row),
+    contextIsSignbank: ()     => state.context === 'signbank',
+    pushToSignbank: (row)     => pushGlossToSignbank(row),
   };
 }
 
@@ -884,6 +886,30 @@ function closeStudioModal() {
   cleanupStudioCards();
   studioCurrentRow = null;
   $('#studioModal').classList.add('hidden');
+}
+
+/* ---------- Signbank push ---------- */
+
+async function pushGlossToSignbank(row) {
+  openConfirmModal(
+    `Glos "${row.glos || '#' + row.id}" naar Signbank pushen?`,
+    async () => {
+      toast(`Push naar Signbank: ${row.glos || '#' + row.id}…`, 'info');
+      try {
+        const res = await api.pushToSignbank(row.id);
+        if (res.ok) {
+          toast('Gloss succesvol naar Signbank gepushed', 'success');
+        } else {
+          const detail = res.curl_error
+            || (res.response && res.response.error)
+            || (typeof res.response === 'string' ? res.response : `HTTP ${res.status}`);
+          toast('Signbank gaf een fout: ' + detail, 'error');
+        }
+      } catch (e) {
+        toast('Push mislukt: ' + e.message, 'error');
+      }
+    }
+  );
 }
 
 /* ---------- Context toggle (Signbank / Signio) ---------- */

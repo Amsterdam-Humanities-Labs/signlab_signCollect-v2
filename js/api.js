@@ -41,4 +41,17 @@ export const api = {
   deleteVideo:    (id, filename) => post('delete_video.php', { id, filename }),
   deleteStudioVideo: (id) => post('studio_video_delete.php', { id }),
   getPhonology:   (id) => call(`phonology_get.php?id=${encodeURIComponent(id)}`),
+  pushToSignbank: (id) => fetch('signbank_sync/push_gloss.php', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id }),
+  }).then(async r => {
+    let data = null; try { data = await r.json(); } catch {}
+    if (!r.ok) {
+      const msg = (data && (data.message || data.error)) || r.statusText;
+      throw new Error(msg);
+    }
+    return data;
+  }),
 };

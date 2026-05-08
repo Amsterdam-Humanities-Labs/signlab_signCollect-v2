@@ -19,3 +19,6 @@ dist/
 # Local-only assets
 /uploads/
 *.log
+
+# Server-only secrets (Signbank API key etc.)
+signbank_sync/config.php

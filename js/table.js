@@ -290,6 +290,9 @@ function renderActionsCol(row, ctx, rowWrap) {
   const summary = el('summary', {}, el('i', { class: 'fas fa-ellipsis-vertical' }));
   const pop = el('div', { class: 'menu-pop' });
   pop.appendChild(itemBtn('record', 'fa-video', 'Zelfopname maken', () => ctx.openRecord(row)));
+  if (ctx.contextIsSignbank()) {
+    pop.appendChild(itemBtn('push-signbank', 'fa-cloud-arrow-up', 'Push naar Signbank', () => ctx.pushToSignbank(row)));
+  }
   if (row.zelfopname.length > 0) {
     const label = row.zelfopname.length === 1
       ? 'Zelfopname verwijderen'
