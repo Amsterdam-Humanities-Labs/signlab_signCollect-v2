@@ -21,39 +21,98 @@ function signbank_config(): array {
 }
 
 /**
- * Performs a JSON POST to a Signbank endpoint via libcurl.
- * Returns ['ok' => bool, 'status' => int, 'body' => mixed, 'error' => ?string].
+ * Performs a request to a Signbank endpoint via libcurl.
+ * Auth: `X-API-Key` header (Bearer is documented in the OpenAPI spec but doesn't
+ * work against the live signbank.cls.ru.nl instance — verified empirically).
+ *
+ * Returns ['ok','status','body','raw','error','duration_ms','content_type','request']
  */
-function signbank_post_json(string $path, array $payload): array {
+function signbank_request(string $method, string $path, ?array $payload = null): array {
     $cfg = signbank_config();
     $url = rtrim($cfg['base_url'], '/') . $path;
+    $start = microtime(true);
+
+    $headers = [
+        'X-API-Key: ' . $cfg['api_key'],
+        'Accept: application/json',
+    ];
+    if ($payload !== null) $headers[] = 'Content-Type: application/json';
 
     $ch = curl_init($url);
-    curl_setopt_array($ch, [
+    $opts = [
+        CURLOPT_CUSTOMREQUEST  => $method,
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_POST           => true,
-        CURLOPT_POSTFIELDS     => json_encode($payload, JSON_UNESCAPED_UNICODE),
-        CURLOPT_HTTPHEADER     => [
-            'Authorization: Bearer ' . $cfg['api_key'],
-            'Content-Type: application/json',
-            'Accept: application/json',
-        ],
+        CURLOPT_HTTPHEADER     => $headers,
         CURLOPT_TIMEOUT        => (int)($cfg['timeout_seconds'] ?? 30),
-    ]);
+        CURLOPT_HEADER         => true,
+    ];
+    if ($payload !== null) {
+        $opts[CURLOPT_POSTFIELDS] = json_encode($payload, JSON_UNESCAPED_UNICODE);
+        if ($method === 'POST') $opts[CURLOPT_POST] = true;
+    }
+    curl_setopt_array($ch, $opts);
 
-    $resBody = curl_exec($ch);
+    $raw     = curl_exec($ch);
     $status  = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+    $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE) ?? '';
     $err     = curl_error($ch) ?: null;
     curl_close($ch);
 
-    $parsed = $resBody !== false ? json_decode($resBody, true) : null;
-    if ($parsed === null && $resBody !== false && $resBody !== '') $parsed = $resBody;
+    $resBody = $raw !== false ? substr($raw, $headerSize) : '';
+    $parsed  = null;
+    if ($resBody !== '') {
+        $parsed = json_decode($resBody, true);
+        if ($parsed === null) $parsed = signbank_extract_html_error($resBody);
+    }
 
     return [
-        'ok'     => ($err === null && $status >= 200 && $status < 300),
-        'status' => $status,
-        'body'   => $parsed,
-        'error'  => $err,
+        'ok'           => ($err === null && $status >= 200 && $status < 300),
+        'status'       => $status,
+        'body'         => $parsed,
+        'raw'          => $resBody,
+        'error'        => $err,
+        'duration_ms'  => (int)round((microtime(true) - $start) * 1000),
+        'content_type' => $contentType,
+        'request'      => [
+            'method'  => $method,
+            'url'     => $url,
+            'headers' => array_map(fn($h) => preg_replace('/(X-API-Key:\s*)\S+/i', '$1***', $h), $headers),
+            'payload' => $payload,
+        ],
+    ];
+}
+
+function signbank_post_json(string $path, array $payload): array {
+    return signbank_request('POST', $path, $payload);
+}
+
+function signbank_get(string $path): array {
+    return signbank_request('GET', $path, null);
+}
+
+/**
+ * Pulls the title / h1 / first paragraph out of a Django error HTML page so the
+ * modal can show a meaningful one-liner instead of an 8 KB blob of HTML.
+ */
+function signbank_extract_html_error(string $html): array {
+    $title = ''; $h1 = ''; $detail = '';
+    if (preg_match('~<title[^>]*>(.*?)</title>~is', $html, $m)) {
+        $title = trim(preg_replace('~\s+~', ' ', strip_tags($m[1])));
+    }
+    if (preg_match_all('~<h1[^>]*>(.*?)</h1>~is', $html, $mm)) {
+        $cleanH1s = array_filter(array_map(fn($s) => trim(strip_tags($s)), $mm[1]));
+        // pick the most specific (often the second h1)
+        $h1 = end($cleanH1s) ?: '';
+    }
+    if (preg_match('~<p[^>]*>(.*?)</p>~is', $html, $m)) {
+        $detail = trim(preg_replace('~\s+~', ' ', strip_tags($m[1])));
+    }
+    return [
+        '_html_error' => true,
+        'title'  => $title,
+        'h1'     => $h1,
+        'detail' => $detail,
     ];
 }
 

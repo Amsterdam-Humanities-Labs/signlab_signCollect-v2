@@ -84,6 +84,7 @@ async function init() {
   setupConfirmModal();
   setupStudioModal();
   setupPhonologyModal();
+  setupSignbankModal();
   setupOverscrollPaging();
   setupNavDrawer();
   setupContextToggle();
@@ -893,26 +894,233 @@ function closeStudioModal() {
 
 /* ---------- Signbank push ---------- */
 
-async function pushGlossToSignbank(row) {
-  openConfirmModal(
-    `Glos "${row.glos || '#' + row.id}" naar Signbank pushen?`,
-    async () => {
-      toast(`Push naar Signbank: ${row.glos || '#' + row.id}…`, 'info');
-      try {
-        const res = await api.pushToSignbank(row.id);
-        if (res.ok) {
-          toast('Gloss succesvol naar Signbank gepushed', 'success');
-        } else {
-          const detail = res.http_error
-            || (res.response && res.response.error)
-            || (typeof res.response === 'string' ? res.response : `HTTP ${res.status}`);
-          toast('Signbank gaf een fout: ' + detail, 'error');
-        }
-      } catch (e) {
-        toast('Push mislukt: ' + e.message, 'error');
-      }
-    }
+function setupSignbankModal() {
+  const modal = $('#signbankModal');
+  modal.addEventListener('click', ev => {
+    if (ev.target.matches('[data-close]') || ev.target === modal) closeSignbankModal();
+  });
+}
+
+let signbankCurrentRow = null;
+
+function pushGlossToSignbank(row) {
+  signbankCurrentRow = row;
+  $('#signbankTitle').textContent = `Push naar Signbank — ${row.glos || '#' + row.id}`;
+  $('#signbankRetryBtn').onclick = () => firePush(row);
+  $('#signbankModal').classList.remove('hidden');
+  firePush(row);
+}
+
+function closeSignbankModal() {
+  signbankCurrentRow = null;
+  $('#signbankModal').classList.add('hidden');
+}
+
+async function firePush(row) {
+  const body = $('#signbankBody');
+  const status = $('#signbankFooterStatus');
+  status.className = 'signbank-status busy';
+  status.textContent = 'Bezig met versturen…';
+  clearChildren(body);
+  body.appendChild(renderSourceSection(row));
+  const banner = el('div', { class: 'sb-banner info' },
+    el('i', { class: 'fas fa-paper-plane' }),
+    el('span', {}, 'Verzoek wordt verstuurd naar Signbank…'),
   );
+  body.appendChild(banner);
+
+  let res;
+  try {
+    res = await api.pushToSignbank(row.id);
+  } catch (e) {
+    body.removeChild(banner);
+    body.appendChild(renderBanner('error', 'Verzoek mislukt', e.message));
+    status.className = 'signbank-status';
+    status.textContent = '';
+    return;
+  }
+
+  body.removeChild(banner);
+  body.appendChild(renderResultBanner(res));
+  body.appendChild(renderLogSection(res.log || []));
+  body.appendChild(renderRequestSection(res.request));
+  body.appendChild(renderResponseSection(res));
+
+  status.className = 'signbank-status';
+  status.textContent = res.ok
+    ? `Klaar — HTTP ${res.status} in ${res.duration_ms} ms`
+    : `Mislukt — HTTP ${res.status} in ${res.duration_ms} ms`;
+}
+
+function renderSourceSection(row) {
+  const wrap = el('section', { class: 'sb-section' });
+  wrap.appendChild(el('header', {}, 'Bron — form_data rij'));
+  const div = el('div', { class: 'sb-section-body' });
+
+  const grid = el('div', { class: 'sb-source-grid' });
+  grid.appendChild(field('Glos NL', row.glos));
+  grid.appendChild(field('Glos EN', row.glos_engels));
+  grid.appendChild(field('Senses NL', (row.senses || []).join(' · ') || null));
+  grid.appendChild(field('Senses EN', (row.sensesEngels || []).join(' · ') || null));
+  grid.appendChild(field('Thema', row.thema));
+  grid.appendChild(field('Labels', (row.labels || []).join(', ') || null));
+  div.appendChild(grid);
+
+  // Media: thumbnail/video preview if available.
+  const thumbVideo = row.thumbnail_video?.m_file;
+  const zelf = (row.zelfopname || [])[0];
+  if (thumbVideo || zelf) {
+    const media = el('div', { class: 'sb-source-media', style: 'margin-top: 12px;' });
+    const v = el('video', { muted: true, loop: true, autoplay: true, playsinline: true });
+    if (thumbVideo) {
+      const folder = row.thumbnail_video.post_processed === 1 ? 'post' : 'raw';
+      v.src = `https://signcollect.nl/gebarenoverleg_media/studioFilesMini/${folder}/${encodeURIComponent(thumbVideo.replace(/\.\w+$/, ''))}.mp4`;
+    } else {
+      v.src = `/uploads/${encodeURIComponent(zelf)}`;
+    }
+    media.appendChild(v);
+    const meta = el('div', { class: 'meta' });
+    meta.append(
+      el('div', {}, el('strong', {}, 'Thumbnail/Video bron: '), thumbVideo ? `studio M-frame (${thumbVideo})` : `zelfopname (${zelf})`),
+      el('div', { style: 'margin-top: 6px;' }, '(Wordt nog niet automatisch meegestuurd — Signbank API ondersteunt video alleen via een aparte ',
+        el('code', {}, '/api_update_gloss/{glossid}/video'),
+        ' call ná aanmaken.)')
+    );
+    media.appendChild(meta);
+    div.appendChild(media);
+  }
+
+  // Phonology summary (text fields only, dropdown values are numeric ids without context lookup here).
+  const phonoText = ['virtualObjectt', 'phonologyOther', 'mouthGesture', 'mouthing', 'phoneticVariation']
+    .map(k => row[k]).filter(Boolean);
+  const fasePieces = [];
+  if (row.fonologie_fase1 === '1' || row.fonologie_fase1 === 1) fasePieces.push('Fase 1 ✓');
+  if (row.fonologie_fase2 === '1' || row.fonologie_fase2 === 1) fasePieces.push('Fase 2 ✓');
+  if (phonoText.length || fasePieces.length) {
+    div.appendChild(el('div', { style: 'margin-top: 12px; font-size: 12.5px; color: var(--text-muted);' },
+      el('strong', {}, 'Fonologie: '),
+      [phonoText.join(' · '), fasePieces.join(' · ')].filter(Boolean).join(' · '),
+      ' (niet aanwezig in Signbank create-payload spec)'
+    ));
+  }
+
+  wrap.appendChild(div);
+  return wrap;
+}
+
+function field(label, value) {
+  const wrap = el('div', {});
+  wrap.appendChild(el('div', { class: 'label' }, label));
+  if (value === null || value === undefined || value === '') {
+    wrap.appendChild(el('div', { class: 'value empty' }, '— leeg —'));
+  } else {
+    wrap.appendChild(el('div', { class: 'value' }, String(value)));
+  }
+  return wrap;
+}
+
+function renderBanner(kind, title, detail) {
+  const icons = { success: 'fa-circle-check', error: 'fa-triangle-exclamation', info: 'fa-circle-info' };
+  return el('div', { class: `sb-banner ${kind}` },
+    el('i', { class: 'fas ' + (icons[kind] || icons.info) }),
+    el('span', {},
+      el('span', { class: 'banner-title' }, title),
+      detail ? el('span', { class: 'banner-detail' }, detail) : null,
+    ),
+  );
+}
+
+function renderResultBanner(res) {
+  if (res.ok) {
+    return renderBanner('success', `Signbank antwoord: HTTP ${res.status}`, `Verzoek voltooid in ${res.duration_ms} ms.`);
+  }
+  let detail = `HTTP ${res.status} in ${res.duration_ms} ms`;
+  if (res.http_error) detail += ' · curl: ' + res.http_error;
+  if (res.response && typeof res.response === 'object' && res.response._html_error) {
+    const err = res.response;
+    detail = `${err.h1 || err.title || 'Server error'} — ${err.detail || ''}`.trim();
+  }
+  return renderBanner('error', 'Signbank gaf een fout', detail);
+}
+
+function renderLogSection(logEntries) {
+  const wrap = el('section', { class: 'sb-section' });
+  wrap.appendChild(el('header', {}, 'Tijdlijn'));
+  const div = el('div', { class: 'sb-section-body sb-log' });
+  if (!logEntries.length) {
+    div.appendChild(el('div', {}, '(geen gebeurtenissen)'));
+  } else {
+    logEntries.forEach(e => {
+      const line = el('div', { class: 'sb-log-line' });
+      line.appendChild(el('span', { class: 't' }, e.t));
+      line.appendChild(el('span', { class: 'level ' + (e.level || 'info') }, (e.level || 'info').toUpperCase()));
+      const msgWrap = el('span', {});
+      msgWrap.appendChild(el('div', {}, e.msg));
+      if (e.data !== null && e.data !== undefined) {
+        const det = el('details', {});
+        det.appendChild(el('summary', {}, 'details'));
+        det.appendChild(el('pre', {}, JSON.stringify(e.data, null, 2)));
+        msgWrap.appendChild(det);
+      }
+      line.appendChild(msgWrap);
+      div.appendChild(line);
+    });
+  }
+  wrap.appendChild(div);
+  return wrap;
+}
+
+function renderRequestSection(req) {
+  const wrap = el('section', { class: 'sb-section' });
+  const headerRow = el('header', {});
+  headerRow.appendChild(el('span', {}, 'Verzonden naar Signbank'));
+  if (req && req.method && req.url) {
+    headerRow.appendChild(el('span', { style: 'text-transform: none; letter-spacing: 0; color: var(--text);' },
+      el('code', {}, `${req.method} ${req.url}`)));
+  }
+  wrap.appendChild(headerRow);
+  const div = el('div', { class: 'sb-section-body' });
+  if (req && req.headers) {
+    div.appendChild(el('div', { style: 'font-size: 12px; color: var(--text-muted); margin-bottom: 8px;' },
+      el('strong', {}, 'Headers: '),
+      req.headers.join(' · ')
+    ));
+  }
+  if (req && req.payload) {
+    div.appendChild(el('pre', { class: 'sb-payload-pre' }, JSON.stringify(req.payload, null, 2)));
+  } else {
+    div.appendChild(el('div', {}, '(geen body)'));
+  }
+  wrap.appendChild(div);
+  return wrap;
+}
+
+function renderResponseSection(res) {
+  const wrap = el('section', { class: 'sb-section' });
+  wrap.appendChild(el('header', {},
+    el('span', {}, 'Antwoord van Signbank'),
+    el('span', { style: 'text-transform: none; letter-spacing: 0; color: var(--text-muted);' },
+      `${res.content_type || ''}`)
+  ));
+  const div = el('div', { class: 'sb-section-body' });
+  if (res.response && typeof res.response === 'object' && res.response._html_error) {
+    div.appendChild(el('div', {},
+      el('strong', {}, (res.response.h1 || res.response.title) + ' '),
+      el('span', { style: 'color: var(--text-muted);' }, res.response.detail || '')
+    ));
+    if (res.raw_excerpt) {
+      const det = el('details', { style: 'margin-top: 8px;' });
+      det.appendChild(el('summary', {}, 'Ruwe HTML (eerste 800 tekens)'));
+      det.appendChild(el('pre', { class: 'sb-payload-pre' }, res.raw_excerpt));
+      div.appendChild(det);
+    }
+  } else if (res.response !== null && res.response !== undefined) {
+    div.appendChild(el('pre', { class: 'sb-payload-pre' }, JSON.stringify(res.response, null, 2)));
+  } else {
+    div.appendChild(el('div', {}, '(leeg)'));
+  }
+  wrap.appendChild(div);
+  return wrap;
 }
 
 /* ---------- Context toggle (Signbank / Signio) ---------- */
