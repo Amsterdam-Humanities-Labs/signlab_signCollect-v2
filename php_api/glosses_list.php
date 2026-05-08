@@ -83,17 +83,35 @@ $total = (int)$countStmt->fetch()['c'];
 
 $externDupActive = in_array('extern_duplicate', $statuses, true);
 $sortMap = [
-    'newest'  => 'id DESC',
-    'oldest'  => 'id ASC',
-    'glos_az' => '(glos IS NULL OR glos = \'\') ASC, glos ASC, id DESC',
-    'glos_za' => '(glos IS NULL OR glos = \'\') ASC, glos DESC, id DESC',
+    'newest'         => 'form_data.id DESC',
+    'oldest'         => 'form_data.id ASC',
+    'glos_az'        => '(form_data.glos IS NULL OR form_data.glos = \'\') ASC, form_data.glos ASC, form_data.id DESC',
+    'glos_za'        => '(form_data.glos IS NULL OR form_data.glos = \'\') ASC, form_data.glos DESC, form_data.id DESC',
+    'latest_capture' => 'COALESCE(_lc.max_id, 0) DESC, form_data.id DESC',
+    'oldest_capture' => '(_lc.max_id IS NULL) ASC, _lc.max_id ASC, form_data.id ASC',
 ];
-$orderBy = 'ORDER BY ' . ($externDupActive ? 'glos ASC, id DESC' : ($sortMap[$sort] ?? $sortMap['glos_az']));
 
-$listSql = "SELECT id, glos, glos_engels, wie, thema, labels, glosZichtbaar,
-                   zelfopname, senses, sensesEngels, control_nodig,
-                   fonologie_fase1, fonologie_fase2
-            FROM form_data {$whereSql}
+$needsCaptureJoin = in_array($sort, ['latest_capture', 'oldest_capture'], true);
+$captureJoin = '';
+if ($needsCaptureJoin) {
+    $captureJoin = "LEFT JOIN (
+        SELECT CAST(m_transcription AS UNSIGNED) AS gid, MAX(id) AS max_id
+        FROM matched_transcriptions
+        WHERE m_transcription REGEXP '^[0-9]+$'
+          AND (added IS NULL OR UPPER(added) <> 'DELETE')
+        GROUP BY CAST(m_transcription AS UNSIGNED)
+    ) _lc ON _lc.gid = form_data.id";
+}
+$orderBy = 'ORDER BY ' . ($externDupActive ? 'form_data.glos ASC, form_data.id DESC' : ($sortMap[$sort] ?? $sortMap['glos_az']));
+
+$listSql = "SELECT form_data.id, form_data.glos, form_data.glos_engels, form_data.wie,
+                   form_data.thema, form_data.labels, form_data.glosZichtbaar,
+                   form_data.zelfopname, form_data.senses, form_data.sensesEngels,
+                   form_data.control_nodig,
+                   form_data.fonologie_fase1, form_data.fonologie_fase2
+            FROM form_data
+            {$captureJoin}
+            {$whereSql}
             {$orderBy}
             LIMIT {$pageSize} OFFSET {$offset}";
 $listStmt = $pdo->prepare($listSql);
