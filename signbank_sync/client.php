@@ -41,6 +41,9 @@ function signbank_request(string $method, string $path, ?array $payload = null):
     $headers = [
         $authHeader,
         'Accept: application/json',
+        // CRITICAL: without this, Signbank's Django 4.2.x parse_accept_lang_header(None)
+        // raises TypeError and the view 500s before doing anything.
+        'Accept-Language: en',
     ];
     if ($payload !== null) $headers[] = 'Content-Type: application/json';
 
