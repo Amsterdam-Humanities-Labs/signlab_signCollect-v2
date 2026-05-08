@@ -34,6 +34,9 @@ async function init() {
   state.options.users.forEach(u => userNameMap.set(String(u.userId), u.user));
 
   state.ownerUserId = String(state.user.userId);
+  if (state.user.defaultContext === 'signbank' || state.user.defaultContext === 'signio') {
+    state.context = state.user.defaultContext;
+  }
 
   populateThemaSelect();
   populateOwnerSelect();
@@ -916,6 +919,9 @@ async function pushGlossToSignbank(row) {
 
 function setupContextToggle() {
   const opts = document.querySelectorAll('.context-toggle .ctx-opt');
+  // Reflect current state on the buttons + label
+  opts.forEach(b => b.classList.toggle('active', b.dataset.ctx === state.context));
+  $('#contextTag').textContent = state.context === 'signbank' ? 'Signbank' : 'Signio';
   applyContextClass();
   opts.forEach(btn => {
     btn.addEventListener('click', () => {
