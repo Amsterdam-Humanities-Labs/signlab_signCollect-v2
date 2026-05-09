@@ -70,16 +70,18 @@ $r = $row->fetch();
 if (!$r) json_response(['error' => 'not_found'], 404);
 
 // Auto-sync any field changes to Signbank when this row is connected.
-// Only fields that map to a Signbank column trigger a push (see sync_helpers).
+// Only push the fields the caller actually changed in *this* request — pushing
+// the entire row would re-validate every phonology value on Signbank, and a
+// single stale value would roll the whole atomic update back.
 $signbankSync = null;
 if (!empty($r['signbank']) && $fields) {
     $relevantKeys = array_merge(array_keys(signbank_field_map()), array_keys(signbank_senses_keys()));
     $relevant = array_intersect_key($fields, array_flip($relevantKeys));
     if ($relevant) {
-        $merged = $r;
-        foreach ($relevant as $k => $v) $merged[$k] = is_array($v) ? json_encode($v) : $v;
+        $changedOnly = [];
+        foreach ($relevant as $k => $v) $changedOnly[$k] = is_array($v) ? json_encode($v) : $v;
         try {
-            $sync = signbank_auto_sync_fields($pdo, $id, $merged);
+            $sync = signbank_auto_sync_fields($pdo, $id, $changedOnly);
             if ($sync !== null) {
                 $signbankSync = [
                     'ok'           => $sync['ok'],

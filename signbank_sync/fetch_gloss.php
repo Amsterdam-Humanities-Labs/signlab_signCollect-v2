@@ -111,15 +111,28 @@ $normRemoteScalar = function ($v) {
 };
 
 $fields = [];
+$dropdownFields = signbank_phonology_dropdown_fields();
 foreach ($compareMap as $localKey => $remoteKey) {
-    $lv = $normLocalScalar($local[$localKey] ?? '');
-    $rv = $normRemoteScalar($remote[$remoteKey] ?? '');
-    $matches = ($lv === $rv) || ($lv === '' && $rv === '');
+    $lvRaw = $normLocalScalar($local[$localKey] ?? '');
+    $rv    = $normRemoteScalar($remote[$remoteKey] ?? '');
+    // For phonology dropdowns the local column stores the FieldChoice
+    // machine_value; translate to the human label for an apples-to-apples
+    // comparison against Signbank's response (which always returns the label).
+    $lvForCompare = $lvRaw;
+    $lvDisplay    = $lvRaw;
+    if ($lvRaw !== '' && in_array($localKey, $dropdownFields, true)) {
+        $translated = signbank_normalize_value($localKey, $lvRaw);
+        if ($translated !== '' && $translated !== $lvRaw) {
+            $lvForCompare = $translated;
+            $lvDisplay    = $translated . ' (mv ' . $lvRaw . ')';
+        }
+    }
+    $matches = ($lvForCompare === $rv) || ($lvForCompare === '' && $rv === '');
     $fields[] = [
-        'label'  => $remoteKey,
+        'label'      => $remoteKey,
         'local_key'  => $localKey,
         'remote_key' => $remoteKey,
-        'local'      => $lv,
+        'local'      => $lvDisplay,
         'remote'     => $rv,
         'matches'    => $matches,
         'note'       => null,
