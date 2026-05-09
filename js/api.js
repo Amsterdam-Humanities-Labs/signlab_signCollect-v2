@@ -44,6 +44,8 @@ export const api = {
   broadcastToSignbank: (id) => post('../signbank_sync/broadcast_gloss.php', { id }),
   deleteFromSignbank:  (id) => post('../signbank_sync/delete_gloss.php', { id }),
   fetchSignbankGloss:  (id) => call(`../signbank_sync/fetch_gloss.php?id=${encodeURIComponent(id)}`),
+  forcePushToSignbank: (id) => post('../signbank_sync/force_push.php', { id }),
+  forcePullFromSignbank: (id) => post('../signbank_sync/force_pull.php', { id }),
   pushToSignbank: (id) => fetch('signbank_sync/push_gloss.php', {
     method: 'POST',
     credentials: 'same-origin',

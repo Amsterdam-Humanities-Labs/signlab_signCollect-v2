@@ -144,6 +144,34 @@ function signbank_set_connection(PDO $pdo, int $form_data_id, ?string $glossid, 
     $stmt->execute([$glossid, $logEntry, $form_data_id]);
 }
 
+/**
+ * Reverse of signbank_normalize_value: turn a human-readable Signbank label
+ * back into the FieldChoice machine_value our form_data stores. Returns the
+ * label unchanged for free-text fields and for labels that aren't in the JSON.
+ */
+function signbank_label_to_machine_value(string $sourceField, string $humanLabel): string {
+    static $reverse = null;
+    if ($reverse === null) {
+        $reverse = [];
+        $path = __DIR__ . '/../data/phonology_options.json';
+        if (is_file($path)) {
+            $opts = json_decode(file_get_contents($path), true) ?: [];
+            foreach ($opts as $field => $rows) {
+                if (!is_array($rows)) continue;
+                foreach ($rows as $row) {
+                    foreach (['EN', 'NL'] as $variant) {
+                        if (isset($row[$variant])) {
+                            $reverse[$field][$row[$variant]] = (string)$row['value'];
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if (!in_array($sourceField, signbank_phonology_dropdown_fields(), true)) return $humanLabel;
+    return $reverse[$sourceField][$humanLabel] ?? $humanLabel;
+}
+
 function signbank_auto_sync_fields(PDO $pdo, int $form_data_id, array $changed): ?array {
     $glossid = signbank_get_connected_glossid($pdo, $form_data_id);
     if ($glossid === null) return null;

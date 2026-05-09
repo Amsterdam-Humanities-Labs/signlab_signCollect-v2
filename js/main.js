@@ -1237,6 +1237,12 @@ async function compareGloss(row) {
   link.hidden = false;
   link.href = `https://signbank.cls.ru.nl/dictionary/gloss/${encodeURIComponent(row.signbank)}.html`;
 
+  // Wire force-push / force-pull buttons (each click confirms first).
+  $('#sbForcePushBtn').hidden = false;
+  $('#sbForcePullBtn').hidden = false;
+  $('#sbForcePushBtn').onclick = () => forceSyncDirection(row, 'push');
+  $('#sbForcePullBtn').onclick = () => forceSyncDirection(row, 'pull');
+
   clearChildren(body);
   body.appendChild(renderBanner('info', 'Bezig met ophalen van Signbank…', ''));
   status.className = 'signbank-status busy';
@@ -1283,6 +1289,45 @@ async function compareGloss(row) {
 
   status.className = 'signbank-status';
   status.textContent = `Klaar — ${res.duration_ms} ms`;
+}
+
+function forceSyncDirection(row, direction) {
+  const verb = direction === 'push' ? 'Push' : 'Pull';
+  const dir  = direction === 'push' ? 'signCollect → Signbank' : 'Signbank → signCollect';
+  openConfirmModal(
+    `${verb} alles (${dir})? Dit overschrijft alle waarden aan de bestemmingskant voor glos "${row.glos}" (#${row.signbank}).`,
+    async () => {
+      const status = $('#sbCompareStatus');
+      status.className = 'signbank-status busy';
+      status.textContent = `${verb}en…`;
+      try {
+        const res = direction === 'push'
+          ? await api.forcePushToSignbank(row.id)
+          : await api.forcePullFromSignbank(row.id);
+        if (res.ok) {
+          toast(`${verb} klaar — ${(res.fields_sent || res.fields_set || []).length} velden`, 'success');
+          if (direction === 'pull') {
+            // Pull updates form_data; refresh local row so the compare reflects new values.
+            await refresh();
+          }
+          // Re-run the comparison to reflect new state.
+          const fresh = state.rows.find(r => r.id === row.id) || row;
+          await compareGloss(fresh);
+        } else {
+          const detail = res.error
+            || (res.response && (res.response.errors?.[0]?.message || res.response.detail))
+            || `HTTP ${res.status}`;
+          toast(`${verb} mislukt: ${detail}`, 'error');
+          status.className = 'signbank-status';
+          status.textContent = '';
+        }
+      } catch (e) {
+        toast(`${verb} mislukt: ${e.message}`, 'error');
+        status.className = 'signbank-status';
+        status.textContent = '';
+      }
+    }
+  );
 }
 
 function renderCompareMedia(row, res) {
