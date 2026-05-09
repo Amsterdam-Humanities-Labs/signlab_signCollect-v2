@@ -1130,48 +1130,119 @@ function renderResponseSection(res) {
 function broadcastGloss(row) {
   openConfirmModal(
     `Glos "${row.glos || '#' + row.id}" naar Signbank pushen? Dit maakt een nieuwe Signbank-entry aan en slaat de glossid lokaal op.`,
-    async () => {
-      toast(`Bezig met broadcasten…`, 'info');
-      try {
-        const res = await api.broadcastToSignbank(row.id);
-        if (res.ok) {
-          row.signbank = res.glossid;
-          makeCtx().refreshRow(row);
-          toast(`Verbonden met Signbank — glossid #${res.glossid}`, 'success');
-        } else {
-          const detail = (res.response && (res.response.errors?.[0]?.message || res.response.detail))
-                       || `HTTP ${res.status}`;
-          toast('Broadcast mislukt: ' + detail, 'error');
-          console.warn('broadcast result:', res);
-        }
-      } catch (e) {
-        toast('Broadcast mislukt: ' + e.message, 'error');
-      }
-    }
+    async () => runSignbankOperation({
+      title:   `Broadcast naar Signbank — ${row.glos || '#' + row.id}`,
+      busyMsg: 'Bezig met broadcasten naar Signbank…',
+      row,
+      call:    () => api.broadcastToSignbank(row.id),
+      onOk:    (res) => {
+        row.signbank = res.glossid;
+        makeCtx().refreshRow(row);
+        toast(`Verbonden met Signbank — glossid #${res.glossid}`, 'success');
+      },
+    })
   );
 }
 
 function disconnectGloss(row) {
   openConfirmModal(
     `Loskoppelen van Signbank — glos "${row.glos}" zal worden verwijderd uit Signbank (#${row.signbank}). Doorgaan?`,
-    async () => {
-      toast(`Loskoppelen van Signbank…`, 'info');
-      try {
-        const res = await api.deleteFromSignbank(row.id);
-        if (res.ok) {
-          row.signbank = null;
-          makeCtx().refreshRow(row);
-          toast(`Losgekoppeld (was #${res.previous_glossid})`, 'success');
-        } else {
-          const detail = (res.response && (res.response.errors?.[0]?.message || res.response.detail))
-                       || `HTTP ${res.status}`;
-          toast('Loskoppelen mislukt: ' + detail, 'error');
-        }
-      } catch (e) {
-        toast('Loskoppelen mislukt: ' + e.message, 'error');
-      }
-    }
+    async () => runSignbankOperation({
+      title:   `Loskoppelen — ${row.glos || '#' + row.id} (was #${row.signbank})`,
+      busyMsg: 'Verzoek tot verwijdering…',
+      row,
+      call:    () => api.deleteFromSignbank(row.id),
+      onOk:    (res) => {
+        row.signbank = null;
+        makeCtx().refreshRow(row);
+        toast(`Losgekoppeld (was #${res.previous_glossid})`, 'success');
+      },
+    })
   );
+}
+
+/**
+ * Run a Signbank operation and render its full result in the existing
+ * #signbankModal (same one the push_gloss flow uses). Doesn't auto-close.
+ */
+async function runSignbankOperation({ title, busyMsg, row, call, onOk }) {
+  $('#signbankTitle').textContent = title;
+  $('#signbankRetryBtn').onclick = () => runSignbankOperation({ title, busyMsg, row, call, onOk });
+
+  const body = $('#signbankBody');
+  const status = $('#signbankFooterStatus');
+  clearChildren(body);
+  body.appendChild(renderSourceSection(row));
+  body.appendChild(renderBanner('info', busyMsg, ''));
+  status.className = 'signbank-status busy';
+  status.textContent = 'Bezig…';
+  $('#signbankModal').classList.remove('hidden');
+
+  let res;
+  try {
+    res = await call();
+  } catch (e) {
+    clearChildren(body);
+    body.appendChild(renderSourceSection(row));
+    body.appendChild(renderBanner('error', 'Verzoek mislukt', e.message));
+    status.className = 'signbank-status';
+    status.textContent = '';
+    return;
+  }
+
+  // Re-render with full detail.
+  clearChildren(body);
+  body.appendChild(renderSourceSection(row));
+  body.appendChild(renderSignbankResultBanner(res));
+  body.appendChild(renderLogSection(res.log || []));
+  // The broadcast endpoint nests the underlying request/response inside `create`.
+  const httpReq  = res.request  || res.create?.request  || null;
+  const httpRes  = httpReq ? {
+    response:     res.response     ?? res.create?.response,
+    raw_excerpt:  res.raw_excerpt  ?? res.create?.raw_excerpt,
+    content_type: res.content_type ?? res.create?.content_type,
+    status:       res.status       ?? res.create?.status,
+    duration_ms:  res.duration_ms  ?? res.create?.duration_ms,
+    http_error:   res.http_error   ?? res.create?.http_error,
+  } : null;
+  if (httpReq) body.appendChild(renderRequestSection(httpReq));
+  if (httpRes && (httpRes.response !== undefined && httpRes.response !== null))
+    body.appendChild(renderResponseSection(httpRes));
+
+  status.className = 'signbank-status';
+  status.textContent = res.ok
+    ? `Klaar — HTTP ${httpRes?.status ?? ''} in ${httpRes?.duration_ms ?? '?'} ms`
+    : `Mislukt — HTTP ${httpRes?.status ?? ''} in ${httpRes?.duration_ms ?? '?'} ms`;
+
+  if (res.ok && typeof onOk === 'function') onOk(res);
+}
+
+function renderSignbankResultBanner(res) {
+  if (res.ok) {
+    const id = res.glossid || res.previous_glossid;
+    const detail = id ? `glossid: ${id}` : '';
+    return renderBanner('success', 'Signbank: succes', detail);
+  }
+  let detail;
+  const httpResponse = res.response ?? res.create?.response;
+  if (httpResponse && typeof httpResponse === 'object') {
+    if (Array.isArray(httpResponse.errors)) {
+      detail = httpResponse.errors
+        .map(e => typeof e === 'string' ? e : (e.message || e.code || JSON.stringify(e)))
+        .join(' · ');
+    } else if (httpResponse._html_error) {
+      detail = `${httpResponse.h1 || httpResponse.title || 'Server error'} — ${httpResponse.detail || ''}`.trim();
+    } else if (httpResponse.error) {
+      detail = httpResponse.error;
+    } else {
+      detail = JSON.stringify(httpResponse).slice(0, 200);
+    }
+  } else if (typeof httpResponse === 'string') {
+    detail = httpResponse.slice(0, 200);
+  } else {
+    detail = `HTTP ${res.status ?? '?'}`;
+  }
+  return renderBanner('error', 'Signbank gaf een fout', detail);
 }
 
 /* ---------- Context toggle (Signbank / Signio) ---------- */
