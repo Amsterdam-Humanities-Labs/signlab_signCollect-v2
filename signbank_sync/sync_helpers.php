@@ -43,6 +43,50 @@ function signbank_senses_keys(): array {
     return ['senses' => 'Senses (Dutch)', 'sensesEngels' => 'Senses (English)'];
 }
 
+/**
+ * Phonology dropdown fields: form_data stores the FieldChoice machine_value
+ * (e.g. "2") but Signbank's api_update_gloss expects the human label
+ * (e.g. "1", "2a", "5w"). We translate via the same `phonology_options.json`
+ * the UI uses.
+ *
+ * Boolean fields (RepeatedMovement, AlternatingMovement) are intentionally
+ * NOT in this list — their FieldChoice options are also "True"/"False"
+ * strings, which signbank_normalize_value already produces.
+ */
+function signbank_phonology_dropdown_fields(): array {
+    return [
+        'Handeness', 'strongHand', 'weakHand', 'HandshapeChange',
+        'RelationArticulators', 'handLocation', 'ContactType',
+        'MovementShape', 'MovementDirection',
+        'relativeOrienationMovement', 'relativeOrienationLocation',
+        'orientationChange',
+    ];
+}
+
+/** Returns the cached map: fieldName → [machine_value => human_label]. */
+function signbank_phonology_translation(): array {
+    static $cache = null;
+    if ($cache !== null) return $cache;
+
+    $cache = [];
+    $path = __DIR__ . '/../data/phonology_options.json';
+    if (!is_file($path)) return $cache;
+    $opts = json_decode(file_get_contents($path), true);
+    if (!is_array($opts)) return $cache;
+
+    foreach ($opts as $field => $rows) {
+        if (!is_array($rows)) continue;
+        $cache[$field] = [];
+        foreach ($rows as $row) {
+            if (!isset($row['value'])) continue;
+            $label = $row['EN'] ?? $row['NL'] ?? null;  // prefer English; same value usually
+            if ($label === null) continue;
+            $cache[$field][(string)$row['value']] = (string)$label;
+        }
+    }
+    return $cache;
+}
+
 function signbank_normalize_value(string $sourceField, $value): string {
     if ($value === null) return '';
     if (in_array($sourceField, ['RepeatedMovement', 'AlternatingMovement'], true)) {
@@ -50,7 +94,20 @@ function signbank_normalize_value(string $sourceField, $value): string {
         if ($v === 'yes' || $v === 'true' || $v === '1') return 'True';
         return 'False';
     }
-    return trim((string)$value);
+    $v = trim((string)$value);
+    if ($v === '') return '';
+    if (in_array($sourceField, signbank_phonology_dropdown_fields(), true)) {
+        $map = signbank_phonology_translation()[$sourceField] ?? null;
+        if ($map !== null) {
+            // Only translate when the value looks like a numeric machine_value AND
+            // is in the map. Anything else is passed through (covers legacy rows
+            // that already store human labels).
+            if (ctype_digit($v) && isset($map[$v])) {
+                return $map[$v];
+            }
+        }
+    }
+    return $v;
 }
 
 function signbank_build_update_payload(array $changedRow): array {
