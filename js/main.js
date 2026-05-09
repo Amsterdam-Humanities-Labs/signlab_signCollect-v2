@@ -1237,11 +1237,13 @@ async function compareGloss(row) {
   link.hidden = false;
   link.href = `https://signbank.cls.ru.nl/dictionary/gloss/${encodeURIComponent(row.signbank)}.html`;
 
-  // Wire force-push / force-pull buttons (each click confirms first).
+  // Wire push/pull buttons (each click confirms first).
   $('#sbForcePushBtn').hidden = false;
   $('#sbForcePullBtn').hidden = false;
+  $('#sbPushDiffBtn').hidden = false;
   $('#sbForcePushBtn').onclick = () => forceSyncDirection(row, 'push');
   $('#sbForcePullBtn').onclick = () => forceSyncDirection(row, 'pull');
+  $('#sbPushDiffBtn').onclick  = () => pushDifferences(row);
 
   clearChildren(body);
   body.appendChild(renderBanner('info', 'Bezig met ophalen van Signbank…', ''));
@@ -1278,6 +1280,10 @@ async function compareGloss(row) {
                : 'Alles komt overeen met Signbank',
     `glossid #${res.glossid} · ${res.duration_ms} ms`));
 
+  // Cache for "Push verschillen" so it knows which fields differ.
+  lastCompareData = res;
+  $('#sbPushDiffBtn').disabled = (res.mismatch_count || 0) === 0;
+
   // Media side-by-side
   body.appendChild(renderCompareMedia(row, res));
 
@@ -1291,43 +1297,143 @@ async function compareGloss(row) {
   status.textContent = `Klaar — ${res.duration_ms} ms`;
 }
 
-function forceSyncDirection(row, direction) {
-  const verb = direction === 'push' ? 'Push' : 'Pull';
+// Cache the most recent compare result so "Push differences" knows which
+// fields are out of sync without a redundant fetch.
+let lastCompareData = null;
+
+async function forceSyncDirection(row, direction) {
+  const verb = direction === 'push' ? 'Push alles' : 'Pull alles';
   const dir  = direction === 'push' ? 'signCollect → Signbank' : 'Signbank → signCollect';
   openConfirmModal(
-    `${verb} alles (${dir})? Dit overschrijft alle waarden aan de bestemmingskant voor glos "${row.glos}" (#${row.signbank}).`,
-    async () => {
-      const status = $('#sbCompareStatus');
-      status.className = 'signbank-status busy';
-      status.textContent = `${verb}en…`;
-      try {
-        const res = direction === 'push'
-          ? await api.forcePushToSignbank(row.id)
-          : await api.forcePullFromSignbank(row.id);
-        if (res.ok) {
-          toast(`${verb} klaar — ${(res.fields_sent || res.fields_set || []).length} velden`, 'success');
-          if (direction === 'pull') {
-            // Pull updates form_data; refresh local row so the compare reflects new values.
-            await refresh();
-          }
-          // Re-run the comparison to reflect new state.
-          const fresh = state.rows.find(r => r.id === row.id) || row;
-          await compareGloss(fresh);
-        } else {
-          const detail = res.error
-            || (res.response && (res.response.errors?.[0]?.message || res.response.detail))
-            || `HTTP ${res.status}`;
-          toast(`${verb} mislukt: ${detail}`, 'error');
-          status.className = 'signbank-status';
-          status.textContent = '';
-        }
-      } catch (e) {
-        toast(`${verb} mislukt: ${e.message}`, 'error');
-        status.className = 'signbank-status';
-        status.textContent = '';
-      }
-    }
+    `${verb} (${dir})? Dit overschrijft alle waarden aan de bestemmingskant voor glos "${row.glos}" (#${row.signbank}).`,
+    async () => doSyncOp(row, direction)
   );
+}
+
+async function pushDifferences(row) {
+  const data = lastCompareData;
+  if (!data) {
+    toast('Wacht tot de vergelijking geladen is', 'error');
+    return;
+  }
+  const mismatchedLocalKeys = (data.fields || [])
+    .filter(f => !f.matches)
+    .map(f => f.local_key);
+  if (!mismatchedLocalKeys.length) {
+    toast('Geen verschillen om te pushen', 'success');
+    return;
+  }
+  const labels = (data.fields || [])
+    .filter(f => !f.matches)
+    .map(f => f.label)
+    .join(', ');
+  openConfirmModal(
+    `Push ${mismatchedLocalKeys.length} verschillen naar Signbank? Velden: ${labels}`,
+    async () => doSyncOp(row, 'push', mismatchedLocalKeys)
+  );
+}
+
+async function doSyncOp(row, direction, onlyFields) {
+  const verb = direction === 'push' ? 'Push' : 'Pull';
+  const body = $('#sbCompareBody');
+  const status = $('#sbCompareStatus');
+  status.className = 'signbank-status busy';
+  status.textContent = `${verb}…`;
+  // Prepend a busy banner so the user sees something immediately.
+  const busyBanner = renderBanner('info', `${verb}: bezig met versturen…`, '');
+  body.insertBefore(busyBanner, body.firstChild);
+
+  let res;
+  try {
+    res = direction === 'push'
+      ? await api.forcePushToSignbank(row.id, onlyFields)
+      : await api.forcePullFromSignbank(row.id);
+  } catch (e) {
+    busyBanner.remove();
+    body.insertBefore(renderBanner('error', `${verb} mislukt`, e.message), body.firstChild);
+    status.className = 'signbank-status';
+    status.textContent = '';
+    return;
+  }
+
+  busyBanner.remove();
+  // Render a per-operation results panel at the top of the modal.
+  body.insertBefore(renderSyncOpResult(verb, direction, res), body.firstChild);
+
+  if (res.ok || (res.succeeded && res.succeeded.length)) {
+    if (direction === 'pull') await refresh();
+    const fresh = state.rows.find(r => r.id === row.id) || row;
+    // After a successful op, refresh the underlying compare state so the table
+    // reflects the new agreement. (Prepend the result panel again since
+    // compareGloss clears the body.)
+    const resultPanel = body.firstChild;
+    body.removeChild(resultPanel);
+    await compareGloss(fresh);
+    $('#sbCompareBody').insertBefore(resultPanel, $('#sbCompareBody').firstChild);
+  }
+
+  status.className = 'signbank-status';
+  status.textContent = res.ok
+    ? `${verb} klaar — ${(res.succeeded || res.fields_set || []).length} velden`
+    : `${verb} klaar met fouten — ${(res.failed || []).length} mislukt`;
+}
+
+function renderSyncOpResult(verb, direction, res) {
+  const succeeded = res.succeeded || res.fields_set || [];
+  const failed    = res.failed    || [];
+  const kind = res.ok ? 'success' : (succeeded.length ? 'info' : 'error');
+  const wrap = el('section', { class: 'sb-section' });
+  wrap.appendChild(el('header', {},
+    el('span', {}, `Resultaat: ${verb}`),
+    el('span', { style: 'text-transform:none;letter-spacing:0;color:var(--text);' },
+      `mode=${res.mode || (direction === 'pull' ? 'pull' : '?')} · glossid #${res.glossid || '?'}`
+    )));
+  const div = el('div', { class: 'sb-section-body' });
+  div.appendChild(renderBanner(
+    kind,
+    res.ok ? 'Voltooid zonder fouten'
+           : (succeeded.length ? `${succeeded.length} velden ok, ${failed.length} mislukt`
+                               : `${verb} volledig mislukt`),
+    res.error || ''));
+
+  if (succeeded.length) {
+    const okSec = el('div', { style: 'margin-top:8px;font-size:12.5px;' },
+      el('strong', { style: 'color:var(--success);' }, `Geslaagd (${succeeded.length}): `),
+      succeeded.join(', ')
+    );
+    div.appendChild(okSec);
+  }
+  if (failed.length) {
+    const det = el('details', { open: true, style: 'margin-top:8px;' });
+    det.appendChild(el('summary', { style: 'color:var(--danger);font-weight:600;cursor:pointer;' },
+      `Mislukt (${failed.length})`));
+    failed.forEach(f => {
+      const errMsg = (f.error && (f.error.errors?.Exception
+                       || f.error.errors?.[Object.keys(f.error.errors||{})[0]]
+                       || f.error.error
+                       || JSON.stringify(f.error)))
+                     || `HTTP ${f.status}`;
+      det.appendChild(el('div', { style: 'font-size:12px;color:var(--text-muted);padding:3px 0;' },
+        el('code', {}, f.field), ` = `, el('code', {}, String(f.value).slice(0, 80)),
+        ` → `, el('span', { style: 'color:var(--danger);' }, errMsg)));
+    });
+    div.appendChild(det);
+  }
+  // For pull operations, show the report
+  if (direction === 'pull' && (res.report || []).length) {
+    const det = el('details', { style: 'margin-top:8px;' });
+    det.appendChild(el('summary', { style: 'cursor:pointer;font-size:12.5px;color:var(--text-muted);' },
+      `Toon ${res.report.length} bijgewerkte velden`));
+    res.report.forEach(r => {
+      det.appendChild(el('div', { style: 'font-size:12px;color:var(--text-muted);padding:2px 0;' },
+        el('code', {}, r.field), ' ← remote: ',
+        el('code', {}, String(r.remote).slice(0, 60)),
+        ' → stored: ', el('code', {}, String(r.stored).slice(0, 60))));
+    });
+    div.appendChild(det);
+  }
+  wrap.appendChild(div);
+  return wrap;
 }
 
 function renderCompareMedia(row, res) {

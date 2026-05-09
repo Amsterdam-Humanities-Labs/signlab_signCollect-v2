@@ -14,41 +14,46 @@ require_session();
 
 $body = json_body();
 $id   = (int)($body['id'] ?? 0);
+$only = isset($body['only_fields']) && is_array($body['only_fields']) ? $body['only_fields'] : null;
 if ($id <= 0) json_response(['error' => 'invalid_id'], 400);
 
 $pdo = db();
-$stmt = $pdo->prepare(
-    "SELECT * FROM form_data WHERE id = ?"
-);
+$stmt = $pdo->prepare("SELECT * FROM form_data WHERE id = ?");
 $stmt->execute([$id]);
 $row = $stmt->fetch();
 if (!$row) json_response(['error' => 'not_found'], 404);
 if (empty($row['signbank'])) json_response(['ok' => false, 'error' => 'not_connected'], 400);
 
-// Try one bulk push first; if Signbank rolls everything back because a single
-// field hits a server-side exception (e.g. "Transaction management error" on
-// Virtual Object / Phonology Other in current Signbank builds), fall back to
-// pushing each field individually so the rest still land.
-$bulk = signbank_auto_sync_fields($pdo, $id, $row);
-if ($bulk === null) {
-    json_response(['ok' => false, 'error' => 'nothing_to_push'], 400);
+$cfg = signbank_config();
+$path = '/dictionary/api_update_gloss/' . rawurlencode($cfg['dataset_id']) . '/' . rawurlencode($row['signbank']) . '/';
+
+// Build the candidate payload from the entire row, then optionally narrow to
+// only the local field names the caller asked for.
+$source = $row;
+if ($only !== null) {
+    $source = array_intersect_key($row, array_flip($only));
+    if (!$source) json_response(['ok' => false, 'error' => 'no_matching_fields_in_row'], 400);
 }
+$payload = signbank_build_update_payload($source);
+if (!$payload) json_response(['ok' => false, 'error' => 'nothing_to_push'], 400);
+
+// One bulk push first. If Signbank rolls everything back (e.g. server-side
+// "Transaction management error" on Virtual Object / Phonology Other), fall
+// back to per-field so the others still land.
+$bulk = signbank_request('POST', $path, $payload);
 if ($bulk['ok']) {
     json_response([
         'ok'          => true,
         'mode'        => 'bulk',
         'status'      => $bulk['status'],
-        'glossid'     => $bulk['glossid'],
-        'fields_sent' => $bulk['fields_sent'],
+        'glossid'     => $row['signbank'],
+        'fields_sent' => array_keys($payload),
+        'succeeded'   => array_keys($payload),
+        'failed'      => [],
         'response'    => $bulk['body'],
     ]);
 }
 
-// Per-field fallback.
-$cfg = signbank_config();
-$path = '/dictionary/api_update_gloss/' . rawurlencode($cfg['dataset_id']) . '/' . rawurlencode($bulk['glossid']) . '/';
-
-$payload = signbank_build_update_payload($row);
 $succeeded = []; $failed = [];
 foreach ($payload as $field => $value) {
     $r = signbank_request('POST', $path, [$field => $value]);
@@ -61,11 +66,11 @@ foreach ($payload as $field => $value) {
 }
 
 json_response([
-    'ok'         => count($failed) === 0,
-    'mode'       => 'per_field',
-    'glossid'    => $bulk['glossid'],
-    'fields_sent'=> array_keys($payload),
-    'succeeded'  => $succeeded,
-    'failed'     => $failed,
-    'bulk_error' => $bulk['body'],
+    'ok'          => count($failed) === 0,
+    'mode'        => 'per_field',
+    'glossid'     => $row['signbank'],
+    'fields_sent' => array_keys($payload),
+    'succeeded'   => $succeeded,
+    'failed'      => $failed,
+    'bulk_error'  => $bulk['body'],
 ]);
