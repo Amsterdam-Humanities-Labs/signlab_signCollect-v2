@@ -304,6 +304,8 @@ function renderActionsCol(row, ctx, rowWrap) {
   pop.appendChild(itemBtn('record', 'fa-video', 'Zelfopname maken', () => ctx.openRecord(row)));
   if (ctx.contextIsSignbank()) {
     if (row.signbank) {
+      pop.appendChild(itemBtn('signbank-compare', 'fa-magnifying-glass',
+        `Vergelijken met Signbank (#${row.signbank})`, () => ctx.compareWithSignbank(row)));
       pop.appendChild(itemBtn('signbank-disconnect', 'fa-link-slash',
         `Loskoppelen van Signbank (#${row.signbank})`, () => ctx.disconnectSignbank(row), true));
     } else {

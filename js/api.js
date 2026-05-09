@@ -43,6 +43,7 @@ export const api = {
   getPhonology:   (id) => call(`phonology_get.php?id=${encodeURIComponent(id)}`),
   broadcastToSignbank: (id) => post('../signbank_sync/broadcast_gloss.php', { id }),
   deleteFromSignbank:  (id) => post('../signbank_sync/delete_gloss.php', { id }),
+  fetchSignbankGloss:  (id) => call(`../signbank_sync/fetch_gloss.php?id=${encodeURIComponent(id)}`),
   pushToSignbank: (id) => fetch('signbank_sync/push_gloss.php', {
     method: 'POST',
     credentials: 'same-origin',

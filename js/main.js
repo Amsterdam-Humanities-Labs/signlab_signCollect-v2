@@ -85,6 +85,7 @@ async function init() {
   setupStudioModal();
   setupPhonologyModal();
   setupSignbankModal();
+  setupCompareModal();
   setupOverscrollPaging();
   setupNavDrawer();
   setupContextToggle();
@@ -271,6 +272,7 @@ function makeCtx() {
     pushToSignbank: (row)     => pushGlossToSignbank(row),
     broadcastToSignbank: (row) => broadcastGloss(row),
     disconnectSignbank: (row)  => disconnectGloss(row),
+    compareWithSignbank: (row) => compareGloss(row),
   };
 }
 
@@ -1215,6 +1217,146 @@ async function runSignbankOperation({ title, busyMsg, row, call, onOk }) {
     : `Mislukt — HTTP ${httpRes?.status ?? ''} in ${httpRes?.duration_ms ?? '?'} ms`;
 
   if (res.ok && typeof onOk === 'function') onOk(res);
+}
+
+/* ---------- Signbank compare modal ---------- */
+
+function setupCompareModal() {
+  const modal = $('#sbCompareModal');
+  modal.addEventListener('click', ev => {
+    if (ev.target.matches('[data-close]') || ev.target === modal) modal.classList.add('hidden');
+  });
+}
+
+async function compareGloss(row) {
+  const modal  = $('#sbCompareModal');
+  const body   = $('#sbCompareBody');
+  const status = $('#sbCompareStatus');
+  const link   = $('#sbCompareOpenLink');
+  $('#sbCompareTitle').textContent = `Vergelijken met Signbank — ${row.glos || '#' + row.id} (#${row.signbank})`;
+  link.hidden = false;
+  link.href = `https://signbank.cls.ru.nl/dictionary/gloss/${encodeURIComponent(row.signbank)}.html`;
+
+  clearChildren(body);
+  body.appendChild(renderBanner('info', 'Bezig met ophalen van Signbank…', ''));
+  status.className = 'signbank-status busy';
+  status.textContent = 'Ophalen…';
+  modal.classList.remove('hidden');
+
+  let res;
+  try {
+    res = await api.fetchSignbankGloss(row.id);
+  } catch (e) {
+    clearChildren(body);
+    body.appendChild(renderBanner('error', 'Ophalen mislukt', e.message));
+    status.className = 'signbank-status';
+    status.textContent = '';
+    return;
+  }
+
+  clearChildren(body);
+  if (!res.ok) {
+    const detail = res.error
+      || (res.response && (res.response.errors?.[0]?.message || res.response.detail))
+      || `HTTP ${res.status}`;
+    body.appendChild(renderBanner('error', 'Signbank gaf een fout', detail));
+    if (res.response) body.appendChild(renderResponseSection({ response: res.response, content_type: 'application/json' }));
+    status.className = 'signbank-status';
+    status.textContent = '';
+    return;
+  }
+
+  const mismatches = res.mismatch_count || 0;
+  body.appendChild(renderBanner(mismatches ? 'info' : 'success',
+    mismatches ? `${mismatches} verschil${mismatches === 1 ? '' : 'len'} met Signbank`
+               : 'Alles komt overeen met Signbank',
+    `glossid #${res.glossid} · ${res.duration_ms} ms`));
+
+  // Media side-by-side
+  body.appendChild(renderCompareMedia(row, res));
+
+  // Comparison table
+  body.appendChild(renderCompareTable(res.fields));
+
+  // Extras (read-only fields)
+  body.appendChild(renderCompareExtras(res.remote_extra));
+
+  status.className = 'signbank-status';
+  status.textContent = `Klaar — ${res.duration_ms} ms`;
+}
+
+function renderCompareMedia(row, res) {
+  const wrap = el('section', { class: 'sb-compare-media' });
+
+  // Local pane: latest matched_transcription M-frame, fallback to zelfopname
+  const localPane = el('div', { class: 'pane' });
+  localPane.appendChild(el('span', { class: 'pane-label' }, 'signCollect'));
+  let localSrc = null;
+  if (row.thumbnail_video?.m_file) {
+    const folder = row.thumbnail_video.post_processed === 1 ? 'post' : 'raw';
+    localSrc = `https://signcollect.nl/gebarenoverleg_media/studioFilesMini/${folder}/${encodeURIComponent(row.thumbnail_video.m_file.replace(/\.\w+$/, ''))}.mp4`;
+  } else if ((row.zelfopname || []).length) {
+    localSrc = `/uploads/${encodeURIComponent(row.zelfopname[0])}`;
+  }
+  if (localSrc) {
+    localPane.appendChild(el('video', { src: localSrc, muted: true, autoplay: true, loop: true, playsinline: true }));
+  } else {
+    localPane.classList.add('empty');
+    localPane.appendChild(el('span', {}, '— geen video —'));
+  }
+
+  // Signbank pane: Video URL from get_gloss_data
+  const remotePane = el('div', { class: 'pane' });
+  remotePane.appendChild(el('span', { class: 'pane-label' }, 'Signbank'));
+  const sbVideoPath = res.remote_extra?.Video;
+  if (sbVideoPath) {
+    const sbVideoUrl = sbVideoPath.startsWith('http')
+      ? sbVideoPath
+      : 'https://signbank.cls.ru.nl' + sbVideoPath.replace(/^\/+/, '/');
+    remotePane.appendChild(el('video', { src: sbVideoUrl, muted: true, autoplay: true, loop: true, playsinline: true, crossorigin: 'anonymous' }));
+  } else {
+    remotePane.classList.add('empty');
+    remotePane.appendChild(el('span', {}, '— Signbank heeft geen video —'));
+  }
+
+  wrap.append(localPane, remotePane);
+  return wrap;
+}
+
+function renderCompareTable(fields) {
+  const tbl = el('table', { class: 'sb-compare-table' });
+  const thead = el('thead', {}, el('tr', {},
+    el('th', { class: 'icon-state' }, ''),
+    el('th', {}, 'Veld'),
+    el('th', {}, 'signCollect'),
+    el('th', {}, 'Signbank'),
+  ));
+  const tbody = el('tbody', {});
+  fields.forEach(f => {
+    const tr = el('tr', { class: f.matches ? '' : 'mismatch' });
+    tr.appendChild(el('td', { class: 'icon-state' },
+      f.matches
+        ? el('i', { class: 'fas fa-check ok' })
+        : el('i', { class: 'fas fa-triangle-exclamation bad' })
+    ));
+    tr.appendChild(el('td', {}, f.label));
+    tr.appendChild(el('td', { class: f.local  === '' ? 'empty' : '' }, f.local  === '' ? '— leeg —' : f.local));
+    tr.appendChild(el('td', { class: f.remote === '' ? 'empty' : '' }, f.remote === '' ? '— leeg —' : f.remote));
+    tbody.appendChild(tr);
+  });
+  tbl.append(thead, tbody);
+  return tbl;
+}
+
+function renderCompareExtras(extra) {
+  if (!extra) return document.createTextNode('');
+  const dl = el('dl', { class: 'sb-compare-extras' });
+  Object.entries(extra).forEach(([k, v]) => {
+    if (v === null || v === undefined || v === '') return;
+    dl.appendChild(el('dt', {}, k));
+    dl.appendChild(el('dd', {}, Array.isArray(v) ? v.join(' · ') : String(v)));
+  });
+  return dl;
 }
 
 function renderSignbankResultBanner(res) {
