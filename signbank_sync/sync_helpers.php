@@ -54,21 +54,16 @@ function signbank_normalize_value(string $sourceField, $value): string {
 }
 
 function signbank_build_update_payload(array $changedRow): array {
+    // NOTE: Signbank's api_update_gloss does NOT accept Senses fields — they
+    // are only settable on create. Auto-sync therefore only pushes the
+    // lemma/annotation/phonology subset. To change senses post-create the
+    // user must either re-broadcast or use a future sense-specific endpoint.
     $map = signbank_field_map();
     $out = [];
     foreach ($map as $src => $dst) {
         if (!array_key_exists($src, $changedRow)) continue;
         $v = signbank_normalize_value($src, $changedRow[$src]);
         if ($v !== '') $out[$dst] = $v;
-    }
-    if (array_key_exists('senses', $changedRow) || array_key_exists('sensesEngels', $changedRow)) {
-        $nl = signbank_decode_json_array($changedRow['senses'] ?? null);
-        $en = signbank_decode_json_array($changedRow['sensesEngels'] ?? null);
-        $nl = array_values(array_filter(array_map('trim', $nl), fn($s) => $s !== ''));
-        $en = array_values(array_filter(array_map('trim', $en), fn($s) => $s !== ''));
-        [$alignedNl, $alignedEn] = signbank_align_sense_pair($nl, $en);
-        $out['Senses (Dutch)']   = signbank_serialize_senses_aligned($alignedNl);
-        $out['Senses (English)'] = signbank_serialize_senses_aligned($alignedEn);
     }
     return $out;
 }
