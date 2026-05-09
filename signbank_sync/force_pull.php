@@ -22,12 +22,20 @@ $row = $stmt->fetch();
 if (!$row) json_response(['error' => 'not_found'], 404);
 if (empty($row['signbank'])) json_response(['ok' => false, 'error' => 'not_connected'], 400);
 
+$log = [];
+$logStep = function (string $level, string $msg, $data = null) use (&$log) {
+    $log[] = ['t' => date('H:i:s'), 'level' => $level, 'msg' => $msg, 'data' => $data];
+};
+
 $cfg  = signbank_config();
 $path = '/dictionary/get_gloss_data/' . rawurlencode($cfg['dataset_id']) . '/' . rawurlencode($row['signbank']) . '/';
+$logStep('out', "GET → {$path}");
 $res  = signbank_get($path);
 if (!$res['ok'] || !is_array($res['body'])) {
-    json_response(['ok' => false, 'status' => $res['status'], 'response' => $res['body']], 200);
+    $logStep('error', "Fetch failed (HTTP {$res['status']})", $res['body']);
+    json_response(['ok' => false, 'status' => $res['status'], 'response' => $res['body'], 'log' => $log], 200);
 }
+$logStep('ok', "Fetched gloss from Signbank ({$res['duration_ms']} ms)", null);
 $remote = $res['body'][$row['signbank']] ?? null;
 if (!$remote) {
     json_response(['ok' => false, 'error' => 'no_payload', 'response' => $res['body']], 200);
@@ -83,9 +91,11 @@ foreach ([['Senses: Dutch','senses'], ['Senses: English','sensesEngels']] as [$s
 }
 
 if (!$updates) {
-    json_response(['ok' => true, 'message' => 'no usable fields to pull', 'report' => []]);
+    $logStep('info', 'No usable fields to pull from Signbank');
+    json_response(['ok' => true, 'message' => 'no usable fields to pull', 'report' => [], 'log' => $log]);
 }
 
+$logStep('info', "Updating " . count($updates) . " local field(s)", ['fields' => array_keys($updates)]);
 $cols = array_keys($updates);
 $set  = implode(', ', array_map(fn($c) => "`$c` = ?", $cols));
 $args = array_values($updates);
@@ -97,10 +107,12 @@ $sql = "UPDATE form_data SET $set,
             logboek = CONCAT_WS('\n', NULLIF(CONVERT(logboek USING utf8mb4), ''), ?)
         WHERE id = ?";
 $pdo->prepare($sql)->execute($args);
+$logStep('ok', 'Local form_data row updated');
 
 json_response([
     'ok'          => true,
     'glossid'     => $row['signbank'],
     'fields_set'  => array_keys($updates),
     'report'      => $report,
+    'log'         => $log,
 ]);

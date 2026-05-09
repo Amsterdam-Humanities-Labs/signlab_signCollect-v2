@@ -1382,58 +1382,82 @@ function renderSyncOpResult(verb, direction, res) {
   const succeeded = res.succeeded || res.fields_set || [];
   const failed    = res.failed    || [];
   const kind = res.ok ? 'success' : (succeeded.length ? 'info' : 'error');
-  const wrap = el('section', { class: 'sb-section' });
-  wrap.appendChild(el('header', {},
-    el('span', {}, `Resultaat: ${verb}`),
+
+  const container = el('div', {});
+
+  // 1. Top status banner (matches broadcast modal pattern)
+  let bannerTitle, bannerDetail;
+  if (res.ok) {
+    bannerTitle = `${verb}: voltooid`;
+    bannerDetail = `${succeeded.length} velden naar Signbank glossid #${res.glossid || '?'}`;
+  } else if (succeeded.length) {
+    bannerTitle = `${verb}: deels gelukt`;
+    bannerDetail = `${succeeded.length} ok · ${failed.length} mislukt`;
+  } else {
+    bannerTitle = `${verb}: mislukt`;
+    const firstErr = failed[0]?.error;
+    bannerDetail = (firstErr && (firstErr.errors?.Exception || firstErr.error || JSON.stringify(firstErr).slice(0, 200)))
+                || res.error || `${failed.length} velden mislukt`;
+  }
+  container.appendChild(renderBanner(kind, bannerTitle, bannerDetail));
+
+  // 2. Tijdlijn — same renderer the broadcast modal uses
+  if ((res.log || []).length) {
+    container.appendChild(renderLogSection(res.log));
+  }
+
+  // 3. Per-field detail table (succeeded vs failed)
+  const summary = el('section', { class: 'sb-section' });
+  summary.appendChild(el('header', {},
+    el('span', {}, 'Per-veld resultaat'),
     el('span', { style: 'text-transform:none;letter-spacing:0;color:var(--text);' },
-      `mode=${res.mode || (direction === 'pull' ? 'pull' : '?')} · glossid #${res.glossid || '?'}`
-    )));
-  const div = el('div', { class: 'sb-section-body' });
-  div.appendChild(renderBanner(
-    kind,
-    res.ok ? 'Voltooid zonder fouten'
-           : (succeeded.length ? `${succeeded.length} velden ok, ${failed.length} mislukt`
-                               : `${verb} volledig mislukt`),
-    res.error || ''));
+      `mode=${res.mode || (direction === 'pull' ? 'pull' : '?')}`)
+  ));
+  const sumDiv = el('div', { class: 'sb-section-body' });
 
   if (succeeded.length) {
-    const okSec = el('div', { style: 'margin-top:8px;font-size:12.5px;' },
-      el('strong', { style: 'color:var(--success);' }, `Geslaagd (${succeeded.length}): `),
-      succeeded.join(', ')
-    );
-    div.appendChild(okSec);
+    const okWrap = el('div', { style: 'margin-bottom:10px;font-size:12.5px;' });
+    okWrap.appendChild(el('strong', { style: 'color:var(--success);' }, `✓ Geslaagd (${succeeded.length}): `));
+    okWrap.appendChild(document.createTextNode(succeeded.join(', ')));
+    sumDiv.appendChild(okWrap);
   }
   if (failed.length) {
-    const det = el('details', { open: true, style: 'margin-top:8px;' });
-    det.appendChild(el('summary', { style: 'color:var(--danger);font-weight:600;cursor:pointer;' },
-      `Mislukt (${failed.length})`));
+    sumDiv.appendChild(el('div', { style: 'font-size:12.5px;margin-bottom:6px;' },
+      el('strong', { style: 'color:var(--danger);' }, `✗ Mislukt (${failed.length}):`)
+    ));
     failed.forEach(f => {
       const errMsg = (f.error && (f.error.errors?.Exception
                        || f.error.errors?.[Object.keys(f.error.errors||{})[0]]
                        || f.error.error
                        || JSON.stringify(f.error)))
                      || `HTTP ${f.status}`;
-      det.appendChild(el('div', { style: 'font-size:12px;color:var(--text-muted);padding:3px 0;' },
-        el('code', {}, f.field), ` = `, el('code', {}, String(f.value).slice(0, 80)),
-        ` → `, el('span', { style: 'color:var(--danger);' }, errMsg)));
+      const row = el('div', { style: 'font-size:12px;padding:6px 10px;background:#fdecec;border-left:3px solid var(--danger);border-radius:4px;margin-top:4px;' },
+        el('code', { style: 'font-weight:600;' }, f.field),
+        ' = ', el('code', {}, String(f.value).slice(0, 80)),
+        el('div', { style: 'color:var(--danger);margin-top:2px;' }, errMsg)
+      );
+      sumDiv.appendChild(row);
     });
-    div.appendChild(det);
   }
-  // For pull operations, show the report
+  summary.appendChild(sumDiv);
+  container.appendChild(summary);
+
+  // 4. Pull report (which Signbank values landed where in form_data)
   if (direction === 'pull' && (res.report || []).length) {
-    const det = el('details', { style: 'margin-top:8px;' });
-    det.appendChild(el('summary', { style: 'cursor:pointer;font-size:12.5px;color:var(--text-muted);' },
-      `Toon ${res.report.length} bijgewerkte velden`));
+    const reportSec = el('section', { class: 'sb-section' });
+    reportSec.appendChild(el('header', {}, 'Pull-mapping (Signbank → form_data)'));
+    const rd = el('div', { class: 'sb-section-body' });
     res.report.forEach(r => {
-      det.appendChild(el('div', { style: 'font-size:12px;color:var(--text-muted);padding:2px 0;' },
-        el('code', {}, r.field), ' ← remote: ',
-        el('code', {}, String(r.remote).slice(0, 60)),
-        ' → stored: ', el('code', {}, String(r.stored).slice(0, 60))));
+      rd.appendChild(el('div', { style: 'font-size:12px;color:var(--text);padding:3px 0;border-bottom:1px dashed var(--border);' },
+        el('code', { style: 'font-weight:600;' }, r.field),
+        ' ← Signbank: ', el('code', {}, String(r.remote).slice(0, 80)),
+        ' → opgeslagen als ', el('code', {}, String(r.stored).slice(0, 80))));
     });
-    div.appendChild(det);
+    reportSec.appendChild(rd);
+    container.appendChild(reportSec);
   }
-  wrap.appendChild(div);
-  return wrap;
+
+  return container;
 }
 
 function renderCompareMedia(row, res) {
