@@ -153,6 +153,18 @@ function renderThumbCol(row, ctx, rowWrap) {
     String(row.id),
   ));
 
+  if (row.signbank) {
+    col.appendChild(el('a', {
+      class: 'signbank-badge',
+      href: `https://signbank.cls.ru.nl/dictionary/gloss/${encodeURIComponent(row.signbank)}.html`,
+      target: '_blank',
+      title: `Verbonden met Signbank glos #${row.signbank}`,
+    },
+      el('i', { class: 'fas fa-link' }),
+      `SB #${row.signbank}`,
+    ));
+  }
+
   return col;
 }
 
@@ -291,7 +303,13 @@ function renderActionsCol(row, ctx, rowWrap) {
   const pop = el('div', { class: 'menu-pop' });
   pop.appendChild(itemBtn('record', 'fa-video', 'Zelfopname maken', () => ctx.openRecord(row)));
   if (ctx.contextIsSignbank()) {
-    pop.appendChild(itemBtn('push-signbank', 'fa-cloud-arrow-up', 'Push naar Signbank', () => ctx.pushToSignbank(row)));
+    if (row.signbank) {
+      pop.appendChild(itemBtn('signbank-disconnect', 'fa-link-slash',
+        `Loskoppelen van Signbank (#${row.signbank})`, () => ctx.disconnectSignbank(row), true));
+    } else {
+      pop.appendChild(itemBtn('signbank-broadcast', 'fa-cloud-arrow-up',
+        'Broadcast naar Signbank', () => ctx.broadcastToSignbank(row)));
+    }
   }
   if (row.zelfopname.length > 0) {
     const label = row.zelfopname.length === 1

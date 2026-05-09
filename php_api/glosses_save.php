@@ -4,6 +4,8 @@ require_once __DIR__ . '/session.php';
 
 $session = require_session();
 
+require_once __DIR__ . '/../signbank_sync/sync_helpers.php';
+
 $body   = json_body();
 $id     = (int)($body['id'] ?? 0);
 $fields = is_array($body['fields'] ?? null) ? $body['fields'] : [];
@@ -55,12 +57,43 @@ $stmt->execute($args);
 
 $row = $pdo->prepare(
     "SELECT id, glos, glos_engels, wie, thema, labels, glosZichtbaar,
-            zelfopname, senses, sensesEngels, control_nodig
+            zelfopname, senses, sensesEngels, control_nodig, signbank,
+            Handeness, strongHand, weakHand, HandshapeChange, RelationArticulators,
+            handLocation, ContactType, MovementShape, MovementDirection,
+            RepeatedMovement, AlternatingMovement,
+            relativeOrienationMovement, relativeOrienationLocation, orientationChange,
+            virtualObjectt, phonologyOther, mouthGesture, mouthing, phoneticVariation
      FROM form_data WHERE id = ?"
 );
 $row->execute([$id]);
 $r = $row->fetch();
 if (!$r) json_response(['error' => 'not_found'], 404);
+
+// Auto-sync any field changes to Signbank when this row is connected.
+// Only fields that map to a Signbank column trigger a push (see sync_helpers).
+$signbankSync = null;
+if (!empty($r['signbank']) && $fields) {
+    $relevantKeys = array_merge(array_keys(signbank_field_map()), array_keys(signbank_senses_keys()));
+    $relevant = array_intersect_key($fields, array_flip($relevantKeys));
+    if ($relevant) {
+        $merged = $r;
+        foreach ($relevant as $k => $v) $merged[$k] = is_array($v) ? json_encode($v) : $v;
+        try {
+            $sync = signbank_auto_sync_fields($pdo, $id, $merged);
+            if ($sync !== null) {
+                $signbankSync = [
+                    'ok'           => $sync['ok'],
+                    'status'       => $sync['status'],
+                    'glossid'      => $sync['glossid'],
+                    'fields_sent'  => $sync['fields_sent'],
+                    'response'     => $sync['body'],
+                ];
+            }
+        } catch (Throwable $e) {
+            $signbankSync = ['ok' => false, 'error' => $e->getMessage()];
+        }
+    }
+}
 
 json_response([
     'id'             => (int)$r['id'],
@@ -74,4 +107,6 @@ json_response([
     'senses'         => parse_json_array($r['senses']),
     'sensesEngels'   => parse_json_array($r['sensesEngels']),
     'control_nodig'  => parse_json_array($r['control_nodig']),
+    'signbank'       => $r['signbank'] ?: null,
+    'signbank_sync'  => $signbankSync,
 ]);

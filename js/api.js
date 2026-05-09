@@ -41,6 +41,8 @@ export const api = {
   deleteVideo:    (id, filename) => post('delete_video.php', { id, filename }),
   deleteStudioVideo: (id) => post('studio_video_delete.php', { id }),
   getPhonology:   (id) => call(`phonology_get.php?id=${encodeURIComponent(id)}`),
+  broadcastToSignbank: (id) => post('../signbank_sync/broadcast_gloss.php', { id }),
+  deleteFromSignbank:  (id) => post('../signbank_sync/delete_gloss.php', { id }),
   pushToSignbank: (id) => fetch('signbank_sync/push_gloss.php', {
     method: 'POST',
     credentials: 'same-origin',

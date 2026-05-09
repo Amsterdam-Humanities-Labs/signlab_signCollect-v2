@@ -269,6 +269,8 @@ function makeCtx() {
     deleteAllZelfopname: (row) => deleteAllZelfopname(row),
     contextIsSignbank: ()     => state.context === 'signbank',
     pushToSignbank: (row)     => pushGlossToSignbank(row),
+    broadcastToSignbank: (row) => broadcastGloss(row),
+    disconnectSignbank: (row)  => disconnectGloss(row),
   };
 }
 
@@ -1121,6 +1123,55 @@ function renderResponseSection(res) {
   }
   wrap.appendChild(div);
   return wrap;
+}
+
+/* ---------- Signbank broadcast & disconnect ---------- */
+
+function broadcastGloss(row) {
+  openConfirmModal(
+    `Glos "${row.glos || '#' + row.id}" naar Signbank pushen? Dit maakt een nieuwe Signbank-entry aan en slaat de glossid lokaal op.`,
+    async () => {
+      toast(`Bezig met broadcasten…`, 'info');
+      try {
+        const res = await api.broadcastToSignbank(row.id);
+        if (res.ok) {
+          row.signbank = res.glossid;
+          makeCtx().refreshRow(row);
+          toast(`Verbonden met Signbank — glossid #${res.glossid}`, 'success');
+        } else {
+          const detail = (res.response && (res.response.errors?.[0]?.message || res.response.detail))
+                       || `HTTP ${res.status}`;
+          toast('Broadcast mislukt: ' + detail, 'error');
+          console.warn('broadcast result:', res);
+        }
+      } catch (e) {
+        toast('Broadcast mislukt: ' + e.message, 'error');
+      }
+    }
+  );
+}
+
+function disconnectGloss(row) {
+  openConfirmModal(
+    `Loskoppelen van Signbank — glos "${row.glos}" zal worden verwijderd uit Signbank (#${row.signbank}). Doorgaan?`,
+    async () => {
+      toast(`Loskoppelen van Signbank…`, 'info');
+      try {
+        const res = await api.deleteFromSignbank(row.id);
+        if (res.ok) {
+          row.signbank = null;
+          makeCtx().refreshRow(row);
+          toast(`Losgekoppeld (was #${res.previous_glossid})`, 'success');
+        } else {
+          const detail = (res.response && (res.response.errors?.[0]?.message || res.response.detail))
+                       || `HTTP ${res.status}`;
+          toast('Loskoppelen mislukt: ' + detail, 'error');
+        }
+      } catch (e) {
+        toast('Loskoppelen mislukt: ' + e.message, 'error');
+      }
+    }
+  );
 }
 
 /* ---------- Context toggle (Signbank / Signio) ---------- */

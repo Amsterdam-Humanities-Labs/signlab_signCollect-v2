@@ -4,6 +4,8 @@ require_once __DIR__ . '/session.php';
 
 $session = require_session();
 
+require_once __DIR__ . '/../signbank_sync/sync_helpers.php';
+
 $id = (int)($_POST['id'] ?? 0);
 if ($id <= 0)                          json_response(['error' => 'invalid_id'], 400);
 if (!isset($_FILES['file']))           json_response(['error' => 'no_file'], 400);
@@ -43,4 +45,24 @@ $upd = $pdo->prepare(
 );
 $upd->execute([json_encode(array_values($arr)), $logEntry, $id]);
 
-json_response(['filename' => $filename, 'zelfopname' => $arr]);
+// Auto-push the new self-recorded video to Signbank when this row is connected.
+$signbankPush = null;
+try {
+    $push = signbank_upload_video_for($pdo, $id, $dest);
+    if ($push !== null) {
+        $signbankPush = [
+            'ok'      => $push['ok'],
+            'status'  => $push['status'] ?? null,
+            'glossid' => $push['glossid'] ?? null,
+            'body'    => $push['body'] ?? null,
+        ];
+    }
+} catch (Throwable $e) {
+    $signbankPush = ['ok' => false, 'error' => $e->getMessage()];
+}
+
+json_response([
+    'filename'      => $filename,
+    'zelfopname'    => $arr,
+    'signbank_push' => $signbankPush,
+]);

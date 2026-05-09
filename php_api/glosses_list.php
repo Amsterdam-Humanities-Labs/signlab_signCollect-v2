@@ -115,7 +115,8 @@ $listSql = "SELECT form_data.id, form_data.glos, form_data.glos_engels, form_dat
                    form_data.thema, form_data.labels, form_data.glosZichtbaar,
                    form_data.zelfopname, form_data.senses, form_data.sensesEngels,
                    form_data.control_nodig,
-                   form_data.fonologie_fase1, form_data.fonologie_fase2
+                   form_data.fonologie_fase1, form_data.fonologie_fase2,
+                   form_data.signbank
             FROM form_data
             {$captureJoin}
             {$whereSql}
@@ -239,6 +240,7 @@ foreach ($rows as $r) {
         'control_nodig'  => parse_json_array($r['control_nodig']),
         'fonologie_fase1' => $r['fonologie_fase1'],
         'fonologie_fase2' => $r['fonologie_fase2'],
+        'signbank'        => $r['signbank'] ?: null,
         'studio_videos'  => $videosByGloss[$id] ?? [],
         'thumbnail_video' => $thumbnailByGloss[$id] ?? null,
         'duplicates'     => $duplicatesByGlos[$r['glos']] ?? [],

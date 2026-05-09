@@ -134,6 +134,23 @@
 }
 .row-id i { font-size: 10px; opacity: .7; }
 
+.signbank-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  align-self: center;
+  padding: 2px 9px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .3px;
+  border-radius: 999px;
+  background: #e8f5ec;
+  color: var(--success);
+  border: 1px solid #c4e2ce;
+  text-decoration: none;
+  transition: filter .12s;
+}
+.signbank-badge:hover { filter: brightness(.96); text-decoration: none; }
+.signbank-badge i { font-size: 9px; }
+
 .studio-open-btn {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 6px 14px;
