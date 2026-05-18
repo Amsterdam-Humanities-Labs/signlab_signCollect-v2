@@ -1,0 +1,76 @@
+From f46d90873619707674d1dda5eb2e871d8ac4540b Mon Sep 17 00:00:00 2001
+From: rem0g <gotterspeer@gmail.com>
+Date: Sat, 9 May 2026 18:42:02 +0000
+Subject: [PATCH 1/2] Detect WebM uploads from plain "WebM" file(1) output
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+detect_video_file_extension() runs `file -b <path>` and checks for
+"Matroska" in the output to identify .webm. On newer file(1) (>=5.41)
+the output for WebM is just "WebM" with no "Matroska" prefix, so the
+detector returned an empty extension and the upload was rejected with
+ValueError("The file is not a video file.")
+
+Repro: POST a valid .webm file (e.g. recorded via MediaRecorder in
+Chrome/Firefox) to api_update_gloss/<glossid>/video on a host with
+file ≥ 5.41 (Ubuntu 24.04 / Debian trixie ship 5.45) → HTTP 500 with
+ValueError, gloss video unchanged.
+
+Fix: also accept "WebM" in the detector's filetype check.
+---
+ signbank/video/convertvideo.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/signbank/video/convertvideo.py b/signbank/video/convertvideo.py
+index e0c7826d..390ae54a 100755
+--- a/signbank/video/convertvideo.py
++++ b/signbank/video/convertvideo.py
+@@ -235,7 +235,7 @@ def detect_video_file_extension(file_path):
+         video_extension = '.mov'
+     elif 'M4V' in filetype:
+         video_extension = '.m4v'
+-    elif 'Matroska' in filetype:
++    elif 'Matroska' in filetype or 'WebM' in filetype:
+         video_extension = '.webm'
+     elif 'MKV' in filetype:
+         video_extension = '.mkv'
+-- 
+2.43.0
+
+
+From 09f937f7745239d94fdb9abfa3f0c33c35226703 Mon Sep 17 00:00:00 2001
+From: rem0g <gotterspeer@gmail.com>
+Date: Sat, 9 May 2026 18:42:11 +0000
+Subject: [PATCH 2/2] Let server_specific.py override STATIC_ROOT
+
+base.py unconditionally set STATIC_ROOT = PREFIX_URL (a URL fragment
+like "/signbank_local"), so `collectstatic` would try to mkdir an
+absolute path under "/" and fail with PermissionError on any non-root
+install. Per-instance settings already override URL/PREFIX_URL etc; let
+them override STATIC_ROOT too with a real disk path.
+
+No behavior change unless server_specific.py defines STATIC_ROOT.
+---
+ signbank/settings/base.py | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/signbank/settings/base.py b/signbank/settings/base.py
+index 565b093b..9197d11e 100755
+--- a/signbank/settings/base.py
++++ b/signbank/settings/base.py
+@@ -28,7 +28,10 @@ MEDIA_MOBILE_URL = MEDIA_URL
+ # Don't put anything in this directory yourself; store your static files
+ # in apps' "static/" subdirectories and in STATICFILES_DIRS.
+ # Example: "/home/media/media.lawrence.com/static/"
+-STATIC_ROOT = PREFIX_URL
++# server_specific.py may set STATIC_ROOT to a real disk path so
++# collectstatic actually works (PREFIX_URL is a URL fragment, not a path).
++if 'STATIC_ROOT' not in dir():
++    STATIC_ROOT = PREFIX_URL
+ 
+ # URL prefix for static files.
+ # Example: "http://media.lawrence.com/static/"
+-- 
+2.43.0
+
