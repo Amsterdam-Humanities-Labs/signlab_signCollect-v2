@@ -35,73 +35,110 @@ if ($only !== null) {
     if (!$source) json_response(['ok' => false, 'error' => 'no_matching_fields_in_row'], 400);
 }
 $payload = signbank_build_update_payload($source);
-if (!$payload) json_response(['ok' => false, 'error' => 'nothing_to_push'], 400);
+
+// Video upload is a *separate* multipart endpoint, not a regular field.
+// Detect when the caller wants the local zelfopname pushed and remember it
+// so we can run signbank_upload_video_for after the bulk text update.
+$wantsVideoPush = ($only === null) || in_array('zelfopname', $only, true);
+$videoLocalPath = null;
+if ($wantsVideoPush) {
+    $zelf = signbank_decode_json_array($row['zelfopname'] ?? null);
+    if (!empty($zelf)) {
+        $candidate = '/web/uploads/' . $zelf[0];
+        if (is_file($candidate)) $videoLocalPath = $candidate;
+    }
+}
+
+if (!$payload && !$videoLocalPath) {
+    json_response(['ok' => false, 'error' => 'nothing_to_push'], 400);
+}
 
 $log = [];
 $logStep = function (string $level, string $msg, $data = null) use (&$log) {
     $log[] = ['t' => date('H:i:s'), 'level' => $level, 'msg' => $msg, 'data' => $data];
 };
 
-$logStep('info', 'Build payload from form_data', ['fields' => array_keys($payload)]);
-$logStep('out', 'POST → bulk push to Signbank', $payload);
-
-$bulk = signbank_request('POST', $path, $payload);
-
-if ($bulk['ok']) {
-    $logStep('ok', "Bulk push OK (HTTP {$bulk['status']}, {$bulk['duration_ms']} ms)", $bulk['body']);
-    json_response([
-        'ok'           => true,
-        'mode'         => 'bulk',
-        'status'       => $bulk['status'],
-        'glossid'      => $row['signbank'],
-        'fields_sent'  => array_keys($payload),
-        'succeeded'    => array_keys($payload),
-        'failed'       => [],
-        'response'     => $bulk['body'],
-        'request'      => $bulk['request'],
-        'duration_ms'  => $bulk['duration_ms'],
-        'log'          => $log,
-    ]);
+if ($payload) {
+    $logStep('info', 'Build payload from form_data', ['fields' => array_keys($payload)]);
 }
-
-$logStep('warn', "Bulk push rolled back (HTTP {$bulk['status']}); falling back to per-field",
-         $bulk['body']);
-
+if ($videoLocalPath) {
+    $logStep('info', 'Video to upload (separate endpoint)', ['file' => basename($videoLocalPath)]);
+}
 $succeeded = []; $failed = [];
-foreach ($payload as $field => $value) {
-    $logStep('out', "POST {$field}", [$field => $value]);
-    $r = signbank_request('POST', $path, [$field => $value]);
-    if ($r['ok']) {
-        $succeeded[] = $field;
-        $logStep('ok', "  {$field} OK (HTTP {$r['status']}, {$r['duration_ms']} ms)", $r['body']);
+$mode = 'bulk';
+$bulk = null;
+
+if ($payload) {
+    $logStep('out', 'POST → bulk push to Signbank', $payload);
+    $bulk = signbank_request('POST', $path, $payload);
+    if ($bulk['ok']) {
+        $logStep('ok', "Bulk push OK (HTTP {$bulk['status']}, {$bulk['duration_ms']} ms)", $bulk['body']);
+        $succeeded = array_keys($payload);
     } else {
-        $errBody = is_array($r['body']) ? $r['body'] : ['raw' => $r['body']];
-        $failed[] = [
-            'field'    => $field,
-            'value'    => $value,
-            'status'   => $r['status'],
-            'error'    => $errBody,
-            'duration_ms' => $r['duration_ms'] ?? null,
-        ];
-        $errMsg = is_array($errBody)
-            ? ($errBody['errors']['Exception']
-                ?? (is_array($errBody['errors'] ?? null) ? json_encode($errBody['errors']) : ($errBody['error'] ?? json_encode($errBody))))
-            : (string)$errBody;
-        $logStep('error', "  {$field} FAIL (HTTP {$r['status']}): {$errMsg}", $errBody);
+        $logStep('warn', "Bulk push rolled back (HTTP {$bulk['status']}); falling back to per-field",
+                 $bulk['body']);
+        $mode = 'per_field';
+        foreach ($payload as $field => $value) {
+            $logStep('out', "POST {$field}", [$field => $value]);
+            $r = signbank_request('POST', $path, [$field => $value]);
+            if ($r['ok']) {
+                $succeeded[] = $field;
+                $logStep('ok', "  {$field} OK (HTTP {$r['status']}, {$r['duration_ms']} ms)", $r['body']);
+            } else {
+                $errBody = is_array($r['body']) ? $r['body'] : ['raw' => $r['body']];
+                $failed[] = [
+                    'field'    => $field,
+                    'value'    => $value,
+                    'status'   => $r['status'],
+                    'error'    => $errBody,
+                    'duration_ms' => $r['duration_ms'] ?? null,
+                ];
+                $errMsg = is_array($errBody)
+                    ? ($errBody['errors']['Exception']
+                        ?? (is_array($errBody['errors'] ?? null) ? json_encode($errBody['errors']) : ($errBody['error'] ?? json_encode($errBody))))
+                    : (string)$errBody;
+                $logStep('error', "  {$field} FAIL (HTTP {$r['status']}): {$errMsg}", $errBody);
+            }
+        }
     }
 }
 
-$logStep('info', "Per-field done: {$succeeded[0]} ok=" . count($succeeded) . ' failed=' . count($failed),
+// After the field push (or skipped if no fields), upload the video via the
+// dedicated multipart endpoint when we have one to push.
+if ($videoLocalPath) {
+    $logStep('out', "POST /video → " . basename($videoLocalPath), null);
+    $vres = signbank_upload_video_for($pdo, $id, $videoLocalPath);
+    if ($vres && $vres['ok']) {
+        $succeeded[] = 'zelfopname';
+        $logStep('ok', "  video OK (HTTP {$vres['status']}, {$vres['duration_ms']} ms)", $vres['body']);
+    } else {
+        $vErr = $vres ? $vres['body'] : 'no result';
+        $failed[] = [
+            'field'    => 'zelfopname',
+            'value'    => basename($videoLocalPath),
+            'status'   => $vres['status'] ?? null,
+            'error'    => is_array($vErr) ? $vErr : ['raw' => $vErr],
+            'duration_ms' => $vres['duration_ms'] ?? null,
+        ];
+        $logStep('error', "  video FAIL (HTTP " . ($vres['status'] ?? '?') . ")", $vErr);
+    }
+}
+
+$logStep('info', 'Done: ok=' . count($succeeded) . ' failed=' . count($failed),
          ['ok_fields' => $succeeded, 'failed_fields' => array_column($failed, 'field')]);
+
+$fieldsSent = array_keys($payload);
+if ($videoLocalPath) $fieldsSent[] = 'zelfopname';
 
 json_response([
     'ok'          => count($failed) === 0,
-    'mode'        => 'per_field',
+    'mode'        => $mode,
     'glossid'     => $row['signbank'],
-    'fields_sent' => array_keys($payload),
+    'fields_sent' => $fieldsSent,
     'succeeded'   => $succeeded,
     'failed'      => $failed,
-    'bulk_error'  => $bulk['body'],
-    'request'     => $bulk['request'],
+    'response'    => $bulk['body'] ?? null,
+    'request'     => $bulk['request'] ?? null,
+    'duration_ms' => $bulk['duration_ms'] ?? null,
     'log'         => $log,
 ]);

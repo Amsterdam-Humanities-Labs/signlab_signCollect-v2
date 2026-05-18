@@ -273,7 +273,12 @@ function makeCtx() {
     broadcastToSignbank: (row) => broadcastGloss(row),
     disconnectSignbank: (row)  => disconnectGloss(row),
     compareWithSignbank: (row) => compareGloss(row),
+    signbankBaseUrl: signbankBaseUrl,
   };
+}
+
+function signbankBaseUrl() {
+  return (state.user && state.user.signbankPublicUrl) || 'https://signbank.cls.ru.nl';
 }
 
 async function deleteAllZelfopname(row) {
@@ -1235,7 +1240,7 @@ async function compareGloss(row) {
   const link   = $('#sbCompareOpenLink');
   $('#sbCompareTitle').textContent = `Vergelijken met Signbank — ${row.glos || '#' + row.id} (#${row.signbank})`;
   link.hidden = false;
-  link.href = `https://signbank.cls.ru.nl/dictionary/gloss/${encodeURIComponent(row.signbank)}.html`;
+  link.href = `${signbankBaseUrl()}/dictionary/gloss/${encodeURIComponent(row.signbank)}.html`;
 
   // Wire push/pull buttons (each click confirms first).
   $('#sbForcePushBtn').hidden = false;
@@ -1426,11 +1431,17 @@ function renderSyncOpResult(verb, direction, res) {
       el('strong', { style: 'color:var(--danger);' }, `✗ Mislukt (${failed.length}):`)
     ));
     failed.forEach(f => {
-      const errMsg = (f.error && (f.error.errors?.Exception
-                       || f.error.errors?.[Object.keys(f.error.errors||{})[0]]
-                       || f.error.error
-                       || JSON.stringify(f.error)))
-                     || `HTTP ${f.status}`;
+      const e = f.error || {};
+      const htmlExtract = e._html_error
+        ? [e.h1, e.title].filter(Boolean).join(' — ')
+        : null;
+      const rawSnippet = typeof e.raw === 'string' ? e.raw.slice(0, 200) : null;
+      const errMsg = e.errors?.Exception
+                  || e.errors?.[Object.keys(e.errors||{})[0]]
+                  || e.error
+                  || htmlExtract
+                  || rawSnippet
+                  || (Object.keys(e).length ? JSON.stringify(e).slice(0, 200) : `HTTP ${f.status}`);
       const row = el('div', { style: 'font-size:12px;padding:6px 10px;background:#fdecec;border-left:3px solid var(--danger);border-radius:4px;margin-top:4px;' },
         el('code', { style: 'font-weight:600;' }, f.field),
         ' = ', el('code', {}, String(f.value).slice(0, 80)),
@@ -1487,7 +1498,7 @@ function renderCompareMedia(row, res) {
   if (sbVideoPath) {
     const sbVideoUrl = sbVideoPath.startsWith('http')
       ? sbVideoPath
-      : 'https://signbank.cls.ru.nl' + sbVideoPath.replace(/^\/+/, '/');
+      : signbankBaseUrl() + sbVideoPath.replace(/^\/+/, '/');
     remotePane.appendChild(el('video', { src: sbVideoUrl, muted: true, autoplay: true, loop: true, playsinline: true, crossorigin: 'anonymous' }));
   } else {
     remotePane.classList.add('empty');

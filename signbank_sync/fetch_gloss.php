@@ -63,6 +63,9 @@ if (!$remote) {
 // Build the comparison map.  Each entry: signCollect column → Signbank key.
 // Note: Signbank uses ":" (e.g. "Annotation ID Gloss: Dutch") in `get_gloss_data`,
 // but "(Dutch)" in `api_create_gloss`. The colon form is canonical for *reading*.
+// NOTE: read keys use ":" (e.g. "Annotation ID Gloss: Dutch"); the
+// write-side equivalents use "(...)". We map the form_data column to the
+// READ key here; the comparison remains semantic.
 $compareMap = [
     'glos'                       => 'Annotation ID Gloss: Dutch',
     'glos_engels'                => 'Annotation ID Gloss: English',
@@ -159,6 +162,27 @@ $fields[] = [
     'local'      => implode(' · ', $lEn),
     'remote'     => implode(' · ', $rEn),
     'matches'    => $lEn == $rEn,
+];
+
+// Video comparison — local zelfopname[0] (the "winner" file shown in UI)
+// vs Signbank's center video URL. We can't byte-compare since Signbank
+// transcodes to MP4, so this is a "presence" check: mismatch only when
+// local has a video and Signbank doesn't (then push will upload it).
+$lZelf = signbank_decode_json_array($local['zelfopname'] ?? null);
+$lVideoFile = !empty($lZelf) ? (string)$lZelf[0] : '';
+$rVideoUrl  = trim((string)($remote['Video'] ?? ''));
+$videoMatches = ($lVideoFile === '' && $rVideoUrl === '')
+             || ($lVideoFile !== '' && $rVideoUrl !== '');
+$fields[] = [
+    'label'      => 'Video',
+    'local_key'  => 'zelfopname',
+    'remote_key' => 'Video',
+    'local'      => $lVideoFile === '' ? '' : '/uploads/' . $lVideoFile,
+    'remote'     => $rVideoUrl,
+    'matches'    => $videoMatches,
+    'note'       => $videoMatches ? null : ($lVideoFile === ''
+        ? 'Geen lokale video — push verwijdert Signbank-video niet'
+        : 'Lokale video aanwezig, Signbank niet — push uploadt naar Signbank'),
 ];
 
 $mismatchCount = 0;

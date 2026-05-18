@@ -156,7 +156,7 @@ function renderThumbCol(row, ctx, rowWrap) {
   if (row.signbank) {
     col.appendChild(el('a', {
       class: 'signbank-badge',
-      href: `https://signbank.cls.ru.nl/dictionary/gloss/${encodeURIComponent(row.signbank)}.html`,
+      href: `${ctx.signbankBaseUrl ? ctx.signbankBaseUrl() : 'https://signbank.cls.ru.nl'}/dictionary/gloss/${encodeURIComponent(row.signbank)}.html`,
       target: '_blank',
       title: `Verbonden met Signbank glos #${row.signbank}`,
     },

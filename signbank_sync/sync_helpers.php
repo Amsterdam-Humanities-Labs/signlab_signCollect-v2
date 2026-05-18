@@ -36,6 +36,11 @@ function signbank_field_map(): array {
         'mouthGesture'               => 'Mouth Gesture',
         'mouthing'                   => 'Mouthing',
         'phoneticVariation'          => 'Phonetic Variation',
+        // "Gecontroleerd" (fonologie_fase1='1' = klaar) controls public
+        // visibility on Signbank's web dictionary. Toggling klaar also
+        // toggles inWeb so the gloss page stops being "not available
+        // for public viewing."
+        'fonologie_fase1'            => 'In The Web Dictionary',
     ];
 }
 
@@ -89,7 +94,7 @@ function signbank_phonology_translation(): array {
 
 function signbank_normalize_value(string $sourceField, $value): string {
     if ($value === null) return '';
-    if (in_array($sourceField, ['RepeatedMovement', 'AlternatingMovement'], true)) {
+    if (in_array($sourceField, ['RepeatedMovement', 'AlternatingMovement', 'fonologie_fase1'], true)) {
         $v = strtolower(trim((string)$value));
         if ($v === 'yes' || $v === 'true' || $v === '1') return 'True';
         return 'False';
@@ -111,16 +116,30 @@ function signbank_normalize_value(string $sourceField, $value): string {
 }
 
 function signbank_build_update_payload(array $changedRow): array {
-    // NOTE: Signbank's api_update_gloss does NOT accept Senses fields — they
-    // are only settable on create. Auto-sync therefore only pushes the
-    // lemma/annotation/phonology subset. To change senses post-create the
-    // user must either re-broadcast or use a future sense-specific endpoint.
+    // Build the lemma/annotation/phonology subset.
     $map = signbank_field_map();
     $out = [];
     foreach ($map as $src => $dst) {
         if (!array_key_exists($src, $changedRow)) continue;
         $v = signbank_normalize_value($src, $changedRow[$src]);
         if ($v !== '') $out[$dst] = $v;
+    }
+    // Senses go in a single combined field "Senses" with a stringified
+    // dict-of-list-of-lists: '{"en":[["sense1"],["sense2"]],"nl":[["..."]]}'.
+    // The view accepts that (see check_fields_can_be_updated → "Senses").
+    if (array_key_exists('senses', $changedRow) || array_key_exists('sensesEngels', $changedRow)) {
+        $nl = signbank_decode_json_array($changedRow['senses'] ?? null);
+        $en = signbank_decode_json_array($changedRow['sensesEngels'] ?? null);
+        $nl = array_values(array_filter(array_map('trim', $nl), fn($s) => $s !== ''));
+        $en = array_values(array_filter(array_map('trim', $en), fn($s) => $s !== ''));
+        [$alignedNl, $alignedEn] = signbank_align_sense_pair($nl, $en);
+        if ($alignedNl || $alignedEn) {
+            $dict = [
+                'en' => array_map(fn($s) => [$s], $alignedEn),
+                'nl' => array_map(fn($s) => [$s], $alignedNl),
+            ];
+            $out['Senses'] = json_encode($dict, JSON_UNESCAPED_UNICODE);
+        }
     }
     return $out;
 }
@@ -216,6 +235,11 @@ function signbank_upload_video_for(PDO $pdo, int $form_data_id, string $localPat
     $err = curl_error($ch) ?: null;
     curl_close($ch);
     $parsed = $body !== false ? json_decode($body, true) : null;
+    // If response wasn't JSON (e.g. Django DEBUG traceback HTML), extract
+    // the title/h1 so the modal can show a meaningful one-liner.
+    if (!is_array($parsed) && is_string($body) && $body !== '') {
+        $parsed = signbank_extract_html_error($body);
+    }
 
     return [
         'ok'          => ($err === null && $status >= 200 && $status < 300),
