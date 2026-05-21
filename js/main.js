@@ -94,6 +94,8 @@ async function init() {
   setupConfirmModal();
   setupStudioModal();
   setupPhonologyModal();
+  setupNotesModal();
+  setupLogbookModal();
   setupSignbankModal();
   setupCompareModal();
   setupOverscrollPaging();
@@ -349,6 +351,8 @@ function makeCtx() {
     openConfirm: (msg, onYes) => openConfirmModal(msg, onYes),
     openStudio:  (row, video) => openStudioModal(row, video),
     openPhonology: (row)      => openPhonologyModal(row),
+    openNotes:     (row)      => openNotesModal(row),
+    openLogbook:   (row)      => openLogbookModal(row),
     deleteAllZelfopname: (row) => deleteAllZelfopname(row),
     contextIsSignbank: ()     => state.context === 'signbank',
     pushToSignbank: (row)     => pushGlossToSignbank(row),
@@ -1873,6 +1877,126 @@ function setupPhonologyModal() {
   modal.addEventListener('click', (ev) => {
     if (ev.target.matches('[data-close]') || ev.target === modal) closePhonologyModal();
   });
+}
+
+/* ---------- Notes modal ---------- */
+
+let notesCurrentRow = null;
+
+function setupNotesModal() {
+  const modal = $('#notesModal');
+  modal.addEventListener('click', (ev) => {
+    if (ev.target.matches('[data-close]') || ev.target === modal) closeNotesModal();
+  });
+  $('#notesAddForm').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const input = $('#notesAddInput');
+    const text = input.value.trim();
+    if (!text || !notesCurrentRow) return;
+    const submit = ev.target.querySelector('button[type="submit"]');
+    if (submit && submit.disabled) return;
+    if (submit) submit.disabled = true;
+    try {
+      const note = await api.notesAdd(notesCurrentRow.id, text);
+      input.value = '';
+      appendNoteToThread(note);
+    } catch (e) {
+      toast(t('notes.post_failed', { msg: e.message }), 'error');
+    } finally {
+      if (submit) submit.disabled = false;
+      input.focus();
+    }
+  });
+}
+
+function closeNotesModal() {
+  $('#notesModal').classList.add('hidden');
+  notesCurrentRow = null;
+}
+
+async function openNotesModal(row) {
+  notesCurrentRow = row;
+  $('#notesTitle').textContent = `${t('notes.title')} — ${row.glos || '#' + row.id}`;
+  const thread = $('#notesThread');
+  clearChildren(thread);
+  thread.appendChild(el('div', { class: 'empty-state' }, el('i', { class: 'fas fa-spinner fa-spin' })));
+  $('#notesAddInput').value = '';
+  $('#notesModal').classList.remove('hidden');
+  setTimeout(() => $('#notesAddInput').focus(), 50);
+  try {
+    const res = await api.notesList(row.id);
+    clearChildren(thread);
+    if (!(res.notes || []).length) {
+      thread.appendChild(el('div', { class: 'empty-state notes-empty' }, t('notes.empty')));
+    } else {
+      res.notes.forEach(appendNoteToThread);
+    }
+  } catch (e) {
+    clearChildren(thread);
+    thread.appendChild(el('div', { class: 'empty-state' }, t('notes.load_failed', { msg: e.message })));
+  }
+}
+
+function appendNoteToThread(note) {
+  const thread = $('#notesThread');
+  // Drop any "empty" placeholder once a real note arrives.
+  const empty = thread.querySelector('.notes-empty');
+  if (empty) thread.removeChild(empty);
+  const mine = String(note.user_id) === String(state.user.userId);
+  const card = el('div', { class: 'note-card' + (mine ? ' note-mine' : '') },
+    el('div', { class: 'note-head' },
+      el('span', { class: 'note-author' }, note.user || ('#' + note.user_id)),
+      el('span', { class: 'note-time' }, formatTimestamp(note.created_at)),
+    ),
+    el('div', { class: 'note-body' }, note.note_text),
+  );
+  thread.appendChild(card);
+  thread.scrollTop = thread.scrollHeight;
+}
+
+function formatTimestamp(ts) {
+  if (!ts) return '';
+  // ts looks like "2026-05-21 19:42:15" — strip seconds for display.
+  return String(ts).replace(/:\d{2}$/, '');
+}
+
+/* ---------- Logbook modal ---------- */
+
+function setupLogbookModal() {
+  const modal = $('#logbookModal');
+  modal.addEventListener('click', (ev) => {
+    if (ev.target.matches('[data-close]') || ev.target === modal) closeLogbookModal();
+  });
+}
+
+function closeLogbookModal() {
+  $('#logbookModal').classList.add('hidden');
+}
+
+async function openLogbookModal(row) {
+  $('#logbookTitle').textContent = `${t('logbook.title')} — ${row.glos || '#' + row.id}`;
+  const list = $('#logbookList');
+  clearChildren(list);
+  list.appendChild(el('div', { class: 'empty-state' }, el('i', { class: 'fas fa-spinner fa-spin' })));
+  $('#logbookModal').classList.remove('hidden');
+  try {
+    const res = await api.logbookGet(row.id);
+    clearChildren(list);
+    if (!(res.entries || []).length) {
+      list.appendChild(el('div', { class: 'empty-state' }, t('logbook.empty')));
+      return;
+    }
+    // Newest first reads better for an activity log.
+    res.entries.slice().reverse().forEach(e => {
+      const row = el('div', { class: 'logbook-entry' });
+      if (e.ts) row.appendChild(el('span', { class: 'logbook-ts' }, e.ts));
+      row.appendChild(el('span', { class: 'logbook-text' }, e.text));
+      list.appendChild(row);
+    });
+  } catch (e) {
+    clearChildren(list);
+    list.appendChild(el('div', { class: 'empty-state' }, t('logbook.load_failed', { msg: e.message })));
+  }
 }
 
 let phonologySaveTimer = null;

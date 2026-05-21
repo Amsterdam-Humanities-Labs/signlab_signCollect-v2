@@ -127,6 +127,22 @@ const STRINGS = {
   'rowmenu.disconnect':            { nl: 'Loskoppelen van Signbank',en: 'Disconnect from Signbank' },
   'rowmenu.compare':               { nl: 'Vergelijken met Signbank',en: 'Compare with Signbank' },
   'rowmenu.delete_zelfopname_all': { nl: 'Alle zelfopnames verwijderen', en: 'Delete all selfie videos' },
+  'rowmenu.notes':                 { nl: 'Notities',                en: 'Notes' },
+  'rowmenu.logbook':               { nl: 'Logboek',                 en: 'Logbook' },
+
+  // ── Notes modal ───────────────────────────────────────────────────────
+  'notes.title':                 { nl: 'Notities',                  en: 'Notes' },
+  'notes.placeholder':           { nl: 'Schrijf een notitie…',      en: 'Write a note…' },
+  'notes.submit':                { nl: 'Plaatsen',                  en: 'Post' },
+  'notes.empty':                 { nl: 'Nog geen notities. Begin het gesprek.',
+                                   en: 'No notes yet. Start the conversation.' },
+  'notes.load_failed':           { nl: 'Notities laden mislukt: {msg}', en: 'Failed to load notes: {msg}' },
+  'notes.post_failed':           { nl: 'Plaatsen mislukt: {msg}',       en: 'Posting failed: {msg}' },
+
+  // ── Logbook modal ─────────────────────────────────────────────────────
+  'logbook.title':               { nl: 'Logboek',                       en: 'Logbook' },
+  'logbook.empty':               { nl: 'Nog geen logboek-vermeldingen.',en: 'No logbook entries yet.' },
+  'logbook.load_failed':         { nl: 'Logboek laden mislukt: {msg}',  en: 'Failed to load logbook: {msg}' },
 
   // ── Toasts / status banners ───────────────────────────────────────────
   'toast.saved':                 { nl: 'Opgeslagen',             en: 'Saved' },

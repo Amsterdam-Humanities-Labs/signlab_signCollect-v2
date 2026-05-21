@@ -318,6 +318,8 @@ function renderActionsCol(row, ctx, rowWrap) {
   const summary = el('summary', {}, el('i', { class: 'fas fa-ellipsis-vertical' }));
   const pop = el('div', { class: 'menu-pop' });
   pop.appendChild(itemBtn('record', 'fa-video', t('rowmenu.record'), () => ctx.openRecord(row)));
+  pop.appendChild(itemBtn('notes', 'fa-comments', t('rowmenu.notes'), () => ctx.openNotes(row)));
+  pop.appendChild(itemBtn('logbook', 'fa-clock-rotate-left', t('rowmenu.logbook'), () => ctx.openLogbook(row)));
   if (ctx.contextIsSignbank()) {
     if (row.signbank) {
       pop.appendChild(itemBtn('signbank-compare', 'fa-magnifying-glass',
