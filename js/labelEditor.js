@@ -1,12 +1,23 @@
 import { el } from './util.js';
 import { t } from './i18n.js';
+import { api } from './api.js';
 
+/**
+ * onCreate: optional async callback called when the user types a label
+ * that doesn't exist yet. Receives the typed text and must return either
+ *   { id, label, color }   → a freshly-created label option, OR
+ *   null/undefined         → fall back to plain free-text behavior.
+ * If onCreate is omitted but allowCreate is true, the editor will call
+ * api.createLabel(text) itself.
+ */
 export function renderLabelEditor({
   value,
   options,
   onChange,
+  onCreate,
   placeholder = '+ label…',
   allowFreeText = true,
+  allowCreate = false,
 }) {
   const opts = options.map(o => ({ ...o, value: o.value ?? o.label }));
   let values = [...(value || [])].map(String);
@@ -64,13 +75,16 @@ export function renderLabelEditor({
         || String(o.value).toLowerCase().includes(lower))
       .slice(0, 12);
 
-    if (allowFreeText && !candidates.length && q) {
+    if ((allowCreate || allowFreeText) && !candidates.length && q) {
+      const labelText = allowCreate
+        ? ` "${q}" ${t('label.create_new').toLowerCase()}`
+        : ` "${q}" ${t('btn.add').toLowerCase()}`;
       suggestions.appendChild(el('div', {
         class: 'suggestion create',
-        onmousedown: (ev) => { ev.preventDefault(); addByText(q); }
+        onmousedown: (ev) => { ev.preventDefault(); createOrAdd(q); }
       },
         el('i', { class: 'fas fa-plus' }),
-        ` "${q}" ${t('btn.add').toLowerCase()}`
+        labelText
       ));
     }
     candidates.forEach(o => {
@@ -106,6 +120,46 @@ export function renderLabelEditor({
     else if (allowFreeText) addByValue(text);
     else {
       input.value = '';
+      input.focus();
+    }
+  }
+
+  /**
+   * Handle a "+ create" click on a label that doesn't exist yet.
+   * - allowCreate=true → POST to labels_create.php, then add by the
+   *   returned id so the pill renders with the proper color.
+   * - allowCreate=false → fall back to addByText (free-text behavior).
+   */
+  async function createOrAdd(text) {
+    text = String(text || '').trim();
+    if (!text) return;
+    if (!allowCreate) { addByText(text); return; }
+
+    // Lock the input so an impatient double-click doesn't fire twice.
+    if (input.disabled) return;
+    input.disabled = true;
+    try {
+      const created = onCreate
+        ? await onCreate(text)
+        : await api.createLabel(text);
+      if (created && created.label) {
+        // Use the label NAME as the value to match how the caller's
+        // options array is built (form_data.labels stores names, not ids).
+        const newOpt = {
+          value: created.label,
+          label: created.label,
+          color: created.color || '#888888',
+        };
+        opts.push(newOpt);
+        addByValue(newOpt.value);
+      } else {
+        addByText(text);
+      }
+    } catch (e) {
+      // Network/server failure — fall back to free-text so the click isn't lost.
+      addByText(text);
+    } finally {
+      input.disabled = false;
       input.focus();
     }
   }

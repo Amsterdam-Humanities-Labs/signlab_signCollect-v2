@@ -226,7 +226,8 @@ function renderMainCol(row, ctx) {
     renderLabelEditor({
       value: row.labels,
       options: ctx.labelOptions().map(l => ({ value: l.label, label: l.label, color: l.color })),
-      onChange: (arr) => { row.labels = arr; save(row, { labels: arr }); }
+      onChange: (arr) => { row.labels = arr; save(row, { labels: arr }); },
+      allowCreate: true,
     }),
   );
   col.appendChild(labelsBlock);

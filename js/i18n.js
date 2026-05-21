@@ -78,6 +78,7 @@ const STRINGS = {
   'filter.thema.all':          { nl: 'Alle themas',         en: 'All themes' },
   'filter.label':              { nl: 'Label',               en: 'Label' },
   'filter.label.add':          { nl: '+ label…',            en: '+ label…' },
+  'label.create_new':          { nl: 'nieuw label aanmaken', en: 'create new label' },
   'filter.owner':              { nl: 'Eigenaar',            en: 'Owner' },
   'filter.owner.everyone':     { nl: 'Iedereen',            en: 'Everyone' },
   'filter.owner.add':          { nl: '+ gebruiker…',        en: '+ user…' },
