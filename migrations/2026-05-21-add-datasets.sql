@@ -13,10 +13,11 @@ UPDATE users
   WHERE allowed_datasets IS NULL;
 
 -- 3. inocencio → LSM only.
+--    The users table uses `user` for the login name (not `username`).
 UPDATE users
   SET default_dataset  = 'lsm',
       allowed_datasets = JSON_ARRAY('lsm')
-  WHERE username = 'inocencio';
+  WHERE user = 'inocencio';
 
 -- 4. New LSM glosses table — exact same shape as form_data.
 --    LIKE clones columns, types, indexes, AUTO_INCREMENT — but not
