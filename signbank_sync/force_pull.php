@@ -16,7 +16,12 @@ $id   = (int)($body['id'] ?? 0);
 if ($id <= 0) json_response(['error' => 'invalid_id'], 400);
 
 $pdo = db();
-$stmt = $pdo->prepare("SELECT * FROM form_data WHERE id = ?");
+
+require_once __DIR__ . '/../php_api/datasets.php';
+$ds    = require_dataset($pdo, $session, $body);
+$table = $ds['table'];
+
+$stmt = $pdo->prepare("SELECT * FROM `$table` WHERE id = ?");
 $stmt->execute([$id]);
 $row = $stmt->fetch();
 if (!$row) json_response(['error' => 'not_found'], 404);
@@ -27,8 +32,10 @@ $logStep = function (string $level, string $msg, $data = null) use (&$log) {
     $log[] = ['t' => date('H:i:s'), 'level' => $level, 'msg' => $msg, 'data' => $data];
 };
 
-$cfg  = signbank_config();
-$path = '/dictionary/get_gloss_data/' . rawurlencode($cfg['dataset_id']) . '/' . rawurlencode($row['signbank']) . '/';
+$sb = signbank_dataset_info_for($ds['code']);
+if ($sb === null) json_response(['ok' => false, 'error' => 'dataset_not_synced', 'dataset' => $ds['code']], 400);
+
+$path = '/dictionary/get_gloss_data/' . rawurlencode($sb['id']) . '/' . rawurlencode($row['signbank']) . '/';
 $logStep('out', "GET → {$path}");
 $res  = signbank_get($path);
 if (!$res['ok'] || !is_array($res['body'])) {
@@ -103,11 +110,11 @@ $logEntry = sprintf('Signbank pull (force) op %s door: %s', date('j/n/Y @ H:i'),
                     $session['username'] ?: $session['userId']);
 $args[] = $logEntry;
 $args[] = $id;
-$sql = "UPDATE form_data SET $set,
+$sql = "UPDATE `$table` SET $set,
             logboek = CONCAT_WS('\n', NULLIF(CONVERT(logboek USING utf8mb4), ''), ?)
         WHERE id = ?";
 $pdo->prepare($sql)->execute($args);
-$logStep('ok', 'Local form_data row updated');
+$logStep('ok', "Local {$table} row updated");
 
 json_response([
     'ok'          => true,

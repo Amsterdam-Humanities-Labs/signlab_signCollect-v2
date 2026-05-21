@@ -16,13 +16,19 @@ $id   = (int)($body['id'] ?? 0);
 if ($id <= 0) json_response(['error' => 'invalid_id'], 400);
 
 $pdo = db();
-$glossid = signbank_get_connected_glossid($pdo, $id);
+
+require_once __DIR__ . '/../php_api/datasets.php';
+$ds    = require_dataset($pdo, $session, $body);
+
+$glossid = signbank_get_connected_glossid($pdo, $id, $ds['code']);
 if ($glossid === null) {
     json_response(['ok' => false, 'error' => 'not_connected'], 400);
 }
 
-$cfg  = signbank_config();
-$path = '/dictionary/api_delete_gloss/' . rawurlencode($cfg['dataset_id']) . '/' . rawurlencode($glossid) . '/';
+$sb = signbank_dataset_info_for($ds['code']);
+if ($sb === null) json_response(['ok' => false, 'error' => 'dataset_not_synced', 'dataset' => $ds['code']], 400);
+
+$path = '/dictionary/api_delete_gloss/' . rawurlencode($sb['id']) . '/' . rawurlencode($glossid) . '/';
 $res  = signbank_request('DELETE', $path, ['confirmed' => 'true']);
 
 $log = [[
@@ -39,10 +45,10 @@ if ($res['ok']) {
         $glossid, date('j/n/Y @ H:i'),
         $session['username'] ?: $session['userId']
     );
-    signbank_set_connection($pdo, $id, null, $logEntry);
+    signbank_set_connection($pdo, $id, null, $logEntry, $ds['code']);
     $log[] = [
         't' => date('H:i:s'), 'level' => 'ok',
-        'msg' => 'Cleared form_data.signbank locally',
+        'msg' => 'Cleared ' . $ds['table'] . '.signbank locally',
     ];
 }
 

@@ -19,6 +19,10 @@ if ($id <= 0) json_response(['error' => 'invalid_id'], 400);
 
 $pdo = db();
 
+require_once __DIR__ . '/../php_api/datasets.php';
+$ds    = require_dataset($pdo, $session, $body);
+$table = $ds['table'];
+
 $stmt = $pdo->prepare(
     "SELECT id, glos, glos_engels, senses, sensesEngels, signbank, zelfopname,
             Handeness, strongHand, weakHand, HandshapeChange, RelationArticulators,
@@ -27,7 +31,7 @@ $stmt = $pdo->prepare(
             relativeOrienationMovement, relativeOrienationLocation, orientationChange,
             virtualObjectt, phonologyOther, mouthGesture, mouthing, phoneticVariation,
             extern
-     FROM form_data WHERE id = ?"
+     FROM `$table` WHERE id = ?"
 );
 $stmt->execute([$id]);
 $row = $stmt->fetch();
@@ -44,11 +48,8 @@ if (!empty($row['signbank'])) {
     ]);
 }
 
-try {
-    $cfg = signbank_config();
-} catch (Throwable $e) {
-    json_response(['error' => 'config_error', 'message' => $e->getMessage()], 500);
-}
+$sb = signbank_dataset_info_for($ds['code']);
+if ($sb === null) json_response(['ok' => false, 'error' => 'dataset_not_synced', 'dataset' => $ds['code']], 400);
 
 $log = [];
 $logStep = function (string $level, string $msg, $data = null) use (&$log) {
@@ -57,8 +58,8 @@ $logStep = function (string $level, string $msg, $data = null) use (&$log) {
 
 // 1) create the gloss on Signbank with the bare minimum required fields
 $logStep('info', 'Creating gloss on Signbank', ['glos' => $row['glos']]);
-$createPayload = signbank_build_create_payload($row, $cfg);
-$createPath    = '/dictionary/api_create_gloss/' . rawurlencode($cfg['dataset_id']) . '/';
+$createPayload = signbank_build_create_payload($row, ['dataset_acronym' => $sb['acronym']]);
+$createPath    = '/dictionary/api_create_gloss/' . rawurlencode($sb['id']) . '/';
 $createRes     = signbank_post_json($createPath, $createPayload);
 
 if (!$createRes['ok']) {
@@ -92,12 +93,12 @@ $logEntry = sprintf(
     $glossid, date('j/n/Y @ H:i'),
     $session['username'] ?: $session['userId']
 );
-signbank_set_connection($pdo, $id, $glossid, $logEntry);
-$logStep('ok', 'Stored signbank glossid in form_data');
+signbank_set_connection($pdo, $id, $glossid, $logEntry, $ds['code']);
+$logStep('ok', "Stored signbank glossid in {$table}");
 
 // 3) push the rest of the fields (phonology + senses) as a follow-up update,
 //    since api_create_gloss only persists the lemma/annotation/senses subset.
-$updateRes = signbank_auto_sync_fields($pdo, $id, $row);
+$updateRes = signbank_auto_sync_fields($pdo, $id, $row, $ds['code']);
 if ($updateRes !== null) {
     if ($updateRes['ok']) {
         $logStep('ok', 'Phonology + extras pushed via api_update_gloss', $updateRes['body']);
@@ -110,7 +111,7 @@ if ($updateRes !== null) {
 $zelf = signbank_decode_json_array($row['zelfopname'] ?? null);
 if ($zelf) {
     $localFile = '/web/uploads/' . $zelf[0];
-    $videoRes = signbank_upload_video_for($pdo, $id, $localFile);
+    $videoRes = signbank_upload_video_for($pdo, $id, $localFile, $ds['code']);
     if ($videoRes && $videoRes['ok']) {
         $logStep('ok', 'Zelfopname uploaded to Signbank as gloss video', $videoRes['body']);
     } elseif ($videoRes) {

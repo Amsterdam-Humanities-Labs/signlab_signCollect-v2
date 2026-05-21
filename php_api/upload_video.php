@@ -52,8 +52,7 @@ $upd->execute([json_encode(array_values($arr)), $logEntry, $id]);
 // Auto-push the new self-recorded video to Signbank when this row is connected.
 $signbankPush = null;
 try {
-    // TODO(LSM-task-14): pass $ds['code'] once signbank_upload_video_for supports it
-    $push = signbank_upload_video_for($pdo, $id, $dest);
+    $push = signbank_upload_video_for($pdo, $id, $dest, $ds['code']);
     if ($push !== null) {
         $signbankPush = [
             'ok'      => $push['ok'],

@@ -9,12 +9,17 @@ require_once __DIR__ . '/../php_api/session.php';
 require_once __DIR__ . '/client.php';
 require_once __DIR__ . '/sync_helpers.php';
 
-require_session();
+$session = require_session();
+
+$pdo = db();
+
+require_once __DIR__ . '/../php_api/datasets.php';
+$ds    = require_dataset($pdo, $session, $_GET);
+$table = $ds['table'];
 
 $id = (int)($_GET['id'] ?? 0);
 if ($id <= 0) json_response(['error' => 'invalid_id'], 400);
 
-$pdo = db();
 $stmt = $pdo->prepare(
     "SELECT id, glos, glos_engels, senses, sensesEngels, signbank, zelfopname,
             Handeness, strongHand, weakHand, HandshapeChange, RelationArticulators,
@@ -23,7 +28,7 @@ $stmt = $pdo->prepare(
             relativeOrienationMovement, relativeOrienationLocation, orientationChange,
             virtualObjectt, phonologyOther, mouthGesture, mouthing, phoneticVariation,
             fonologie_fase1, fonologie_fase2, signbank_status, extern
-     FROM form_data WHERE id = ?"
+     FROM `$table` WHERE id = ?"
 );
 $stmt->execute([$id]);
 $local = $stmt->fetch();
@@ -34,8 +39,10 @@ if ($glossid === '') {
     json_response(['ok' => false, 'error' => 'not_connected', 'message' => 'This gloss is not connected to Signbank.'], 400);
 }
 
-$cfg = signbank_config();
-$path = '/dictionary/get_gloss_data/' . rawurlencode($cfg['dataset_id']) . '/' . rawurlencode($glossid) . '/';
+$sb = signbank_dataset_info_for($ds['code']);
+if ($sb === null) json_response(['ok' => false, 'error' => 'dataset_not_synced', 'dataset' => $ds['code']], 400);
+
+$path = '/dictionary/get_gloss_data/' . rawurlencode($sb['id']) . '/' . rawurlencode($glossid) . '/';
 $res = signbank_get($path);
 
 if (!$res['ok']) {

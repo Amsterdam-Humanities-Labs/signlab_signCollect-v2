@@ -10,7 +10,7 @@ require_once __DIR__ . '/../php_api/session.php';
 require_once __DIR__ . '/client.php';
 require_once __DIR__ . '/sync_helpers.php';
 
-require_session();
+$session = require_session();
 
 $body = json_body();
 $id   = (int)($body['id'] ?? 0);
@@ -18,14 +18,21 @@ $only = isset($body['only_fields']) && is_array($body['only_fields']) ? $body['o
 if ($id <= 0) json_response(['error' => 'invalid_id'], 400);
 
 $pdo = db();
-$stmt = $pdo->prepare("SELECT * FROM form_data WHERE id = ?");
+
+require_once __DIR__ . '/../php_api/datasets.php';
+$ds    = require_dataset($pdo, $session, $body);
+$table = $ds['table'];
+
+$stmt = $pdo->prepare("SELECT * FROM `$table` WHERE id = ?");
 $stmt->execute([$id]);
 $row = $stmt->fetch();
 if (!$row) json_response(['error' => 'not_found'], 404);
 if (empty($row['signbank'])) json_response(['ok' => false, 'error' => 'not_connected'], 400);
 
-$cfg = signbank_config();
-$path = '/dictionary/api_update_gloss/' . rawurlencode($cfg['dataset_id']) . '/' . rawurlencode($row['signbank']) . '/';
+$sb = signbank_dataset_info_for($ds['code']);
+if ($sb === null) json_response(['ok' => false, 'error' => 'dataset_not_synced', 'dataset' => $ds['code']], 400);
+
+$path = '/dictionary/api_update_gloss/' . rawurlencode($sb['id']) . '/' . rawurlencode($row['signbank']) . '/';
 
 // Build the candidate payload from the entire row, then optionally narrow to
 // only the local field names the caller asked for.
@@ -59,7 +66,7 @@ $logStep = function (string $level, string $msg, $data = null) use (&$log) {
 };
 
 if ($payload) {
-    $logStep('info', 'Build payload from form_data', ['fields' => array_keys($payload)]);
+    $logStep('info', 'Build payload from ' . $table, ['fields' => array_keys($payload)]);
 }
 if ($videoLocalPath) {
     $logStep('info', 'Video to upload (separate endpoint)', ['file' => basename($videoLocalPath)]);
@@ -107,7 +114,7 @@ if ($payload) {
 // dedicated multipart endpoint when we have one to push.
 if ($videoLocalPath) {
     $logStep('out', "POST /video → " . basename($videoLocalPath), null);
-    $vres = signbank_upload_video_for($pdo, $id, $videoLocalPath);
+    $vres = signbank_upload_video_for($pdo, $id, $videoLocalPath, $ds['code']);
     if ($vres && $vres['ok']) {
         $succeeded[] = 'zelfopname';
         $logStep('ok', "  video OK (HTTP {$vres['status']}, {$vres['duration_ms']} ms)", $vres['body']);

@@ -85,8 +85,7 @@ if (!empty($r['signbank']) && $fields) {
         $changedOnly = [];
         foreach ($relevant as $k => $v) $changedOnly[$k] = is_array($v) ? json_encode($v) : $v;
         try {
-            // TODO(LSM-task-13): pass $ds['code'] once signbank_auto_sync_fields supports it
-            $sync = signbank_auto_sync_fields($pdo, $id, $changedOnly);
+            $sync = signbank_auto_sync_fields($pdo, $id, $changedOnly, $ds['code']);
             if ($sync !== null) {
                 $signbankSync = [
                     'ok'           => $sync['ok'],
