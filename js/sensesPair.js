@@ -9,13 +9,13 @@ export function renderSensesPair({ nl, en, onChange }) {
   const list   = el('div', { class: 'senses-pair-rows' });
   const warning = el('div', { class: 'senses-warning hidden' },
     el('i', { class: 'fas fa-triangle-exclamation' }),
-    ' Senses NL en EN moeten beide ingevuld zijn'  // no i18n key for senses warning
+    ' ' + t('senses.both_required')
   );
   const addBtn = el('button', {
     type: 'button',
     class: 'senses-add',
     onclick: () => { pairs.push({ nl: '', en: '' }); render(); commit({ skipWarning: true }); focusLast(); },
-  }, '+ sense paar toevoegen');  // no i18n key for "sense paar toevoegen"
+  }, t('senses.add_pair'));
 
   function pairUp(nl, en) {
     const max = Math.max(nl?.length || 0, en?.length || 0);
@@ -45,7 +45,7 @@ export function renderSensesPair({ nl, en, onChange }) {
     warning.classList.toggle('hidden', !incomplete);
     onChange?.(arrays, { incomplete });
     if (incomplete && !skipWarning) {
-      toast('Let op: niet alle sense-paren NL/EN zijn ingevuld', 'error');  // no i18n key for this senses warning toast
+      toast(t('senses.incomplete'), 'error');
     }
   }
 
@@ -73,7 +73,7 @@ export function renderSensesPair({ nl, en, onChange }) {
       nlInput.addEventListener('blur', () => commit());
       enInput.addEventListener('blur', () => commit());
       const removeBtn = el('button', {
-        type: 'button', class: 'btn-icon', title: t('btn.delete'),  // "Paar verwijderen" has no i18n key, using btn.delete
+        type: 'button', class: 'btn-icon', title: t('btn.delete'),
         onclick: () => { pairs.splice(idx, 1); render(); commit({ skipWarning: true }); },
       }, el('i', { class: 'fas fa-times' }));
       list.appendChild(el('div', { class: 'senses-pair-row' }, nlInput, enInput, removeBtn));

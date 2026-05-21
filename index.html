@@ -100,7 +100,7 @@
     </div>
     <div class="filter-group">
       <label data-i18n="filter.thema">Thema</label>
-      <select id="themaSelect"><option value="">— alle —</option></select>
+      <select id="themaSelect"><option value="" data-i18n="multi.all">— alle —</option></select>
     </div>
     <div class="filter-group multi">
       <label data-i18n="filter.label">Labels</label>
@@ -125,7 +125,7 @@
         </div>
       </details>
     </div>
-    <button class="btn btn-primary btn-add" id="addGlossBtn"><i class="fas fa-plus"></i> Nieuwe glos</button>
+    <button class="btn btn-primary btn-add" id="addGlossBtn"><i class="fas fa-plus"></i> <span data-i18n="add.title">Nieuwe glos</span></button>
   </section>
 
   <section class="result-meta">
@@ -148,8 +148,7 @@
 <!-- Add gloss modal -->
 <div class="modal-backdrop hidden" id="addModal">
   <div class="modal">
-    <header><h3>Nieuwe glos</h3><button class="close" data-close>&times;</button></header>
-    <!-- "Nieuwe glos" has no i18n key -->
+    <header><h3 data-i18n="add.title">Nieuwe glos</h3><button class="close" data-close>&times;</button></header>
     <form id="addForm">
       <label><span class="add-form-label-glos-local">Glos NL</span> <span class="req">*</span><input name="glos" required maxlength="255"></label>
       <label>Glos EN <span class="req">*</span><input name="glos_engels" required maxlength="255"></label>
@@ -162,8 +161,7 @@
       <label>Senses EN<div class="senses-editor" data-name="sensesEngels"></div></label>
       <footer>
         <button type="button" class="btn" data-close data-i18n="btn.cancel">Annuleren</button>
-        <button type="submit" class="btn btn-primary">Aanmaken</button>
-        <!-- "Aanmaken" has no i18n key -->
+        <button type="submit" class="btn btn-primary" data-i18n="add.submit">Aanmaken</button>
       </footer>
     </form>
   </div>
@@ -195,8 +193,7 @@
     <div class="signbank-body" id="signbankBody"></div>
     <footer>
       <span class="signbank-status" id="signbankFooterStatus"></span>
-      <button type="button" class="btn" id="signbankRetryBtn">Opnieuw verzenden</button>
-      <!-- "Opnieuw verzenden" has no i18n key -->
+      <button type="button" class="btn" id="signbankRetryBtn" data-i18n="sb.btn.retry">Opnieuw verzenden</button>
       <button type="button" class="btn" data-close data-i18n="btn.close">Sluiten</button>
     </footer>
   </div>
@@ -262,8 +259,7 @@
 <!-- Confirm delete modal -->
 <div class="modal-backdrop hidden" id="confirmModal">
   <div class="modal small">
-    <header><h3 id="confirmTitle">Weet je het zeker?</h3><button class="close" data-close>&times;</button></header>
-    <!-- "Weet je het zeker?" has no i18n key -->
+    <header><h3 id="confirmTitle" data-i18n="confirm.title">Weet je het zeker?</h3><button class="close" data-close>&times;</button></header>
     <div class="confirm-body" id="confirmBody"></div>
     <footer>
       <button type="button" class="btn" data-close data-i18n="confirm.no">Annuleren</button>

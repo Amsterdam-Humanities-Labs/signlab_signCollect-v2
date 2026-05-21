@@ -120,7 +120,7 @@ function populateOwnerSelect() {
   clearChildren(sel);
   const myId = String(state.user.userId);
   const myName = state.user.username || userNameMap.get(myId) || myId;
-  sel.appendChild(el('option', { value: myId }, `${myName} (jij)`));
+  sel.appendChild(el('option', { value: myId }, `${myName} ${t('multi.you_suffix')}`));
   sel.appendChild(el('option', { value: '' }, t('filter.owner.everyone')));
   state.options.users
     .filter(u => String(u.userId) !== myId)
@@ -132,7 +132,7 @@ function populateOwnerSelect() {
 function populateThemaSelect() {
   const sel = $('#themaSelect');
   clearChildren(sel);
-  sel.appendChild(el('option', { value: '' }, '— alle —'));
+  sel.appendChild(el('option', { value: '' }, t('multi.all')));
   for (const thema of state.options.themas) {
     sel.appendChild(el('option', { value: thema }, thema));
   }
@@ -167,11 +167,11 @@ function syncMulti(root, onChange) {
   const values = Array.from(inputs).map(i => i.value);
   const summary = document.querySelector(`${root} .multi-summary`);
   if (values.length === 0) {
-    summary.textContent = '— alle —'; summary.classList.add('placeholder');  // "— alle —" has no i18n key
+    summary.textContent = t('multi.all'); summary.classList.add('placeholder');
   } else if (values.length <= 2) {
     summary.textContent = values.join(', '); summary.classList.remove('placeholder');
   } else {
-    summary.textContent = `${values.length} geselecteerd`; summary.classList.remove('placeholder');  // "N geselecteerd" has no i18n key — left as-is
+    summary.textContent = t('multi.n_selected', { n: values.length }); summary.classList.remove('placeholder');
   }
   onChange(values);
 }
@@ -179,7 +179,7 @@ function syncMulti(root, onChange) {
 function resetMulti(root) {
   document.querySelectorAll(`${root} .multi-list input`).forEach(i => i.checked = false);
   const summary = document.querySelector(`${root} .multi-summary`);
-  summary.textContent = '— alle —'; summary.classList.add('placeholder');
+  summary.textContent = t('multi.all'); summary.classList.add('placeholder');
 }
 
 async function refresh() {
@@ -232,7 +232,7 @@ async function refresh() {
         if (rows.length > 1) {
           wrap.appendChild(el('div', { class: 'dup-banner' },
             el('i', { class: 'fas fa-triangle-exclamation' }),
-            `Waarschuwing: duplicaat gedetecteerd voor "${rows[0].glos || '?'}". ${rows.length} rijen hieronder.`  // no i18n key for duplicate warning
+            t('duplicate.warning', { glos: rows[0].glos || '?', n: rows.length })
           ));
         }
         rows.forEach(r => wrap.appendChild(renderRow(r, ctx)));
@@ -248,12 +248,7 @@ async function refresh() {
   } else {
     const from = (res.page - 1) * res.pageSize + 1;
     const to   = Math.min(res.page * res.pageSize, res.total);
-    meta.append(
-      'Toont ',  // "Toont X–Y van Z" has no i18n key — left as-is
-      el('strong', {}, String(from)), '–',
-      el('strong', {}, String(to)), ' van ',
-      el('strong', {}, fmtCount(res.total)),
-    );
+    meta.textContent = t('count.showing', { from, to, total: fmtCount(res.total) });
   }
 
   renderPager(res.page, Math.ceil(res.total / res.pageSize));
@@ -472,7 +467,7 @@ async function openRecordModal(row) {
     recorder = new VideoRecorder($('#recordPreview'));
     recorder.stream = stream;
   } catch (e) {
-    toast('Camera-toegang geweigerd: ' + e.message, 'error');  // no i18n key for camera access denied
+    toast(t('recorder.no_camera') + ': ' + e.message, 'error');
     closeRecordModal();
   }
 }
@@ -482,10 +477,10 @@ function setRecordToggleLabel(mode) {
   clearChildren(btn);
   if (mode === 'start') {
     btn.appendChild(el('i', { class: 'fas fa-circle' }));
-    btn.append(' Opname starten');  // no i18n key for "Opname starten" / "Stoppen & opslaan"
+    btn.append(' ' + t('recorder.start'));
   } else {
     btn.appendChild(el('i', { class: 'fas fa-stop' }));
-    btn.append(' Stoppen & opslaan');  // no i18n key
+    btn.append(' ' + t('recorder.stop'));
   }
 }
 
@@ -511,7 +506,7 @@ async function toggleRecording() {
       setRecordToggleLabel('stop');
       $('#recordToggle').classList.add('recording');
     } catch (e) {
-      toast('Kon niet starten: ' + e.message, 'error');  // no i18n key for "Kon niet starten"
+      toast(t('recorder.start_failed') + ': ' + e.message, 'error');
     }
   } else if (recordingState === 'recording') {
     $('#recordStatus').textContent = t('record.status.uploading');
@@ -578,14 +573,14 @@ function updateOverscrollUI() {
     drop.classList.toggle('ready', ready);
     drop.style.setProperty('--fill', pct);
     drop.querySelector('.drop-label-text').textContent = label;
-    drop.querySelector('.drop-page').textContent = `pagina ${page} / ${totalPages()}`;  // no i18n key for "pagina X / Y"
+    drop.querySelector('.drop-page').textContent = t('overscroll.page', { p: page, total: totalPages() });
   };
   if (overscroll.dir === -1) {
-    setActive(top, overscroll.ready ? 'Loslaten…' : t('pager.prev'), state.page - 1);  // "Loslaten…" has no i18n key
+    setActive(top, overscroll.ready ? t('overscroll.release') : t('pager.prev'), state.page - 1);
     bot.classList.remove('active', 'ready');
     bot.style.removeProperty('--fill');
   } else if (overscroll.dir === 1) {
-    setActive(bot, overscroll.ready ? 'Loslaten…' : t('pager.next'), state.page + 1);  // "Loslaten…" has no i18n key
+    setActive(bot, overscroll.ready ? t('overscroll.release') : t('pager.next'), state.page + 1);
     top.classList.remove('active', 'ready');
     top.style.removeProperty('--fill');
   } else {
@@ -779,7 +774,9 @@ function renderStudioList() {
   const deletedCount = videos.length - liveCount;
   $('#studioCount').textContent = videos.length === 0
     ? t('studio.no_videos')
-    : `${videos.length} opname${videos.length === 1 ? '' : 's'}${deletedCount ? ` (waarvan ${deletedCount} verwijderd)` : ''}`;  // "N opnames (waarvan N verwijderd)" has no i18n key
+    : deletedCount
+      ? t('studio.count_with_deleted', { n: videos.length, d: deletedCount })
+      : t('studio.count_simple', { n: videos.length });
 
   if (!videos.length) {
     list.appendChild(el('div', { class: 'empty-state' },
@@ -902,7 +899,7 @@ function renderStudioCard(video) {
       onclick: async (ev) => {
         ev.preventDefault();
         ev.stopPropagation();
-        openConfirmModal(`Studio-opname "${(video.m_file || '#' + video.id).replace(/\.\w+$/, '')}" verwijderen?`, async () => {  // no i18n key for studio delete confirm
+        openConfirmModal(t('studio.confirm_delete_one', { name: (video.m_file || '#' + video.id).replace(/\.\w+$/, '') }), async () => {
           try {
             await api.deleteStudioVideo(video.id);
             video.added = 'DELETE';
@@ -973,7 +970,7 @@ let signbankCurrentRow = null;
 
 function pushGlossToSignbank(row) {
   signbankCurrentRow = row;
-  $('#signbankTitle').textContent = `Push naar Signbank — ${row.glos || '#' + row.id}`;  // no i18n key for this push title
+  $('#signbankTitle').textContent = t('sb.op_title.broadcast', { name: row.glos || '#' + row.id });
   $('#signbankRetryBtn').onclick = () => firePush(row);
   $('#signbankModal').classList.remove('hidden');
   firePush(row);
@@ -993,7 +990,7 @@ async function firePush(row) {
   body.appendChild(renderSourceSection(row));
   const banner = el('div', { class: 'sb-banner info' },
     el('i', { class: 'fas fa-paper-plane' }),
-    el('span', {}, 'Verzoek wordt verstuurd naar Signbank…'),  // no i18n key for this detailed banner text
+    el('span', {}, t('sb.busy.broadcast')),
   );
   body.appendChild(banner);
 
@@ -1002,7 +999,7 @@ async function firePush(row) {
     res = await api.pushToSignbank(row.id);
   } catch (e) {
     body.removeChild(banner);
-    body.appendChild(renderBanner('error', 'Verzoek mislukt', e.message));  // no i18n key for "Verzoek mislukt"
+    body.appendChild(renderBanner('error', t('sb.error.request_failed'), e.message));
     status.className = 'signbank-status';
     status.textContent = '';
     return;
@@ -1016,13 +1013,13 @@ async function firePush(row) {
 
   status.className = 'signbank-status';
   status.textContent = res.ok
-    ? `Klaar — HTTP ${res.status} in ${res.duration_ms} ms`  // no i18n key for "Klaar — HTTP …"
-    : `Mislukt — HTTP ${res.status} in ${res.duration_ms} ms`;  // no i18n key for "Mislukt — HTTP …"
+    ? t('sb.status.done_http', { status: res.status, ms: res.duration_ms })
+    : t('sb.status.failed_http', { status: res.status, ms: res.duration_ms });
 }
 
 function renderSourceSection(row) {
   const wrap = el('section', { class: 'sb-section' });
-  wrap.appendChild(el('header', {}, 'Bron — form_data rij'));  // no i18n key for "Bron — form_data rij"
+  wrap.appendChild(el('header', {}, t('sb.section.source')));
   const div = el('div', { class: 'sb-section-body' });
 
   const grid = el('div', { class: 'sb-source-grid' });
@@ -1197,8 +1194,8 @@ function broadcastGloss(row) {
   openConfirmModal(
     t('confirm.broadcast', { name: row.glos || '#' + row.id }),
     async () => runSignbankOperation({
-      title:   `Broadcast naar Signbank — ${row.glos || '#' + row.id}`,  // no i18n key for this title
-      busyMsg: 'Bezig met broadcasten naar Signbank…',  // no i18n key
+      title:   t('sb.op_title.broadcast', { name: row.glos || '#' + row.id }),
+      busyMsg: t('sb.busy.broadcast'),
       row,
       call:    () => api.broadcastToSignbank(row.id),
       onOk:    (res) => {
@@ -1214,8 +1211,8 @@ function disconnectGloss(row) {
   openConfirmModal(
     t('confirm.disconnect', { id: row.signbank }),
     async () => runSignbankOperation({
-      title:   `Loskoppelen — ${row.glos || '#' + row.id} (was #${row.signbank})`,  // no i18n key for this title
-      busyMsg: 'Verzoek tot verwijdering…',  // no i18n key
+      title:   t('sb.op_title.disconnect', { name: `${row.glos || '#' + row.id} (was #${row.signbank})` }),
+      busyMsg: t('sb.busy.disconnect'),
       row,
       call:    () => api.deleteFromSignbank(row.id),
       onOk:    (res) => {
@@ -1250,7 +1247,7 @@ async function runSignbankOperation({ title, busyMsg, row, call, onOk }) {
   } catch (e) {
     clearChildren(body);
     body.appendChild(renderSourceSection(row));
-    body.appendChild(renderBanner('error', 'Verzoek mislukt', e.message));  // no i18n key for "Verzoek mislukt"
+    body.appendChild(renderBanner('error', t('sb.error.request_failed'), e.message));
     status.className = 'signbank-status';
     status.textContent = '';
     return;
@@ -1277,8 +1274,8 @@ async function runSignbankOperation({ title, busyMsg, row, call, onOk }) {
 
   status.className = 'signbank-status';
   status.textContent = res.ok
-    ? `Klaar — HTTP ${httpRes?.status ?? ''} in ${httpRes?.duration_ms ?? '?'} ms`  // no i18n key
-    : `Mislukt — HTTP ${httpRes?.status ?? ''} in ${httpRes?.duration_ms ?? '?'} ms`;  // no i18n key
+    ? t('sb.status.done_http', { status: httpRes?.status ?? '', ms: httpRes?.duration_ms ?? '?' })
+    : t('sb.status.failed_http', { status: httpRes?.status ?? '', ms: httpRes?.duration_ms ?? '?' });
 
   if (res.ok && typeof onOk === 'function') onOk(res);
 }
@@ -1320,7 +1317,7 @@ async function compareGloss(row) {
     res = await api.fetchSignbankGloss(row.id);
   } catch (e) {
     clearChildren(body);
-    body.appendChild(renderBanner('error', 'Ophalen mislukt', e.message));  // no i18n key for "Ophalen mislukt"
+    body.appendChild(renderBanner('error', t('sb.error.fetch_failed'), e.message));
     status.className = 'signbank-status';
     status.textContent = '';
     return;
@@ -1341,7 +1338,7 @@ async function compareGloss(row) {
   const mismatches = res.mismatch_count || 0;
   body.appendChild(renderBanner(mismatches ? 'info' : 'success',
     mismatches ? t('sb.diff.count', { n: mismatches, id: res.glossid, ms: res.duration_ms })
-               : 'Alles komt overeen met Signbank',  // no i18n key for "Alles komt overeen met Signbank"
+               : t('sb.compare.all_match'),
     `glossid #${res.glossid} · ${res.duration_ms} ms`));
 
   // Cache for "Push verschillen" so it knows which fields differ.
@@ -1358,7 +1355,7 @@ async function compareGloss(row) {
   body.appendChild(renderCompareExtras(res.remote_extra));
 
   status.className = 'signbank-status';
-  status.textContent = `Klaar — ${res.duration_ms} ms`;  // no i18n key for "Klaar — X ms"
+  status.textContent = t('sb.status.done_ms', { ms: res.duration_ms });
 }
 
 // Cache the most recent compare result so "Push differences" knows which
@@ -1436,8 +1433,8 @@ async function doSyncOp(row, direction, onlyFields) {
 
   status.className = 'signbank-status';
   status.textContent = res.ok
-    ? t('sb.op.done', { verb }) + ` — ${(res.succeeded || res.fields_set || []).length} velden`  // no i18n key for "N velden" in status
-    : t('sb.op.partial', { verb }) + ` — ${(res.failed || []).length} mislukt`;  // no i18n key for "N mislukt" suffix
+    ? t('sb.op.done', { verb }) + ` — ${(res.succeeded || res.fields_set || []).length} velden`
+    : t('sb.op.partial', { verb }) + ` — ${(res.failed || []).length} mislukt`;
 }
 
 function renderSyncOpResult(verb, direction, res) {

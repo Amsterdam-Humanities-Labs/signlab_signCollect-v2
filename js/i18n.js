@@ -243,4 +243,75 @@ const STRINGS = {
   'header.subtitle':             { nl: 'Glos-beheer',                   en: 'Gloss management' },
   'ctx.signio':                  { nl: 'Signio',                        en: 'Signio' },
   'ctx.signbank':                { nl: 'Signbank',                      en: 'Signbank' },
+
+  // ── User dropdown / multi-select ─────────────────────────────────────────
+  'multi.all':                   { nl: '— alle —',                      en: '— all —' },
+  'multi.none':                  { nl: '— geen —',                      en: '— none —' },
+  'multi.n_selected':            { nl: '{n} geselecteerd',              en: '{n} selected' },
+  'multi.you_suffix':            { nl: '(jij)',                         en: '(you)' },
+
+  // ── Duplicates ────────────────────────────────────────────────────────────
+  'duplicate.warning':           { nl: 'Waarschuwing: duplicaat gedetecteerd voor "{glos}". {n} rijen hieronder.',
+                                   en: 'Warning: duplicate detected for "{glos}". {n} rows below.' },
+  'duplicate.of':                { nl: 'Duplicaat van:',                en: 'Duplicate of:' },
+
+  // ── Pagination / count (extra) ────────────────────────────────────────────
+  'count.showing':               { nl: 'Toont {from}–{to} van {total}', en: 'Showing {from}–{to} of {total}' },
+
+  // ── Overscroll ────────────────────────────────────────────────────────────
+  'overscroll.release':          { nl: 'Loslaten…',                     en: 'Release…' },
+  'overscroll.page':             { nl: 'pagina {p} / {total}',          en: 'page {p} / {total}' },
+
+  // ── Studio ────────────────────────────────────────────────────────────────
+  'studio.count_simple':         { nl: '{n} opnames',                   en: '{n} recordings' },
+  'studio.count_with_deleted':   { nl: '{n} opnames (waarvan {d} verwijderd)',
+                                   en: '{n} recordings ({d} deleted)' },
+  'studio.confirm_delete_one':   { nl: 'Studio-opname "{name}" verwijderen?',
+                                   en: 'Delete studio recording "{name}"?' },
+
+  // ── Recorder ─────────────────────────────────────────────────────────────
+  'recorder.start':              { nl: 'Opname starten',                en: 'Start recording' },
+  'recorder.stop':               { nl: 'Stoppen & opslaan',             en: 'Stop & save' },
+  'recorder.no_camera':          { nl: 'Camera-toegang geweigerd',      en: 'Camera access denied' },
+  'recorder.start_failed':       { nl: 'Kon niet starten',              en: 'Could not start' },
+
+  // ── Signbank operation lifecycle ──────────────────────────────────────────
+  'sb.busy.broadcast':           { nl: 'Bezig met broadcasten naar Signbank…',
+                                   en: 'Broadcasting to Signbank…' },
+  'sb.busy.disconnect':          { nl: 'Verzoek tot verwijdering…',     en: 'Requesting removal…' },
+  'sb.op_title.broadcast':       { nl: 'Broadcast naar Signbank — {name}',
+                                   en: 'Broadcast to Signbank — {name}' },
+  'sb.op_title.disconnect':      { nl: 'Loskoppelen — {name}',          en: 'Disconnect — {name}' },
+  'sb.status.done_http':         { nl: 'Klaar — HTTP {status} in {ms} ms',
+                                   en: 'Done — HTTP {status} in {ms} ms' },
+  'sb.status.failed_http':       { nl: 'Mislukt — HTTP {status} in {ms} ms',
+                                   en: 'Failed — HTTP {status} in {ms} ms' },
+  'sb.status.done_ms':           { nl: 'Klaar — {ms} ms',              en: 'Done — {ms} ms' },
+  'sb.compare.all_match':        { nl: 'Alles komt overeen met Signbank',
+                                   en: 'Everything matches Signbank' },
+  'sb.error.request_failed':     { nl: 'Verzoek mislukt',               en: 'Request failed' },
+  'sb.error.fetch_failed':       { nl: 'Ophalen mislukt',               en: 'Fetch failed' },
+  'sb.section.source':           { nl: 'Bron — form_data rij',          en: 'Source — form_data row' },
+  'sb.btn.retry':                { nl: 'Opnieuw verzenden',             en: 'Resend' },
+  'sb.badge_tooltip':            { nl: 'Verbonden met Signbank glos #{id}',
+                                   en: 'Connected to Signbank gloss #{id}' },
+
+  // ── Confirm modal title ───────────────────────────────────────────────────
+  'confirm.title':               { nl: 'Weet je het zeker?',            en: 'Are you sure?' },
+
+  // ── Row actions extra ─────────────────────────────────────────────────────
+  'rowmenu.show':                { nl: 'Zichtbaar maken',               en: 'Show' },
+
+  // ── Row thema empty ───────────────────────────────────────────────────────
+  'row.thema_none':              { nl: '— geen thema —',                en: '— no theme —' },
+
+  // ── Senses pair editor ────────────────────────────────────────────────────
+  'senses.both_required':        { nl: 'Senses NL en EN moeten beide ingevuld zijn',
+                                   en: 'Senses NL and EN must both be filled in' },
+  'senses.incomplete':           { nl: 'Let op: niet alle sense-paren NL/EN zijn ingevuld',
+                                   en: 'Note: not all sense pairs (NL/EN) are filled in' },
+  'senses.add_pair':             { nl: '+ sense paar toevoegen',        en: '+ add sense pair' },
+
+  // ── Thumb prompt ─────────────────────────────────────────────────────────
+  'thumb.click_to_record':       { nl: 'Klik om zelfopname te maken',   en: 'Click to record selfie video' },
 };

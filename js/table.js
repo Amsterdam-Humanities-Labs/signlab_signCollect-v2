@@ -111,7 +111,7 @@ function renderThumbCol(row, ctx, rowWrap) {
     thumbWrap.addEventListener('mouseleave', () => thumbWrap.classList.remove('zoomed'));
   } else {
     thumbWrap.classList.add('record-prompt');
-    thumbWrap.title = 'Klik om zelfopname te maken';  // no i18n key for this tooltip
+    thumbWrap.title = t('thumb.click_to_record');
     thumbWrap.appendChild(el('i', { class: 'fas fa-video-slash' }));
     thumbWrap.appendChild(el('span', { class: 'record-prompt-label' }, t('rowmenu.record')));
     thumbWrap.addEventListener('click', () => ctx.openRecord(row));
@@ -170,7 +170,7 @@ function renderThumbCol(row, ctx, rowWrap) {
       class: 'signbank-badge',
       href: `${ctx.signbankBaseUrl ? ctx.signbankBaseUrl() : 'https://signbank.cls.ru.nl'}/dictionary/gloss/${encodeURIComponent(row.signbank)}.html`,
       target: '_blank',
-      title: `Verbonden met Signbank glos #${row.signbank}`,  // no i18n key for signbank badge tooltip
+      title: t('sb.badge_tooltip', { id: row.signbank }),
     },
       el('i', { class: 'fas fa-link' }),
       `SB #${row.signbank}`,
@@ -196,7 +196,7 @@ function renderMainCol(row, ctx) {
   if (row.duplicates && row.duplicates.length) {
     const dupBlock = el('div', { class: 'duplicate-hint' });
     dupBlock.appendChild(el('i', { class: 'fas fa-clone' }));
-    dupBlock.appendChild(el('span', { class: 'duplicate-label' }, 'Duplicaat van: '));
+    dupBlock.appendChild(el('span', { class: 'duplicate-label' }, t('duplicate.of') + ' '));
     row.duplicates.forEach((d, i) => {
       if (i > 0) dupBlock.appendChild(document.createTextNode(', '));
       const tokens     = extractUserTokens(d.wie);
@@ -335,7 +335,7 @@ function renderActionsCol(row, ctx, rowWrap) {
     pop.appendChild(itemBtn('delete-zelfopname', 'fa-video-slash', label, () => ctx.deleteAllZelfopname(row), true));
   }
   pop.appendChild(itemBtn('toggle-vis', row.glosZichtbaar === 0 ? 'fa-eye-slash' : 'fa-eye',
-    row.glosZichtbaar === 0 ? t('rowmenu.hide') : 'Zichtbaar maken',  // no i18n key for "Zichtbaar maken"
+    row.glosZichtbaar === 0 ? t('rowmenu.hide') : t('rowmenu.show'),
     () => {
       const next = row.glosZichtbaar === 0 ? 1 : 0;
       row.glosZichtbaar = next;
@@ -404,7 +404,7 @@ function renderThemaSelect(row, ctx) {
       save(row, { thema: v });
     }
   });
-  select.appendChild(el('option', { value: '' }, '— geen thema —'));  // no i18n key for "— geen thema —"
+  select.appendChild(el('option', { value: '' }, t('row.thema_none')));
   // ensure current value is present even if not in catalog
   const set = new Set(themas);
   if (row.thema && !set.has(row.thema)) {
