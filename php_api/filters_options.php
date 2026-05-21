@@ -1,13 +1,16 @@
 <?php
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/session.php';
+require_once __DIR__ . '/datasets.php';
 
-require_session();
+$session = require_session();
 
-$pdo = db();
+$pdo   = db();
+$ds    = require_dataset($pdo, $session, $_GET);
+$table = $ds['table'];
 
 $themas = $pdo->query(
-    "SELECT thema, COUNT(*) AS c FROM form_data
+    "SELECT thema, COUNT(*) AS c FROM `$table`
      WHERE thema IS NOT NULL AND thema <> ''
      GROUP BY thema ORDER BY c DESC"
 )->fetchAll();
