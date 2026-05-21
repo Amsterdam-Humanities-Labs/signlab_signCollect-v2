@@ -297,6 +297,12 @@ function activeDatasetGlosLocalLabel() {
   return (entry && entry.glosLocalLabel) || 'Glos NL';
 }
 
+function activeDatasetSensesLocalLabel() {
+  const list = (state.user && state.user.datasets) || [];
+  const entry = list.find(d => d.code === state.dataset);
+  return (entry && entry.sensesLocalLabel) || 'Senses NL';
+}
+
 function signbankBaseUrl() {
   return (state.user && state.user.signbankPublicUrl) || 'https://signbank.cls.ru.nl';
 }
@@ -429,10 +435,12 @@ function setupAddModal() {
 }
 
 function openAddModal() {
-  // Reflect the active dataset in the form: LSM users see "Glos PT",
-  // NGT users see "Glos NL".
-  const localLabel = $('#addModal .add-form-label-glos-local');
-  if (localLabel) localLabel.textContent = activeDatasetGlosLocalLabel();
+  // Reflect the active dataset in the form: LSM users see "Glos PT" /
+  // "Senses PT", NGT users see "Glos NL" / "Senses NL".
+  const localGlos   = $('#addModal .add-form-label-glos-local');
+  const localSenses = $('#addModal .add-form-label-senses-local');
+  if (localGlos)   localGlos.textContent   = activeDatasetGlosLocalLabel();
+  if (localSenses) localSenses.textContent = activeDatasetSensesLocalLabel();
   // Ensure the submit button isn't stuck disabled from a previous failed
   // submit that didn't reach the finally block (very rare, but defensive).
   const submitBtn = $('#addForm button[type="submit"]');
@@ -1031,7 +1039,7 @@ function renderSourceSection(row) {
   const grid = el('div', { class: 'sb-source-grid' });
   grid.appendChild(field(activeDatasetGlosLocalLabel(), row.glos));
   grid.appendChild(field('Glos EN', row.glos_engels));
-  grid.appendChild(field('Senses NL', (row.senses || []).join(' · ') || null));
+  grid.appendChild(field(activeDatasetSensesLocalLabel(), (row.senses || []).join(' · ') || null));
   grid.appendChild(field('Senses EN', (row.sensesEngels || []).join(' · ') || null));
   grid.appendChild(field('Thema', row.thema));
   grid.appendChild(field('Labels', (row.labels || []).join(', ') || null));
