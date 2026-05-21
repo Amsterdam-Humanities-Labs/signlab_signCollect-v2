@@ -22,3 +22,4 @@ dist/
 
 # Server-only secrets (Signbank API key etc.)
 signbank_sync/config.php
+php_api/upload_tokens.php
