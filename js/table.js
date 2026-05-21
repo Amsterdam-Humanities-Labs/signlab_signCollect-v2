@@ -342,7 +342,29 @@ function renderActionsCol(row, ctx, rowWrap) {
     ctx.openConfirm(`Glos "${row.glos || '#' + row.id}" verbergen?`, async () => {
       await api.remove(row.id);
       row.glosZichtbaar = 1;
-      ctx.refreshRow(row);
+      // Fade the row out and remove it from the DOM. The previous flow
+      // re-rendered it with the .hidden-row dim, which left it sitting
+      // there at .55 opacity. Users expect a hidden gloss to actually
+      // disappear from the list (it's still in the DB, accessible via
+      // the "verborgen" filter).
+      const node = document.querySelector(`.gloss-row[data-id="${row.id}"]`);
+      if (node) {
+        node.style.transition = 'opacity .2s ease, max-height .3s ease .05s, margin .3s ease .05s, padding .3s ease .05s';
+        node.style.maxHeight = node.offsetHeight + 'px';
+        node.style.overflow = 'hidden';
+        // next frame: opacity to 0, then collapse height
+        requestAnimationFrame(() => {
+          node.style.opacity = '0';
+          requestAnimationFrame(() => {
+            node.style.maxHeight = '0';
+            node.style.marginTop = '0';
+            node.style.marginBottom = '0';
+            node.style.paddingTop = '0';
+            node.style.paddingBottom = '0';
+          });
+        });
+        setTimeout(() => node.remove(), 400);
+      }
       toast('Glos verborgen', 'success');
     });
   }, true));
