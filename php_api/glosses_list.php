@@ -134,22 +134,18 @@ if ($ids) {
     $placeholders = implode(',', array_fill(0, count($ids), '?'));
     $stringIds = array_map('strval', $ids);
 
-    // Modal list: zOg depends on gloss's extern flag.
-    //   - extern = '1'   → zOg IN ('labels', 'extern')
-    //   - otherwise      → zOg = 'Glos'
+    // Modal list: zOg rule is dataset-specific (via dataset registry).
+    $videoMtZog = dataset_matched_zog_clause($ds['code'], 'mt', 'fd');
     $videoStmt = $pdo->prepare(
         "SELECT mt.id, mt.m_transcription, mt.m_file, mt.l_file, mt.r_file,
                 mt.thumbnail, mt.post_processed, mt.definitive_outcome, mt.date,
                 mt.zOg, mt.added
          FROM matched_transcriptions mt
-         INNER JOIN form_data fd
+         INNER JOIN `$table` fd
                  ON mt.m_transcription REGEXP '^[0-9]+$'
                 AND CAST(mt.m_transcription AS UNSIGNED) = fd.id
          WHERE fd.id IN ($placeholders)
-           AND (
-                  (fd.extern = '1'   AND mt.zOg IN ('labels', 'extern'))
-               OR (fd.extern IS NULL AND mt.zOg = 'Glos')
-               )
+           AND $videoMtZog
          ORDER BY mt.m_transcription, mt.id DESC"
     );
     $videoStmt->execute($ids);
@@ -170,22 +166,20 @@ if ($ids) {
         ];
     }
 
-    // Row thumbnail: latest non-deleted entry, with same zOg/extern rule as the modal list.
+    // Row thumbnail: latest non-deleted entry, with zOg rule via dataset registry.
+    $thumbMtZog = dataset_matched_zog_clause($ds['code'], 'mt2', 'fd');
     $thumbStmt = $pdo->prepare(
         "SELECT mt.m_transcription, mt.m_file, mt.post_processed
          FROM matched_transcriptions mt
          INNER JOIN (
            SELECT mt2.m_transcription, MAX(mt2.id) AS max_id
            FROM matched_transcriptions mt2
-           INNER JOIN form_data fd
+           INNER JOIN `$table` fd
                    ON mt2.m_transcription REGEXP '^[0-9]+$'
                   AND CAST(mt2.m_transcription AS UNSIGNED) = fd.id
            WHERE fd.id IN ($placeholders)
              AND (mt2.added IS NULL OR UPPER(mt2.added) <> 'DELETE')
-             AND (
-                    (fd.extern = '1'   AND mt2.zOg IN ('labels', 'extern'))
-                 OR (fd.extern IS NULL AND mt2.zOg = 'Glos')
-                 )
+             AND $thumbMtZog
            GROUP BY mt2.m_transcription
          ) latest ON mt.id = latest.max_id"
     );
