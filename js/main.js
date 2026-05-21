@@ -331,10 +331,11 @@ function makeCtx() {
     userName,
     themaOptions: () => state.options.themas,
     labelOptions: () => state.options.labels,
-    // Owner dropdown picker is dataset-scoped (use users_for_dataset);
-    // the full state.options.users list still feeds userNameMap so that
-    // rendering owner pills for cross-dataset users still resolves names.
-    userOptions:  () => (state.options.users_for_dataset || state.options.users || []).map(u => ({
+    // The row's owner editor uses the FULL users list so existing pills
+    // (e.g. gomer = id 1 on an LSM row) resolve to a name instead of the
+    // raw id. The top-bar "Eigenaar" filter is dataset-scoped separately
+    // in populateOwnerSelect().
+    userOptions:  () => (state.options.users || []).map(u => ({
       value: String(u.userId),
       label: u.user,
     })),
