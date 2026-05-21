@@ -1,5 +1,6 @@
 import { el, debounce, toast, extractUserTokens } from './util.js';
 import { api } from './api.js';
+import { t } from './i18n.js';
 import { renderSensesPair } from './sensesPair.js';
 import { renderLabelEditor } from './labelEditor.js';
 
@@ -110,9 +111,9 @@ function renderThumbCol(row, ctx, rowWrap) {
     thumbWrap.addEventListener('mouseleave', () => thumbWrap.classList.remove('zoomed'));
   } else {
     thumbWrap.classList.add('record-prompt');
-    thumbWrap.title = 'Klik om zelfopname te maken';
+    thumbWrap.title = 'Klik om zelfopname te maken';  // no i18n key for this tooltip
     thumbWrap.appendChild(el('i', { class: 'fas fa-video-slash' }));
-    thumbWrap.appendChild(el('span', { class: 'record-prompt-label' }, 'Maak zelfopname'));
+    thumbWrap.appendChild(el('span', { class: 'record-prompt-label' }, t('rowmenu.record')));
     thumbWrap.addEventListener('click', () => ctx.openRecord(row));
   }
   col.appendChild(thumbWrap);
@@ -126,10 +127,10 @@ function renderThumbCol(row, ctx, rowWrap) {
       el('i', { class: 'fas fa-film' }),
       `#${idx + 1}`,
       el('button', {
-        type: 'button', class: 'x', title: 'Verwijderen',
+        type: 'button', class: 'x', title: t('btn.delete'),
         onclick: async (ev) => {
           ev.stopPropagation();
-          ctx.openConfirm(`Zelfopname ${idx + 1} verwijderen uit deze glos?`, async () => {
+          ctx.openConfirm(t('confirm.delete_zelfopname'), async () => {
             const upd = await api.deleteVideo(row.id, fname);
             row.zelfopname = upd.zelfopname;
             ctx.refreshRow(row);
@@ -156,7 +157,7 @@ function renderThumbCol(row, ctx, rowWrap) {
     onclick: () => ctx.openPhonology(row),
   },
     el('i', { class: 'fas fa-hand-spock' }),
-    'Fonologie bewerken',
+    t('rowmenu.phonology'),
   ));
 
   col.appendChild(el('div', { class: 'row-id' },
@@ -169,7 +170,7 @@ function renderThumbCol(row, ctx, rowWrap) {
       class: 'signbank-badge',
       href: `${ctx.signbankBaseUrl ? ctx.signbankBaseUrl() : 'https://signbank.cls.ru.nl'}/dictionary/gloss/${encodeURIComponent(row.signbank)}.html`,
       target: '_blank',
-      title: `Verbonden met Signbank glos #${row.signbank}`,
+      title: `Verbonden met Signbank glos #${row.signbank}`,  // no i18n key for signbank badge tooltip
     },
       el('i', { class: 'fas fa-link' }),
       `SB #${row.signbank}`,
@@ -211,14 +212,14 @@ function renderMainCol(row, ctx) {
 
   const themaBlock = el('div', { class: 'meta-block' });
   themaBlock.append(
-    el('span', { class: 'meta-label' }, 'Thema'),
+    el('span', { class: 'meta-label' }, t('row.thema')),
     renderThemaSelect(row, ctx),
   );
   col.appendChild(themaBlock);
 
   const labelsBlock = el('div', { class: 'meta-block' });
   labelsBlock.append(
-    el('span', { class: 'meta-label' }, 'Labels'),
+    el('span', { class: 'meta-label' }, t('row.labels')),
     renderLabelEditor({
       value: row.labels,
       options: ctx.labelOptions().map(l => ({ value: l.label, label: l.label, color: l.color })),
@@ -229,7 +230,7 @@ function renderMainCol(row, ctx) {
 
   const sensesBlock = el('div', { class: 'meta-block' });
   sensesBlock.append(
-    el('span', { class: 'meta-label' }, 'Senses (NL / EN)'),
+    el('span', { class: 'meta-label' }, t('row.senses') + ' (NL / EN)'),
     renderSensesPair({
       nl: row.senses,
       en: row.sensesEngels,
@@ -264,7 +265,7 @@ function renderMetaCol(row, ctx) {
 
   const wieBlock = el('div', { class: 'meta-block' });
   wieBlock.append(
-    el('span', { class: 'meta-label' }, 'Wie'),
+    el('span', { class: 'meta-label' }, t('row.wie')),
     renderLabelEditor({
       value: row.wie,
       options: ctx.userOptions(),
@@ -278,19 +279,19 @@ function renderMetaCol(row, ctx) {
         row.wie = newWie;
         save(row, updates).then(() => ctx.refreshRow(row));
       },
-      placeholder: '+ gebruiker…',
+      placeholder: t('filter.owner.add'),
       allowFreeText: false,
     }),
   );
   col.appendChild(wieBlock);
 
   const gecBlock = el('div', { class: 'meta-block' });
-  gecBlock.append(el('span', { class: 'meta-label' }, 'Gecontroleerd'));
+  gecBlock.append(el('span', { class: 'meta-label' }, t('row.gecontroleerd')));
   const isKlaar = String(row.fonologie_fase1 ?? '') === '1';
   const toggle = el('button', {
     type: 'button',
     class: 'gec-state gec-toggle ' + (isKlaar ? 'klaar' : 'bezig'),
-    title: 'Klik om te wisselen tussen klaar / niet klaar',
+    title: t('row.gec.toggle_hint'),
     onclick: () => {
       const next = isKlaar ? '0' : '1';
       row.fonologie_fase1 = next;
@@ -299,7 +300,7 @@ function renderMetaCol(row, ctx) {
     },
   },
     el('i', { class: 'fas ' + (isKlaar ? 'fa-check' : 'fa-clock') }),
-    isKlaar ? 'klaar' : 'niet klaar',
+    isKlaar ? t('row.gec.done') : t('row.gec.busy'),
   );
   gecBlock.appendChild(toggle);
   col.appendChild(gecBlock);
@@ -312,34 +313,34 @@ function renderActionsCol(row, ctx, rowWrap) {
 
   const summary = el('summary', {}, el('i', { class: 'fas fa-ellipsis-vertical' }));
   const pop = el('div', { class: 'menu-pop' });
-  pop.appendChild(itemBtn('record', 'fa-video', 'Zelfopname maken', () => ctx.openRecord(row)));
+  pop.appendChild(itemBtn('record', 'fa-video', t('rowmenu.record'), () => ctx.openRecord(row)));
   if (ctx.contextIsSignbank()) {
     if (row.signbank) {
       pop.appendChild(itemBtn('signbank-compare', 'fa-magnifying-glass',
-        `Vergelijken met Signbank (#${row.signbank})`, () => ctx.compareWithSignbank(row)));
+        `${t('rowmenu.compare')} (#${row.signbank})`, () => ctx.compareWithSignbank(row)));
       pop.appendChild(itemBtn('signbank-disconnect', 'fa-link-slash',
-        `Loskoppelen van Signbank (#${row.signbank})`, () => ctx.disconnectSignbank(row), true));
+        `${t('rowmenu.disconnect')} (#${row.signbank})`, () => ctx.disconnectSignbank(row), true));
     } else {
       pop.appendChild(itemBtn('signbank-broadcast', 'fa-cloud-arrow-up',
-        'Broadcast naar Signbank', () => ctx.broadcastToSignbank(row)));
+        t('rowmenu.broadcast'), () => ctx.broadcastToSignbank(row)));
     }
   }
   if (row.zelfopname.length > 0) {
     const label = row.zelfopname.length === 1
-      ? 'Zelfopname verwijderen'
-      : `Zelfopnames verwijderen (${row.zelfopname.length})`;
+      ? t('rowmenu.delete_zelfopname_all')
+      : `${t('rowmenu.delete_zelfopname_all')} (${row.zelfopname.length})`;
     pop.appendChild(itemBtn('delete-zelfopname', 'fa-video-slash', label, () => ctx.deleteAllZelfopname(row), true));
   }
   pop.appendChild(itemBtn('toggle-vis', row.glosZichtbaar === 0 ? 'fa-eye-slash' : 'fa-eye',
-    row.glosZichtbaar === 0 ? 'Verbergen' : 'Zichtbaar maken',
+    row.glosZichtbaar === 0 ? t('rowmenu.hide') : 'Zichtbaar maken',  // no i18n key for "Zichtbaar maken"
     () => {
       const next = row.glosZichtbaar === 0 ? 1 : 0;
       row.glosZichtbaar = next;
       save(row, { glosZichtbaar: next });
       ctx.refreshRow(row);
     }));
-  pop.appendChild(itemBtn('delete', 'fa-trash', 'Verwijderen', () => {
-    ctx.openConfirm(`Glos "${row.glos || '#' + row.id}" verbergen?`, async () => {
+  pop.appendChild(itemBtn('delete', 'fa-trash', t('rowmenu.delete'), () => {
+    ctx.openConfirm(t('confirm.hide_gloss', { name: row.glos || '#' + row.id }), async () => {
       await api.remove(row.id);
       row.glosZichtbaar = 1;
       // Fade the row out and remove it from the DOM. The previous flow
@@ -365,7 +366,7 @@ function renderActionsCol(row, ctx, rowWrap) {
         });
         setTimeout(() => node.remove(), 400);
       }
-      toast('Glos verborgen', 'success');
+      toast(t('toast.gloss_hidden'), 'success');
     });
   }, true));
 
@@ -400,11 +401,11 @@ function renderThemaSelect(row, ctx) {
       save(row, { thema: v });
     }
   });
-  select.appendChild(el('option', { value: '' }, '— geen thema —'));
+  select.appendChild(el('option', { value: '' }, '— geen thema —'));  // no i18n key for "— geen thema —"
   // ensure current value is present even if not in catalog
   const set = new Set(themas);
   if (row.thema && !set.has(row.thema)) {
-    select.appendChild(el('option', { value: row.thema, selected: true }, row.thema + ' (custom)'));
+    select.appendChild(el('option', { value: row.thema, selected: true }, row.thema + ' (custom)'));  // "(custom)" is intentionally mixed-language
   }
   themas.forEach(t => {
     select.appendChild(el('option', { value: t, selected: t === row.thema }, t));
@@ -424,6 +425,6 @@ async function save(row, fields) {
   try {
     await api.save(row.id, fields);
   } catch (e) {
-    toast('Opslaan mislukt: ' + e.message, 'error');
+    toast(t('toast.save_failed') + ': ' + e.message, 'error');
   }
 }

@@ -1,4 +1,5 @@
 import { el } from './util.js';
+import { t } from './i18n.js';
 
 export function renderLabelEditor({
   value,
@@ -41,7 +42,7 @@ export function renderLabelEditor({
         el('button', {
           type: 'button',
           class: 'pill-x',
-          title: 'Verwijderen',
+          title: t('btn.delete'),
           onclick: () => {
             values = values.filter(x => String(x) !== String(val));
             renderPills();
@@ -69,7 +70,7 @@ export function renderLabelEditor({
         onmousedown: (ev) => { ev.preventDefault(); addByText(q); }
       },
         el('i', { class: 'fas fa-plus' }),
-        ` "${q}" toevoegen`
+        ` "${q}" ${t('btn.add').toLowerCase()}`
       ));
     }
     candidates.forEach(o => {

@@ -1,5 +1,6 @@
 import { el, toast } from './util.js';
 import { api } from './api.js';
+import { t } from './i18n.js';
 
 export const PHONOLOGY_FIELDS = [
   { key: 'Handeness',                  label: 'Handedness',                    type: 'select' },
@@ -24,8 +25,8 @@ export const PHONOLOGY_FIELDS = [
 ];
 
 export const FASE_FIELDS = [
-  { key: 'fonologie_fase1', label: 'Fonologie Fase 1 Klaar?' },
-  { key: 'fonologie_fase2', label: 'Fonologie Fase 2 Klaar?' },
+  { key: 'fonologie_fase1', labelKey: 'phon.fase1', label: 'Fonologie Fase 1 Klaar?' },
+  { key: 'fonologie_fase2', labelKey: 'phon.fase2', label: 'Fonologie Fase 2 Klaar?' },
 ];
 
 let selectsDataPromise = null;
@@ -107,7 +108,7 @@ export async function buildPhonologyForm({ row, onSave }) {
     });
     toggle.append(
       input,
-      el('span', { class: 'fase-label' }, f.label),
+      el('span', { class: 'fase-label' }, f.labelKey ? t(f.labelKey) : f.label),
     );
     faseRow.appendChild(toggle);
   });

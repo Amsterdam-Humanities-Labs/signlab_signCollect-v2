@@ -1,4 +1,5 @@
 import { api, setActiveDataset } from './api.js';
+import { t, setLanguage, applyI18nToDom } from './i18n.js';
 import { el, debounce, toast, fmtCount } from './util.js';
 import { renderRow, resetThumbQueue } from './table.js';
 import { renderSenses } from './senses.js';
@@ -32,6 +33,8 @@ async function init() {
   if (saved) setActiveDataset(saved);  // request will be 403'd if no longer allowed
 
   state.user = await api.currentUser();
+  setLanguage(state.user.language);
+  applyI18nToDom();
   const allowedCodes = (state.user.datasets || []).map(d => d.code);
   state.dataset = (saved && allowedCodes.includes(saved)) ? saved : (state.user.activeDataset || 'ngt');
   setActiveDataset(state.dataset);
@@ -118,7 +121,7 @@ function populateOwnerSelect() {
   const myId = String(state.user.userId);
   const myName = state.user.username || userNameMap.get(myId) || myId;
   sel.appendChild(el('option', { value: myId }, `${myName} (jij)`));
-  sel.appendChild(el('option', { value: '' }, 'Iedereen'));
+  sel.appendChild(el('option', { value: '' }, t('filter.owner.everyone')));
   state.options.users
     .filter(u => String(u.userId) !== myId)
     .sort((a, b) => Number(a.userId) - Number(b.userId))
@@ -130,13 +133,13 @@ function populateThemaSelect() {
   const sel = $('#themaSelect');
   clearChildren(sel);
   sel.appendChild(el('option', { value: '' }, '— alle —'));
-  for (const t of state.options.themas) {
-    sel.appendChild(el('option', { value: t }, t));
+  for (const thema of state.options.themas) {
+    sel.appendChild(el('option', { value: thema }, thema));
   }
   const list = $('#themaList');
   clearChildren(list);
-  for (const t of state.options.themas) {
-    list.appendChild(el('option', { value: t }));
+  for (const thema of state.options.themas) {
+    list.appendChild(el('option', { value: thema }));
   }
 }
 
@@ -164,11 +167,11 @@ function syncMulti(root, onChange) {
   const values = Array.from(inputs).map(i => i.value);
   const summary = document.querySelector(`${root} .multi-summary`);
   if (values.length === 0) {
-    summary.textContent = '— alle —'; summary.classList.add('placeholder');
+    summary.textContent = '— alle —'; summary.classList.add('placeholder');  // "— alle —" has no i18n key
   } else if (values.length <= 2) {
     summary.textContent = values.join(', '); summary.classList.remove('placeholder');
   } else {
-    summary.textContent = `${values.length} geselecteerd`; summary.classList.remove('placeholder');
+    summary.textContent = `${values.length} geselecteerd`; summary.classList.remove('placeholder');  // "N geselecteerd" has no i18n key — left as-is
   }
   onChange(values);
 }
@@ -199,7 +202,7 @@ async function refresh() {
       page: state.page,
     });
   } catch (e) {
-    toast('Lijst laden mislukt: ' + e.message, 'error');
+    toast(t('toast.error_loading') + ': ' + e.message, 'error');
     clearChildren(list);
     return;
   }
@@ -229,7 +232,7 @@ async function refresh() {
         if (rows.length > 1) {
           wrap.appendChild(el('div', { class: 'dup-banner' },
             el('i', { class: 'fas fa-triangle-exclamation' }),
-            `Waarschuwing: duplicaat gedetecteerd voor "${rows[0].glos || '?'}". ${rows.length} rijen hieronder.`
+            `Waarschuwing: duplicaat gedetecteerd voor "${rows[0].glos || '?'}". ${rows.length} rijen hieronder.`  // no i18n key for duplicate warning
           ));
         }
         rows.forEach(r => wrap.appendChild(renderRow(r, ctx)));
@@ -241,12 +244,12 @@ async function refresh() {
   const meta = $('#resultMeta');
   clearChildren(meta);
   if (res.total === 0) {
-    meta.textContent = 'Geen resultaten';
+    meta.textContent = t('empty.title');
   } else {
     const from = (res.page - 1) * res.pageSize + 1;
     const to   = Math.min(res.page * res.pageSize, res.total);
     meta.append(
-      'Toont ',
+      'Toont ',  // "Toont X–Y van Z" has no i18n key — left as-is
       el('strong', {}, String(from)), '–',
       el('strong', {}, String(to)), ' van ',
       el('strong', {}, fmtCount(res.total)),
@@ -294,8 +297,8 @@ async function deleteAllZelfopname(row) {
   if (!row.zelfopname.length) return;
   const count = row.zelfopname.length;
   const msg = count === 1
-    ? `Zelfopname "${row.zelfopname[0]}" verwijderen?`
-    : `Alle ${count} zelfopnames van deze glos verwijderen?`;
+    ? t('confirm.delete_zelfopname')
+    : t('confirm.delete_all_zelfopname', { n: count });
   openConfirmModal(msg, async () => {
     const filenames = [...row.zelfopname];
     for (const fn of filenames) {
@@ -303,7 +306,7 @@ async function deleteAllZelfopname(row) {
       row.zelfopname = upd.zelfopname;
     }
     makeCtx().refreshRow(row);
-    toast(count === 1 ? 'Zelfopname verwijderd' : `${count} zelfopnames verwijderd`, 'success');
+    toast(t('toast.video_deleted'), 'success');
   });
 }
 
@@ -382,11 +385,11 @@ function setupAddModal() {
       document.querySelectorAll('#addLabelsMulti .multi-list input').forEach(i => i.checked = false);
       sensesEditors.__reset_senses();
       sensesEditors.__reset_sensesEngels();
-      toast('Glos aangemaakt', 'success');
+      toast('Glos aangemaakt', 'success');  // no i18n key for "Glos aangemaakt"
       state.page = 1;
       refresh();
     } catch (e) {
-      toast('Aanmaken mislukt: ' + e.message, 'error');
+      toast('Aanmaken mislukt: ' + e.message, 'error');  // no i18n key for "Aanmaken mislukt"
     }
   });
 }
@@ -416,7 +419,7 @@ async function openRecordModal(row) {
   recordingForRow = row;
   recordingState = 'idle';
   $('#recordModal').classList.remove('hidden');
-  $('#recordStatus').textContent = 'Klaar';
+  $('#recordStatus').textContent = t('record.status.ready');
   $('#recordTimer').textContent = '0:00';
   setRecordToggleLabel('start');
   $('#recordToggle').classList.remove('recording');
@@ -428,7 +431,7 @@ async function openRecordModal(row) {
     recorder = new VideoRecorder($('#recordPreview'));
     recorder.stream = stream;
   } catch (e) {
-    toast('Camera-toegang geweigerd: ' + e.message, 'error');
+    toast('Camera-toegang geweigerd: ' + e.message, 'error');  // no i18n key for camera access denied
     closeRecordModal();
   }
 }
@@ -438,10 +441,10 @@ function setRecordToggleLabel(mode) {
   clearChildren(btn);
   if (mode === 'start') {
     btn.appendChild(el('i', { class: 'fas fa-circle' }));
-    btn.append(' Opname starten');
+    btn.append(' Opname starten');  // no i18n key for "Opname starten" / "Stoppen & opslaan"
   } else {
     btn.appendChild(el('i', { class: 'fas fa-stop' }));
-    btn.append(' Stoppen & opslaan');
+    btn.append(' Stoppen & opslaan');  // no i18n key
   }
 }
 
@@ -463,24 +466,24 @@ async function toggleRecording() {
         250
       );
       recordingState = 'recording';
-      $('#recordStatus').textContent = 'Opname loopt…';
+      $('#recordStatus').textContent = t('record.status.recording');
       setRecordToggleLabel('stop');
       $('#recordToggle').classList.add('recording');
     } catch (e) {
-      toast('Kon niet starten: ' + e.message, 'error');
+      toast('Kon niet starten: ' + e.message, 'error');  // no i18n key for "Kon niet starten"
     }
   } else if (recordingState === 'recording') {
-    $('#recordStatus').textContent = 'Bezig met opslaan…';
+    $('#recordStatus').textContent = t('record.status.uploading');
     $('#recordToggle').disabled = true;
     const blob = await recorder.stop();
     try {
       const upd = await api.uploadVideo(recordingForRow.id, blob);
       recordingForRow.zelfopname = upd.zelfopname;
       makeCtx().refreshRow(recordingForRow);
-      toast('Zelfopname opgeslagen', 'success');
+      toast(t('toast.video_uploaded'), 'success');
       closeRecordModal();
     } catch (e) {
-      toast('Uploaden mislukt: ' + e.message, 'error');
+      toast(t('toast.save_failed') + ': ' + e.message, 'error');
     } finally {
       $('#recordToggle').disabled = false;
     }
@@ -534,14 +537,14 @@ function updateOverscrollUI() {
     drop.classList.toggle('ready', ready);
     drop.style.setProperty('--fill', pct);
     drop.querySelector('.drop-label-text').textContent = label;
-    drop.querySelector('.drop-page').textContent = `pagina ${page} / ${totalPages()}`;
+    drop.querySelector('.drop-page').textContent = `pagina ${page} / ${totalPages()}`;  // no i18n key for "pagina X / Y"
   };
   if (overscroll.dir === -1) {
-    setActive(top, overscroll.ready ? 'Loslaten…' : 'Vorige pagina', state.page - 1);
+    setActive(top, overscroll.ready ? 'Loslaten…' : t('pager.prev'), state.page - 1);  // "Loslaten…" has no i18n key
     bot.classList.remove('active', 'ready');
     bot.style.removeProperty('--fill');
   } else if (overscroll.dir === 1) {
-    setActive(bot, overscroll.ready ? 'Loslaten…' : 'Volgende pagina', state.page + 1);
+    setActive(bot, overscroll.ready ? 'Loslaten…' : t('pager.next'), state.page + 1);  // "Loslaten…" has no i18n key
     top.classList.remove('active', 'ready');
     top.style.removeProperty('--fill');
   } else {
@@ -720,7 +723,7 @@ function studioVideoUrl(basename, postProcessed) {
 
 function openStudioModal(row) {
   studioCurrentRow = row;
-  $('#studioTitle').textContent = `Studio video's — ${row.glos || '#' + row.id}`;
+  $('#studioTitle').textContent = t('studio.title', { name: row.glos || '#' + row.id });
   renderStudioList();
   $('#studioModal').classList.remove('hidden');
 }
@@ -734,13 +737,13 @@ function renderStudioList() {
   const liveCount    = videos.filter(v => !v.deleted).length;
   const deletedCount = videos.length - liveCount;
   $('#studioCount').textContent = videos.length === 0
-    ? 'Geen studio-opnames'
-    : `${videos.length} opname${videos.length === 1 ? '' : 's'}${deletedCount ? ` (waarvan ${deletedCount} verwijderd)` : ''}`;
+    ? t('studio.no_videos')
+    : `${videos.length} opname${videos.length === 1 ? '' : 's'}${deletedCount ? ` (waarvan ${deletedCount} verwijderd)` : ''}`;  // "N opnames (waarvan N verwijderd)" has no i18n key
 
   if (!videos.length) {
     list.appendChild(el('div', { class: 'empty-state' },
       el('i', { class: 'fas fa-clapperboard' }),
-      el('p', {}, 'Geen studio-opnames voor deze glos.')
+      el('p', {}, t('studio.no_videos'))
     ));
     return;
   }
@@ -764,7 +767,7 @@ function renderStudioCard(video) {
         video.post_processed === 1 ? 'post' : 'raw'),
       video.zOg ? el('span', { class: 'badge zog' }, video.zOg) : null,
       video.date ? el('span', { class: 'badge' }, el('i', { class: 'fas fa-calendar-day' }), video.date) : null,
-      isDeleted ? el('span', { class: 'badge deleted' }, el('i', { class: 'fas fa-trash' }), 'verwijderd') : null,
+      isDeleted ? el('span', { class: 'badge deleted' }, el('i', { class: 'fas fa-trash' }), t('studio.deleted')) : null,
     ),
   );
   card.appendChild(head);
@@ -772,9 +775,9 @@ function renderStudioCard(video) {
   const body = el('div', { class: 'studio-card-body' });
 
   const cameras = [
-    { letter: 'L', label: 'Links',  file: video.l_file },
-    { letter: 'M', label: 'Midden', file: video.m_file },
-    { letter: 'R', label: 'Rechts', file: video.r_file },
+    { letter: 'L', label: t('studio.cam.l'), file: video.l_file },
+    { letter: 'M', label: t('studio.cam.m'), file: video.m_file },
+    { letter: 'R', label: t('studio.cam.r'), file: video.r_file },
   ].filter(c => c.file);
 
   const grid = el('div', { class: 'studio-grid' });
@@ -858,7 +861,7 @@ function renderStudioCard(video) {
       onclick: async (ev) => {
         ev.preventDefault();
         ev.stopPropagation();
-        openConfirmModal(`Studio-opname "${(video.m_file || '#' + video.id).replace(/\.\w+$/, '')}" verwijderen?`, async () => {
+        openConfirmModal(`Studio-opname "${(video.m_file || '#' + video.id).replace(/\.\w+$/, '')}" verwijderen?`, async () => {  // no i18n key for studio delete confirm
           try {
             await api.deleteStudioVideo(video.id);
             video.added = 'DELETE';
@@ -866,14 +869,14 @@ function renderStudioCard(video) {
             renderStudioList();
             // also refresh the underlying gloss row
             makeCtx().refreshRow(studioCurrentRow);
-            toast('Studio-opname verwijderd', 'success');
+            toast(t('toast.video_deleted'), 'success');
           } catch (e) {
-            toast('Verwijderen mislukt: ' + e.message, 'error');
+            toast(t('toast.save_failed') + ': ' + e.message, 'error');
           }
         });
       }
     },
-      el('i', { class: 'fas fa-trash' }), ' Verwijderen'
+      el('i', { class: 'fas fa-trash' }), ' ', t('studio.delete')
     );
     body.appendChild(el('div', { class: 'delete-row' }, delBtn));
   }
@@ -929,7 +932,7 @@ let signbankCurrentRow = null;
 
 function pushGlossToSignbank(row) {
   signbankCurrentRow = row;
-  $('#signbankTitle').textContent = `Push naar Signbank — ${row.glos || '#' + row.id}`;
+  $('#signbankTitle').textContent = `Push naar Signbank — ${row.glos || '#' + row.id}`;  // no i18n key for this push title
   $('#signbankRetryBtn').onclick = () => firePush(row);
   $('#signbankModal').classList.remove('hidden');
   firePush(row);
@@ -944,12 +947,12 @@ async function firePush(row) {
   const body = $('#signbankBody');
   const status = $('#signbankFooterStatus');
   status.className = 'signbank-status busy';
-  status.textContent = 'Bezig met versturen…';
+  status.textContent = t('sb.op.busy', { verb: 'Push' });
   clearChildren(body);
   body.appendChild(renderSourceSection(row));
   const banner = el('div', { class: 'sb-banner info' },
     el('i', { class: 'fas fa-paper-plane' }),
-    el('span', {}, 'Verzoek wordt verstuurd naar Signbank…'),
+    el('span', {}, 'Verzoek wordt verstuurd naar Signbank…'),  // no i18n key for this detailed banner text
   );
   body.appendChild(banner);
 
@@ -958,7 +961,7 @@ async function firePush(row) {
     res = await api.pushToSignbank(row.id);
   } catch (e) {
     body.removeChild(banner);
-    body.appendChild(renderBanner('error', 'Verzoek mislukt', e.message));
+    body.appendChild(renderBanner('error', 'Verzoek mislukt', e.message));  // no i18n key for "Verzoek mislukt"
     status.className = 'signbank-status';
     status.textContent = '';
     return;
@@ -972,13 +975,13 @@ async function firePush(row) {
 
   status.className = 'signbank-status';
   status.textContent = res.ok
-    ? `Klaar — HTTP ${res.status} in ${res.duration_ms} ms`
-    : `Mislukt — HTTP ${res.status} in ${res.duration_ms} ms`;
+    ? `Klaar — HTTP ${res.status} in ${res.duration_ms} ms`  // no i18n key for "Klaar — HTTP …"
+    : `Mislukt — HTTP ${res.status} in ${res.duration_ms} ms`;  // no i18n key for "Mislukt — HTTP …"
 }
 
 function renderSourceSection(row) {
   const wrap = el('section', { class: 'sb-section' });
-  wrap.appendChild(el('header', {}, 'Bron — form_data rij'));
+  wrap.appendChild(el('header', {}, 'Bron — form_data rij'));  // no i18n key for "Bron — form_data rij"
   const div = el('div', { class: 'sb-section-body' });
 
   const grid = el('div', { class: 'sb-source-grid' });
@@ -1069,7 +1072,7 @@ function renderResultBanner(res) {
 
 function renderLogSection(logEntries) {
   const wrap = el('section', { class: 'sb-section' });
-  wrap.appendChild(el('header', {}, 'Tijdlijn'));
+  wrap.appendChild(el('header', {}, t('sb.section.timeline')));
   const div = el('div', { class: 'sb-section-body sb-log' });
   if (!logEntries.length) {
     div.appendChild(el('div', {}, '(geen gebeurtenissen)'));
@@ -1151,16 +1154,16 @@ function renderResponseSection(res) {
 
 function broadcastGloss(row) {
   openConfirmModal(
-    `Glos "${row.glos || '#' + row.id}" naar Signbank pushen? Dit maakt een nieuwe Signbank-entry aan en slaat de glossid lokaal op.`,
+    t('confirm.broadcast', { name: row.glos || '#' + row.id }),
     async () => runSignbankOperation({
-      title:   `Broadcast naar Signbank — ${row.glos || '#' + row.id}`,
-      busyMsg: 'Bezig met broadcasten naar Signbank…',
+      title:   `Broadcast naar Signbank — ${row.glos || '#' + row.id}`,  // no i18n key for this title
+      busyMsg: 'Bezig met broadcasten naar Signbank…',  // no i18n key
       row,
       call:    () => api.broadcastToSignbank(row.id),
       onOk:    (res) => {
         row.signbank = res.glossid;
         makeCtx().refreshRow(row);
-        toast(`Verbonden met Signbank — glossid #${res.glossid}`, 'success');
+        toast(t('toast.connected') + ` — glossid #${res.glossid}`, 'success');
       },
     })
   );
@@ -1168,16 +1171,16 @@ function broadcastGloss(row) {
 
 function disconnectGloss(row) {
   openConfirmModal(
-    `Loskoppelen van Signbank — glos "${row.glos}" zal worden verwijderd uit Signbank (#${row.signbank}). Doorgaan?`,
+    t('confirm.disconnect', { id: row.signbank }),
     async () => runSignbankOperation({
-      title:   `Loskoppelen — ${row.glos || '#' + row.id} (was #${row.signbank})`,
-      busyMsg: 'Verzoek tot verwijdering…',
+      title:   `Loskoppelen — ${row.glos || '#' + row.id} (was #${row.signbank})`,  // no i18n key for this title
+      busyMsg: 'Verzoek tot verwijdering…',  // no i18n key
       row,
       call:    () => api.deleteFromSignbank(row.id),
       onOk:    (res) => {
         row.signbank = null;
         makeCtx().refreshRow(row);
-        toast(`Losgekoppeld (was #${res.previous_glossid})`, 'success');
+        toast(t('toast.disconnected') + ` (was #${res.previous_glossid})`, 'success');
       },
     })
   );
@@ -1197,7 +1200,7 @@ async function runSignbankOperation({ title, busyMsg, row, call, onOk }) {
   body.appendChild(renderSourceSection(row));
   body.appendChild(renderBanner('info', busyMsg, ''));
   status.className = 'signbank-status busy';
-  status.textContent = 'Bezig…';
+  status.textContent = t('sb.status.busy');
   $('#signbankModal').classList.remove('hidden');
 
   let res;
@@ -1206,7 +1209,7 @@ async function runSignbankOperation({ title, busyMsg, row, call, onOk }) {
   } catch (e) {
     clearChildren(body);
     body.appendChild(renderSourceSection(row));
-    body.appendChild(renderBanner('error', 'Verzoek mislukt', e.message));
+    body.appendChild(renderBanner('error', 'Verzoek mislukt', e.message));  // no i18n key for "Verzoek mislukt"
     status.className = 'signbank-status';
     status.textContent = '';
     return;
@@ -1233,8 +1236,8 @@ async function runSignbankOperation({ title, busyMsg, row, call, onOk }) {
 
   status.className = 'signbank-status';
   status.textContent = res.ok
-    ? `Klaar — HTTP ${httpRes?.status ?? ''} in ${httpRes?.duration_ms ?? '?'} ms`
-    : `Mislukt — HTTP ${httpRes?.status ?? ''} in ${httpRes?.duration_ms ?? '?'} ms`;
+    ? `Klaar — HTTP ${httpRes?.status ?? ''} in ${httpRes?.duration_ms ?? '?'} ms`  // no i18n key
+    : `Mislukt — HTTP ${httpRes?.status ?? ''} in ${httpRes?.duration_ms ?? '?'} ms`;  // no i18n key
 
   if (res.ok && typeof onOk === 'function') onOk(res);
 }
@@ -1253,7 +1256,7 @@ async function compareGloss(row) {
   const body   = $('#sbCompareBody');
   const status = $('#sbCompareStatus');
   const link   = $('#sbCompareOpenLink');
-  $('#sbCompareTitle').textContent = `Vergelijken met Signbank — ${row.glos || '#' + row.id} (#${row.signbank})`;
+  $('#sbCompareTitle').textContent = t('sb.compare.title', { name: row.glos || '#' + row.id, id: row.signbank });
   link.hidden = false;
   link.href = `${signbankBaseUrl()}/dictionary/gloss/${encodeURIComponent(row.signbank)}.html`;
 
@@ -1266,9 +1269,9 @@ async function compareGloss(row) {
   $('#sbPushDiffBtn').onclick  = () => pushDifferences(row);
 
   clearChildren(body);
-  body.appendChild(renderBanner('info', 'Bezig met ophalen van Signbank…', ''));
+  body.appendChild(renderBanner('info', t('sb.fetching'), ''));
   status.className = 'signbank-status busy';
-  status.textContent = 'Ophalen…';
+  status.textContent = t('sb.status.busy');
   modal.classList.remove('hidden');
 
   let res;
@@ -1276,7 +1279,7 @@ async function compareGloss(row) {
     res = await api.fetchSignbankGloss(row.id);
   } catch (e) {
     clearChildren(body);
-    body.appendChild(renderBanner('error', 'Ophalen mislukt', e.message));
+    body.appendChild(renderBanner('error', 'Ophalen mislukt', e.message));  // no i18n key for "Ophalen mislukt"
     status.className = 'signbank-status';
     status.textContent = '';
     return;
@@ -1296,8 +1299,8 @@ async function compareGloss(row) {
 
   const mismatches = res.mismatch_count || 0;
   body.appendChild(renderBanner(mismatches ? 'info' : 'success',
-    mismatches ? `${mismatches} verschil${mismatches === 1 ? '' : 'len'} met Signbank`
-               : 'Alles komt overeen met Signbank',
+    mismatches ? t('sb.diff.count', { n: mismatches, id: res.glossid, ms: res.duration_ms })
+               : 'Alles komt overeen met Signbank',  // no i18n key for "Alles komt overeen met Signbank"
     `glossid #${res.glossid} · ${res.duration_ms} ms`));
 
   // Cache for "Push verschillen" so it knows which fields differ.
@@ -1314,7 +1317,7 @@ async function compareGloss(row) {
   body.appendChild(renderCompareExtras(res.remote_extra));
 
   status.className = 'signbank-status';
-  status.textContent = `Klaar — ${res.duration_ms} ms`;
+  status.textContent = `Klaar — ${res.duration_ms} ms`;  // no i18n key for "Klaar — X ms"
 }
 
 // Cache the most recent compare result so "Push differences" knows which
@@ -1322,10 +1325,8 @@ async function compareGloss(row) {
 let lastCompareData = null;
 
 async function forceSyncDirection(row, direction) {
-  const verb = direction === 'push' ? 'Push alles' : 'Pull alles';
-  const dir  = direction === 'push' ? 'signCollect → Signbank' : 'Signbank → signCollect';
   openConfirmModal(
-    `${verb} (${dir})? Dit overschrijft alle waarden aan de bestemmingskant voor glos "${row.glos}" (#${row.signbank}).`,
+    direction === 'push' ? t('confirm.force_push') : t('confirm.force_pull'),
     async () => doSyncOp(row, direction)
   );
 }
@@ -1340,7 +1341,7 @@ async function pushDifferences(row) {
     .filter(f => !f.matches)
     .map(f => f.local_key);
   if (!mismatchedLocalKeys.length) {
-    toast('Geen verschillen om te pushen', 'success');
+    toast(t('toast.no_differences'), 'success');
     return;
   }
   const labels = (data.fields || [])
@@ -1348,19 +1349,19 @@ async function pushDifferences(row) {
     .map(f => f.label)
     .join(', ');
   openConfirmModal(
-    `Push ${mismatchedLocalKeys.length} verschillen naar Signbank? Velden: ${labels}`,
+    t('confirm.push_diff', { n: mismatchedLocalKeys.length, fields: labels }),
     async () => doSyncOp(row, 'push', mismatchedLocalKeys)
   );
 }
 
 async function doSyncOp(row, direction, onlyFields) {
-  const verb = direction === 'push' ? 'Push' : 'Pull';
+  const verb = direction === 'push' ? t('sb.push.verb') : t('sb.pull.verb');
   const body = $('#sbCompareBody');
   const status = $('#sbCompareStatus');
   status.className = 'signbank-status busy';
   status.textContent = `${verb}…`;
   // Prepend a busy banner so the user sees something immediately.
-  const busyBanner = renderBanner('info', `${verb}: bezig met versturen…`, '');
+  const busyBanner = renderBanner('info', t('sb.op.busy', { verb }), '');
   body.insertBefore(busyBanner, body.firstChild);
 
   let res;
@@ -1370,7 +1371,7 @@ async function doSyncOp(row, direction, onlyFields) {
       : await api.forcePullFromSignbank(row.id);
   } catch (e) {
     busyBanner.remove();
-    body.insertBefore(renderBanner('error', `${verb} mislukt`, e.message), body.firstChild);
+    body.insertBefore(renderBanner('error', t('sb.op.failed', { verb }), e.message), body.firstChild);
     status.className = 'signbank-status';
     status.textContent = '';
     return;
@@ -1394,8 +1395,8 @@ async function doSyncOp(row, direction, onlyFields) {
 
   status.className = 'signbank-status';
   status.textContent = res.ok
-    ? `${verb} klaar — ${(res.succeeded || res.fields_set || []).length} velden`
-    : `${verb} klaar met fouten — ${(res.failed || []).length} mislukt`;
+    ? t('sb.op.done', { verb }) + ` — ${(res.succeeded || res.fields_set || []).length} velden`  // no i18n key for "N velden" in status
+    : t('sb.op.partial', { verb }) + ` — ${(res.failed || []).length} mislukt`;  // no i18n key for "N mislukt" suffix
 }
 
 function renderSyncOpResult(verb, direction, res) {
@@ -1408,13 +1409,13 @@ function renderSyncOpResult(verb, direction, res) {
   // 1. Top status banner (matches broadcast modal pattern)
   let bannerTitle, bannerDetail;
   if (res.ok) {
-    bannerTitle = `${verb}: voltooid`;
-    bannerDetail = `${succeeded.length} velden naar Signbank glossid #${res.glossid || '?'}`;
+    bannerTitle = t('sb.op.done', { verb });
+    bannerDetail = t('sb.op.field_to_glossid', { n: succeeded.length, id: res.glossid || '?' });
   } else if (succeeded.length) {
-    bannerTitle = `${verb}: deels gelukt`;
-    bannerDetail = `${succeeded.length} ok · ${failed.length} mislukt`;
+    bannerTitle = t('sb.op.partial', { verb });
+    bannerDetail = t('sb.op.summary', { ok: succeeded.length, fail: failed.length });
   } else {
-    bannerTitle = `${verb}: mislukt`;
+    bannerTitle = t('sb.op.failed', { verb });
     const firstErr = failed[0]?.error;
     bannerDetail = (firstErr && (firstErr.errors?.Exception || firstErr.error || JSON.stringify(firstErr).slice(0, 200)))
                 || res.error || `${failed.length} velden mislukt`;
@@ -1429,7 +1430,7 @@ function renderSyncOpResult(verb, direction, res) {
   // 3. Per-field detail table (succeeded vs failed)
   const summary = el('section', { class: 'sb-section' });
   summary.appendChild(el('header', {},
-    el('span', {}, 'Per-veld resultaat'),
+    el('span', {}, t('sb.section.per_field')),
     el('span', { style: 'text-transform:none;letter-spacing:0;color:var(--text);' },
       `mode=${res.mode || (direction === 'pull' ? 'pull' : '?')}`)
   ));
@@ -1437,13 +1438,13 @@ function renderSyncOpResult(verb, direction, res) {
 
   if (succeeded.length) {
     const okWrap = el('div', { style: 'margin-bottom:10px;font-size:12.5px;' });
-    okWrap.appendChild(el('strong', { style: 'color:var(--success);' }, `✓ Geslaagd (${succeeded.length}): `));
+    okWrap.appendChild(el('strong', { style: 'color:var(--success);' }, t('sb.ok_count', { n: succeeded.length }) + ': '));
     okWrap.appendChild(document.createTextNode(succeeded.join(', ')));
     sumDiv.appendChild(okWrap);
   }
   if (failed.length) {
     sumDiv.appendChild(el('div', { style: 'font-size:12.5px;margin-bottom:6px;' },
-      el('strong', { style: 'color:var(--danger);' }, `✗ Mislukt (${failed.length}):`)
+      el('strong', { style: 'color:var(--danger);' }, t('sb.fail_count', { n: failed.length }) + ':')
     ));
     failed.forEach(f => {
       const e = f.error || {};
@@ -1471,7 +1472,7 @@ function renderSyncOpResult(verb, direction, res) {
   // 4. Pull report (which Signbank values landed where in form_data)
   if (direction === 'pull' && (res.report || []).length) {
     const reportSec = el('section', { class: 'sb-section' });
-    reportSec.appendChild(el('header', {}, 'Pull-mapping (Signbank → form_data)'));
+    reportSec.appendChild(el('header', {}, t('sb.section.pull_mapping')));
     const rd = el('div', { class: 'sb-section-body' });
     res.report.forEach(r => {
       rd.appendChild(el('div', { style: 'font-size:12px;color:var(--text);padding:3px 0;border-bottom:1px dashed var(--border);' },
@@ -1507,7 +1508,7 @@ function renderCompareMedia(row, res) {
     localPane.appendChild(el('video', { src: localSrc, muted: true, autoplay: true, loop: true, playsinline: true }));
   } else {
     localPane.classList.add('empty');
-    localPane.appendChild(el('span', {}, '— geen video —'));
+    localPane.appendChild(el('span', {}, t('sb.video.no_local')));
   }
 
   // Signbank pane: Video URL from get_gloss_data
@@ -1521,7 +1522,7 @@ function renderCompareMedia(row, res) {
     remotePane.appendChild(el('video', { src: sbVideoUrl, muted: true, autoplay: true, loop: true, playsinline: true, crossorigin: 'anonymous' }));
   } else {
     remotePane.classList.add('empty');
-    remotePane.appendChild(el('span', {}, '— Signbank heeft geen video —'));
+    remotePane.appendChild(el('span', {}, t('sb.video.no_remote')));
   }
 
   wrap.append(localPane, remotePane);
@@ -1532,9 +1533,9 @@ function renderCompareTable(fields) {
   const tbl = el('table', { class: 'sb-compare-table' });
   const thead = el('thead', {}, el('tr', {},
     el('th', { class: 'icon-state' }, ''),
-    el('th', {}, 'Veld'),
-    el('th', {}, 'signCollect'),
-    el('th', {}, 'Signbank'),
+    el('th', {}, t('sb.diff.field')),
+    el('th', {}, t('sb.diff.local')),
+    el('th', {}, t('sb.diff.remote')),
   ));
   const tbody = el('tbody', {});
   fields.forEach(f => {
@@ -1629,7 +1630,7 @@ function setupContextToggle() {
   const opts = document.querySelectorAll('.context-toggle .ctx-opt');
   // Reflect current state on the buttons + label
   opts.forEach(b => b.classList.toggle('active', b.dataset.ctx === state.context));
-  $('#contextTag').textContent = state.context === 'signbank' ? 'Signbank' : 'Signio';
+  $('#contextTag').textContent = state.context === 'signbank' ? t('ctx.signbank') : t('ctx.signio');
   applyContextClass();
   applyContextToggleVisibility();
   opts.forEach(btn => {
@@ -1638,7 +1639,7 @@ function setupContextToggle() {
       if (next === state.context) return;
       state.context = next;
       opts.forEach(b => b.classList.toggle('active', b.dataset.ctx === next));
-      $('#contextTag').textContent = next === 'signbank' ? 'Signbank' : 'Signio';
+      $('#contextTag').textContent = next === 'signbank' ? t('ctx.signbank') : t('ctx.signio');
       applyContextClass();
       state.page = 1;
       refresh();
@@ -1753,10 +1754,10 @@ function setupPhonologyModal() {
 let phonologySaveTimer = null;
 
 async function openPhonologyModal(row) {
-  $('#phonologyTitle').textContent = `Fonologie — ${row.glos || '#' + row.id}`;
+  $('#phonologyTitle').textContent = t('phon.title', { name: row.glos || '#' + row.id });
   const body = $('#phonologyBody');
   clearChildren(body);
-  body.appendChild(el('div', { class: 'empty-state' }, el('i', { class: 'fas fa-spinner fa-spin' }), el('p', {}, 'Laden…')));
+  body.appendChild(el('div', { class: 'empty-state' }, el('i', { class: 'fas fa-spinner fa-spin' }), el('p', {}, t('phon.loading'))));
   $('#phonologyStatus').textContent = '';
   $('#phonologyModal').classList.remove('hidden');
 
@@ -1769,20 +1770,20 @@ async function openPhonologyModal(row) {
     body.appendChild(form);
   } catch (e) {
     clearChildren(body);
-    body.appendChild(el('div', { class: 'empty-state' }, `Fout bij laden: ${e.message}`));
+    body.appendChild(el('div', { class: 'empty-state' }, t('toast.error_loading') + ': ' + e.message));
   }
 }
 
 function savePhonologyDebounced(row, fields) {
   const status = $('#phonologyStatus');
   status.className = 'phono-status saving';
-  status.textContent = 'Opslaan…';
+  status.textContent = t('phon.saving');
   clearTimeout(phonologySaveTimer);
   phonologySaveTimer = setTimeout(async () => {
     try {
       await api.save(row.id, fields);
       status.className = 'phono-status saved';
-      status.textContent = 'Opgeslagen ✓';
+      status.textContent = t('phon.saved') + ' ✓';
       setTimeout(() => {
         if (status.classList.contains('saved')) {
           status.className = 'phono-status';
@@ -1792,7 +1793,7 @@ function savePhonologyDebounced(row, fields) {
     } catch (e) {
       status.className = 'phono-status';
       status.textContent = '';
-      toast('Opslaan mislukt: ' + e.message, 'error');
+      toast(t('toast.save_failed') + ': ' + e.message, 'error');
     }
   }, 250);
 }

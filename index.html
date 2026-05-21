@@ -36,42 +36,42 @@
 
 <aside class="nav-drawer hidden" id="navDrawer" aria-hidden="true">
   <header class="nav-drawer-head">
-    <span><i class="fas fa-compass"></i> Navigatie</span>
+    <span><i class="fas fa-compass"></i> <span data-i18n="menu.title">Navigatie</span></span>
     <button class="close" data-drawer-close>&times;</button>
   </header>
   <nav class="nav-drawer-body">
     <section>
-      <h4>Hoofdmenu</h4>
-      <a href="https://signcollect.nl/menu.html"><i class="fas fa-wand-magic-sparkles"></i> Glos Wizard</a>
-      <a href="https://signcollect.nl/videoFix/index.html"><i class="fas fa-crop"></i> Video Crop fix</a>
-      <a href="https://signcollect.nl/studioIndex/index.html"><i class="fas fa-clapperboard"></i> Studio Videos</a>
-      <a href="https://mocap.signcollect.nl"><i class="fas fa-bullseye"></i> Motion Capture</a>
-      <a href="https://signcollect.nl/zin/zinnen.html"><i class="fas fa-comment"></i> Zinnen Interface</a>
-      <a href="https://signcollect.nl/nmm/fastView.html"><i class="fas fa-face-smile"></i> NMM Site</a>
-      <a href="https://signcollect.nl/hh/index.html"><i class="fas fa-heart-pulse"></i> Health Holland Interface</a>
-      <a href="https://signcollect.nl/downloadVideos/downloadThemaVideo.html"><i class="fas fa-download"></i> Video Downloader</a>
+      <h4 data-i18n="menu.section.main">Hoofdmenu</h4>
+      <a href="https://signcollect.nl/menu.html"><i class="fas fa-wand-magic-sparkles"></i> <span data-i18n="menu.item.glos_wizard">Glos Wizard</span></a>
+      <a href="https://signcollect.nl/videoFix/index.html"><i class="fas fa-crop"></i> <span data-i18n="menu.item.video_crop">Video Crop fix</span></a>
+      <a href="https://signcollect.nl/studioIndex/index.html"><i class="fas fa-clapperboard"></i> <span data-i18n="menu.item.studio">Studio Videos</span></a>
+      <a href="https://mocap.signcollect.nl"><i class="fas fa-bullseye"></i> <span data-i18n="menu.item.mocap">Motion Capture</span></a>
+      <a href="https://signcollect.nl/zin/zinnen.html"><i class="fas fa-comment"></i> <span data-i18n="menu.item.zinnen">Zinnen Interface</span></a>
+      <a href="https://signcollect.nl/nmm/fastView.html"><i class="fas fa-face-smile"></i> <span data-i18n="menu.item.nmm">NMM Site</span></a>
+      <a href="https://signcollect.nl/hh/index.html"><i class="fas fa-heart-pulse"></i> <span data-i18n="menu.item.hh">Health Holland Interface</span></a>
+      <a href="https://signcollect.nl/downloadVideos/downloadThemaVideo.html"><i class="fas fa-download"></i> <span data-i18n="menu.item.downloader">Video Downloader</span></a>
     </section>
 
     <section>
-      <h4>Beheer</h4>
-      <a href="https://signcollect.nl/labels_add.html"><i class="fas fa-tags"></i> Labels toevoegen</a>
-      <a href="https://signcollect.nl/batch_add.html"><i class="fas fa-stream"></i> Batch toevoegen</a>
-      <a href="https://signcollect.nl/themas.html"><i class="fas fa-folder-tree"></i> Themas Aanpassen</a>
+      <h4 data-i18n="menu.section.manage">Beheer</h4>
+      <a href="https://signcollect.nl/labels_add.html"><i class="fas fa-tags"></i> <span data-i18n="menu.item.labels">Labels toevoegen</span></a>
+      <a href="https://signcollect.nl/batch_add.html"><i class="fas fa-stream"></i> <span data-i18n="menu.item.batch">Batch toevoegen</span></a>
+      <a href="https://signcollect.nl/themas.html"><i class="fas fa-folder-tree"></i> <span data-i18n="menu.item.themas">Themas Aanpassen</span></a>
     </section>
 
     <section class="admin-only" hidden>
-      <h4>Admin</h4>
-      <a href="https://signcollect.nl/users.html"><i class="fas fa-users-gear"></i> Gebruikers Beheren</a>
+      <h4 data-i18n="menu.section.admin">Admin</h4>
+      <a href="https://signcollect.nl/users.html"><i class="fas fa-users-gear"></i> <span data-i18n="menu.item.users">Gebruikers Beheren</span></a>
     </section>
 
     <section class="gomer-only" hidden>
-      <h4>Statistieken</h4>
-      <a href="https://signcollect.nl/stats/"><i class="fas fa-chart-line"></i> Gebruikersactiviteit</a>
+      <h4 data-i18n="menu.section.stats">Statistieken</h4>
+      <a href="https://signcollect.nl/stats/"><i class="fas fa-chart-line"></i> <span data-i18n="menu.item.user_stats">Gebruikersactiviteit</span></a>
     </section>
 
     <section>
-      <h4>Account</h4>
-      <a href="#" id="navLogout" class="logout"><i class="fas fa-sign-out-alt"></i> Uitloggen</a>
+      <h4 data-i18n="menu.section.account">Account</h4>
+      <a href="#" id="navLogout" class="logout"><i class="fas fa-sign-out-alt"></i> <span data-i18n="menu.logout">Uitloggen</span></a>
     </section>
   </nav>
 </aside>
@@ -81,47 +81,47 @@
   <section class="filter-bar">
     <div class="search">
       <i class="fas fa-search"></i>
-      <input type="text" id="searchInput" placeholder="Zoek op glos, EN, of senses…" autocomplete="off">
+      <input type="text" id="searchInput" placeholder="Zoek op glos, EN, of senses…" autocomplete="off" data-i18n-attr="placeholder:filter.search.placeholder">
     </div>
     <div class="filter-group">
-      <label>Eigenaar</label>
+      <label data-i18n="filter.owner">Eigenaar</label>
       <select id="ownerSelect"></select>
     </div>
     <div class="filter-group">
-      <label>Sortering</label>
+      <label data-i18n="filter.sort">Sortering</label>
       <select id="sortSelect">
-        <option value="glos_az" selected>Glos A → Z</option>
-        <option value="glos_za">Glos Z → A</option>
-        <option value="latest_capture">Laatste opname eerst</option>
-        <option value="oldest_capture">Oudste opname eerst</option>
-        <option value="newest">Nieuwste eerst</option>
-        <option value="oldest">Oudste eerst</option>
+        <option value="glos_az" selected data-i18n="filter.sort.glos_az">Glos A → Z</option>
+        <option value="glos_za" data-i18n="filter.sort.glos_za">Glos Z → A</option>
+        <option value="latest_capture" data-i18n="filter.sort.latest_capture">Laatste opname eerst</option>
+        <option value="oldest_capture" data-i18n="filter.sort.oldest_capture">Oudste opname eerst</option>
+        <option value="newest" data-i18n="filter.sort.newest">Nieuwste eerst</option>
+        <option value="oldest" data-i18n="filter.sort.oldest">Oudste eerst</option>
       </select>
     </div>
     <div class="filter-group">
-      <label>Thema</label>
+      <label data-i18n="filter.thema">Thema</label>
       <select id="themaSelect"><option value="">— alle —</option></select>
     </div>
     <div class="filter-group multi">
-      <label>Labels</label>
+      <label data-i18n="filter.label">Labels</label>
       <details class="multi-select" id="labelsMulti">
         <summary><span class="multi-summary">— alle —</span></summary>
         <div class="multi-list"></div>
       </details>
     </div>
     <div class="filter-group multi">
-      <label>Status</label>
+      <label data-i18n="filter.status">Status</label>
       <details class="multi-select" id="statusMulti">
         <summary><span class="multi-summary">— alle —</span></summary>
         <div class="multi-list">
-          <label><input type="checkbox" value="hidden"> Verborgen</label>
-          <label><input type="checkbox" value="no_label"> Geen label</label>
-          <label><input type="checkbox" value="no_thema"> Geen thema</label>
-          <label><input type="checkbox" value="no_zelfopname"> Geen zelfopname</label>
-          <label><input type="checkbox" value="has_zelfopname"> Heeft zelfopname</label>
-          <label><input type="checkbox" value="no_studio_video"> Geen studio video</label>
-          <label><input type="checkbox" value="has_studio_video"> Heeft studio opname</label>
-          <label><input type="checkbox" value="extern_duplicate"> Extern duplicaat</label>
+          <label><input type="checkbox" value="hidden"> <span data-i18n="filter.status.hidden">Verborgen</span></label>
+          <label><input type="checkbox" value="no_label"> <span data-i18n="filter.status.no_label">Geen label</span></label>
+          <label><input type="checkbox" value="no_thema"> <span data-i18n="filter.status.no_thema">Geen thema</span></label>
+          <label><input type="checkbox" value="no_zelfopname"> <span data-i18n="filter.status.no_zelfopname">Geen zelfopname</span></label>
+          <label><input type="checkbox" value="has_zelfopname"> <span data-i18n="filter.status.has_zelfopname">Heeft zelfopname</span></label>
+          <label><input type="checkbox" value="no_studio_video"> <span data-i18n="filter.status.no_studio_video">Geen studio video</span></label>
+          <label><input type="checkbox" value="has_studio_video"> <span data-i18n="filter.status.has_studio_video">Heeft studio opname</span></label>
+          <label><input type="checkbox" value="extern_duplicate"> <span data-i18n="filter.status.extern_duplicate">Extern duplicaat</span></label>
         </div>
       </details>
     </div>
@@ -131,14 +131,14 @@
   <section class="result-meta">
     <span id="resultMeta">Laden…</span>
     <span class="spacer"></span>
-    <button class="btn btn-link btn-sm" id="resetFiltersBtn"><i class="fas fa-rotate-left"></i> Reset filters</button>
+    <button class="btn btn-link btn-sm" id="resetFiltersBtn"><i class="fas fa-rotate-left"></i> <span data-i18n="filter.reset">Reset filters</span></button>
   </section>
 
   <section class="table-wrap">
     <div id="glossList" class="gloss-list"></div>
     <div class="empty-state" id="emptyState" style="display:none">
       <i class="fas fa-folder-open"></i>
-      <p>Geen glossen gevonden voor deze filters.</p>
+      <p data-i18n="empty.hint">Geen glossen gevonden voor deze filters.</p>
     </div>
   </section>
 
@@ -149,6 +149,7 @@
 <div class="modal-backdrop hidden" id="addModal">
   <div class="modal">
     <header><h3>Nieuwe glos</h3><button class="close" data-close>&times;</button></header>
+    <!-- "Nieuwe glos" has no i18n key -->
     <form id="addForm">
       <label>Glos NL <span class="req">*</span><input name="glos" required maxlength="255"></label>
       <label>Glos EN<input name="glos_engels" maxlength="255"></label>
@@ -160,8 +161,9 @@
       <label>Senses NL<div class="senses-editor" data-name="senses"></div></label>
       <label>Senses EN<div class="senses-editor" data-name="sensesEngels"></div></label>
       <footer>
-        <button type="button" class="btn" data-close>Annuleren</button>
+        <button type="button" class="btn" data-close data-i18n="btn.cancel">Annuleren</button>
         <button type="submit" class="btn btn-primary">Aanmaken</button>
+        <!-- "Aanmaken" has no i18n key -->
       </footer>
     </form>
   </div>
@@ -170,14 +172,15 @@
 <!-- Record video modal -->
 <div class="modal-backdrop hidden" id="recordModal">
   <div class="modal">
-    <header><h3>Zelfopname</h3><button class="close" data-close>&times;</button></header>
+    <header><h3 data-i18n="record.title">Zelfopname</h3><button class="close" data-close>&times;</button></header>
     <div class="record-body">
       <video id="recordPreview" autoplay muted playsinline></video>
-      <div class="record-meta"><span id="recordStatus">Klaar</span><span id="recordTimer">0:00</span></div>
+      <div class="record-meta"><span id="recordStatus" data-i18n="record.status.ready">Klaar</span><span id="recordTimer">0:00</span></div>
     </div>
     <footer>
-      <button type="button" class="btn" data-close>Annuleren</button>
+      <button type="button" class="btn" data-close data-i18n="btn.cancel">Annuleren</button>
       <button type="button" class="btn btn-danger" id="recordToggle"><i class="fas fa-circle"></i> Opname starten</button>
+      <!-- "Opname starten" is set dynamically by JS -->
     </footer>
   </div>
 </div>
@@ -193,7 +196,8 @@
     <footer>
       <span class="signbank-status" id="signbankFooterStatus"></span>
       <button type="button" class="btn" id="signbankRetryBtn">Opnieuw verzenden</button>
-      <button type="button" class="btn" data-close>Sluiten</button>
+      <!-- "Opnieuw verzenden" has no i18n key -->
+      <button type="button" class="btn" data-close data-i18n="btn.close">Sluiten</button>
     </footer>
   </div>
 </div>
@@ -209,18 +213,18 @@
     <footer>
       <span class="signbank-status" id="sbCompareStatus"></span>
       <a class="btn btn-link" id="sbCompareOpenLink" target="_blank" rel="noopener" hidden>
-        <i class="fas fa-arrow-up-right-from-square"></i> Open in Signbank
+        <i class="fas fa-arrow-up-right-from-square"></i> <span data-i18n="sb.btn.open_in_signbank">Open in Signbank</span>
       </a>
       <button type="button" class="btn btn-primary" id="sbPushDiffBtn" hidden>
-        <i class="fas fa-arrow-right-arrow-left"></i> Push verschillen → Signbank
+        <i class="fas fa-arrow-right-arrow-left"></i> <span data-i18n="sb.btn.push_diff">Push verschillen → Signbank</span>
       </button>
       <button type="button" class="btn" id="sbForcePushBtn" hidden>
-        <i class="fas fa-cloud-arrow-up"></i> Push alles → Signbank
+        <i class="fas fa-cloud-arrow-up"></i> <span data-i18n="sb.btn.force_push">Push alles → Signbank</span>
       </button>
       <button type="button" class="btn" id="sbForcePullBtn" hidden>
-        <i class="fas fa-cloud-arrow-down"></i> Pull alles ← Signbank
+        <i class="fas fa-cloud-arrow-down"></i> <span data-i18n="sb.btn.force_pull">Pull alles ← Signbank</span>
       </button>
-      <button type="button" class="btn" data-close>Sluiten</button>
+      <button type="button" class="btn" data-close data-i18n="btn.close">Sluiten</button>
     </footer>
   </div>
 </div>
@@ -235,7 +239,7 @@
     <div id="phonologyBody"></div>
     <footer>
       <span class="phono-status" id="phonologyStatus"></span>
-      <button type="button" class="btn" data-close>Sluiten</button>
+      <button type="button" class="btn" data-close data-i18n="btn.close">Sluiten</button>
     </footer>
   </div>
 </div>
@@ -250,7 +254,7 @@
     <div class="studio-list" id="studioList"></div>
     <footer>
       <span class="studio-count" id="studioCount"></span>
-      <button type="button" class="btn" data-close>Sluiten</button>
+      <button type="button" class="btn" data-close data-i18n="btn.close">Sluiten</button>
     </footer>
   </div>
 </div>
@@ -259,10 +263,11 @@
 <div class="modal-backdrop hidden" id="confirmModal">
   <div class="modal small">
     <header><h3 id="confirmTitle">Weet je het zeker?</h3><button class="close" data-close>&times;</button></header>
+    <!-- "Weet je het zeker?" has no i18n key -->
     <div class="confirm-body" id="confirmBody"></div>
     <footer>
-      <button type="button" class="btn" data-close>Annuleren</button>
-      <button type="button" class="btn btn-danger" id="confirmOk">Ja, doorgaan</button>
+      <button type="button" class="btn" data-close data-i18n="confirm.no">Annuleren</button>
+      <button type="button" class="btn btn-danger" id="confirmOk" data-i18n="confirm.yes">Ja, doorgaan</button>
     </footer>
   </div>
 </div>
@@ -273,7 +278,7 @@
     <i class="fas fa-arrow-up drop-icon"></i>
   </div>
   <div class="drop-label">
-    <span class="drop-label-text">Vorige pagina</span>
+    <span class="drop-label-text" data-i18n="pager.prev">Vorige pagina</span>
     <span class="drop-page"></span>
   </div>
 </button>
@@ -283,7 +288,7 @@
     <i class="fas fa-arrow-down drop-icon"></i>
   </div>
   <div class="drop-label">
-    <span class="drop-label-text">Volgende pagina</span>
+    <span class="drop-label-text" data-i18n="pager.next">Volgende pagina</span>
     <span class="drop-page"></span>
   </div>
 </button>
