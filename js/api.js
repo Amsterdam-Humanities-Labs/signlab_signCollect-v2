@@ -1,10 +1,18 @@
 const BASE = 'php_api';
 
+// Set by main.js after current_user.php resolves so every request carries
+// the active dataset. Falls back to 'ngt' until then.
+let _dataset = 'ngt';
+export function setActiveDataset(code) { _dataset = String(code || 'ngt'); }
+export function getActiveDataset() { return _dataset; }
+
 async function call(path, opts = {}) {
-  const res = await fetch(`${BASE}/${path}`, {
-    credentials: 'same-origin',
-    ...opts,
-  });
+  const method = (opts.method || 'GET').toUpperCase();
+  let url = `${BASE}/${path}`;
+  if (method === 'GET') {
+    url += (url.includes('?') ? '&' : '?') + 'dataset=' + encodeURIComponent(_dataset);
+  }
+  const res = await fetch(url, { credentials: 'same-origin', ...opts });
   if (res.status === 401) {
     const here = encodeURIComponent(location.pathname);
     location.href = `/login.html?redirect=${here}`;
@@ -22,7 +30,7 @@ async function call(path, opts = {}) {
 const post = (path, body) => call(path, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(body || {}),
+  body: JSON.stringify({ ...(body || {}), dataset: _dataset }),
 });
 
 export const api = {
@@ -32,9 +40,10 @@ export const api = {
   save:           (id, fields) => post('glosses_save.php', { id, fields }),
   create:         (fields)     => post('glosses_create.php', fields),
   remove:         (id)         => post('glosses_delete.php', { id }),
-  uploadVideo:    (id, blob) => {
+  uploadVideo: (id, blob) => {
     const fd = new FormData();
     fd.append('id', id);
+    fd.append('dataset', _dataset);
     fd.append('file', blob, 'recording.webm');
     return call('upload_video.php', { method: 'POST', body: fd });
   },
@@ -51,7 +60,7 @@ export const api = {
     method: 'POST',
     credentials: 'same-origin',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id }),
+    body: JSON.stringify({ id, dataset: _dataset }),
   }).then(async r => {
     let data = null; try { data = await r.json(); } catch {}
     if (!r.ok) {

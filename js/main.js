@@ -1,4 +1,4 @@
-import { api } from './api.js';
+import { api, setActiveDataset } from './api.js';
 import { el, debounce, toast, fmtCount } from './util.js';
 import { renderRow, resetThumbQueue } from './table.js';
 import { renderSenses } from './senses.js';
@@ -19,6 +19,7 @@ const state = {
   rows: [],
   options: { themas: [], labels: [], users: [] },
   user: null,
+  dataset: 'ngt',
 };
 
 const $ = sel => document.querySelector(sel);
@@ -28,6 +29,8 @@ const userName = uid => userNameMap.get(String(uid)) || `#${uid}`;
 
 async function init() {
   state.user = await api.currentUser();
+  state.dataset = state.user.activeDataset || 'ngt';
+  setActiveDataset(state.dataset);
   $('#userBadge').textContent = state.user.username;
 
   state.options = await api.filterOptions();
