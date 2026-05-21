@@ -5,12 +5,21 @@ import { renderLabelEditor } from './labelEditor.js';
 
 const UPLOADS_BASE = '/uploads';
 const STUDIO_BASE  = 'https://signcollect.nl/gebarenoverleg_media/studioFilesMini';
+const LSM_BASE     = '/uploads/lsm';
 
 function studioMp4Url(basename, postProcessed) {
   if (!basename) return null;
   const stem = basename.replace(/\.\w+$/, '');
   const folder = postProcessed === 1 ? 'post' : 'raw';
   return `${STUDIO_BASE}/${folder}/${encodeURIComponent(stem)}.mp4`;
+}
+
+// LSM matched_transcriptions are uploaded by lsm_video_upload.php to
+// /web/uploads/lsm/<gloss_id>_<sha-prefix>.<ext> — `m_file` already
+// carries the full filename with extension, no transcoding involved.
+function lsmMp4Url(filename) {
+  if (!filename) return null;
+  return `${LSM_BASE}/${encodeURIComponent(filename)}`;
 }
 
 // FIFO loader with bounded concurrency. Sources attach in render order,
@@ -71,7 +80,9 @@ function renderThumbCol(row, ctx, rowWrap) {
 
   let videoSrc = null;
   if (row.thumbnail_video && row.thumbnail_video.m_file) {
-    videoSrc = studioMp4Url(row.thumbnail_video.m_file, row.thumbnail_video.post_processed);
+    videoSrc = (ctx.datasetCode && ctx.datasetCode() === 'lsm')
+      ? lsmMp4Url(row.thumbnail_video.m_file)
+      : studioMp4Url(row.thumbnail_video.m_file, row.thumbnail_video.post_processed);
   } else if (row.zelfopname.length) {
     videoSrc = `${UPLOADS_BASE}/${encodeURIComponent(row.zelfopname[0])}`;
   }

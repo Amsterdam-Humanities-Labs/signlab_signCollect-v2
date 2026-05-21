@@ -282,6 +282,7 @@ function makeCtx() {
     disconnectSignbank: (row)  => disconnectGloss(row),
     compareWithSignbank: (row) => compareGloss(row),
     signbankBaseUrl: signbankBaseUrl,
+    datasetCode: () => state.dataset,
   };
 }
 
@@ -706,6 +707,12 @@ function setupStudioModal() {
 
 function studioVideoUrl(basename, postProcessed) {
   if (!basename) return null;
+  // LSM uploads keep their original filename (with extension) and live
+  // under /uploads/lsm/. NGT studio files get transcoded into the
+  // studioFilesMini/{post|raw}/<stem>.mp4 tree.
+  if (state.dataset === 'lsm') {
+    return `/uploads/lsm/${encodeURIComponent(basename)}`;
+  }
   const stem = basename.replace(/\.\w+$/, '');
   const folder = postProcessed === 1 ? 'post' : 'raw';
   return `${STUDIO_BASE}/${folder}/${encodeURIComponent(stem)}.mp4`;
@@ -1487,8 +1494,12 @@ function renderCompareMedia(row, res) {
   localPane.appendChild(el('span', { class: 'pane-label' }, 'signCollect'));
   let localSrc = null;
   if (row.thumbnail_video?.m_file) {
-    const folder = row.thumbnail_video.post_processed === 1 ? 'post' : 'raw';
-    localSrc = `https://signcollect.nl/gebarenoverleg_media/studioFilesMini/${folder}/${encodeURIComponent(row.thumbnail_video.m_file.replace(/\.\w+$/, ''))}.mp4`;
+    if (state.dataset === 'lsm') {
+      localSrc = `/uploads/lsm/${encodeURIComponent(row.thumbnail_video.m_file)}`;
+    } else {
+      const folder = row.thumbnail_video.post_processed === 1 ? 'post' : 'raw';
+      localSrc = `https://signcollect.nl/gebarenoverleg_media/studioFilesMini/${folder}/${encodeURIComponent(row.thumbnail_video.m_file.replace(/\.\w+$/, ''))}.mp4`;
+    }
   } else if ((row.zelfopname || []).length) {
     localSrc = `/uploads/${encodeURIComponent(row.zelfopname[0])}`;
   }
