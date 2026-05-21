@@ -1608,6 +1608,7 @@ async function onDatasetChange(code) {
   state.page = 1;
   renderDatasetSwitcher();
   applyContextToggleVisibility();
+  applyDatasetNavVisibility();
   await refresh();
 }
 
@@ -1641,6 +1642,39 @@ function activeDatasetHasExternSubview() {
   return entry ? entry.hasExternSubview !== false : true;
 }
 
+function activeDatasetHidesNavMenu() {
+  const list = (state.user && state.user.datasets) || [];
+  const entry = list.find(d => d.code === state.dataset);
+  return entry ? entry.hideNavMenuItems === true : false;
+}
+
+/**
+ * Decide which nav-drawer sections are visible for the current dataset.
+ * - LSM (or any dataset with hideNavMenuItems=true): hide every section that
+ *   doesn't contain the logout link. The user can still log out.
+ * - NGT (the default): show every public section; admin-only / gomer-only
+ *   sections stay hidden unless the user actually qualifies (handled by
+ *   setupNavDrawer once at boot — we replay that logic here in case the
+ *   user switched datasets mid-session).
+ */
+function applyDatasetNavVisibility() {
+  const drawer = $('#navDrawer');
+  if (!drawer) return;
+  const hide = activeDatasetHidesNavMenu();
+  const isAdmin = (state.user.role || '').toLowerCase() === 'admin';
+  const isGomer = (state.user.username || '').toLowerCase() === 'gomer'
+                || String(state.user.userId) === '1';
+
+  drawer.querySelectorAll('.nav-drawer-body section').forEach(section => {
+    const isAccount = !!section.querySelector('#navLogout');
+    if (isAccount) { section.hidden = false; return; }
+    if (hide) { section.hidden = true; return; }
+    if (section.classList.contains('admin-only')) { section.hidden = !isAdmin; return; }
+    if (section.classList.contains('gomer-only')) { section.hidden = !isGomer; return; }
+    section.hidden = false;
+  });
+}
+
 function applyContextToggleVisibility() {
   const wrap = document.querySelector('.context-toggle');
   if (!wrap) return;
@@ -1662,13 +1696,9 @@ function setupNavDrawer() {
   const drawer  = $('#navDrawer');
   const overlay = $('#navDrawerOverlay');
 
-  // Conditional sections
-  if ((state.user.role || '').toLowerCase() === 'admin') {
-    document.querySelectorAll('.nav-drawer .admin-only').forEach(s => s.hidden = false);
-  }
-  if ((state.user.username || '').toLowerCase() === 'gomer' || String(state.user.userId) === '1') {
-    document.querySelectorAll('.nav-drawer .gomer-only').forEach(s => s.hidden = false);
-  }
+  // Section visibility (admin-only, gomer-only, per-dataset hiding) all
+  // live in applyDatasetNavVisibility so we can re-apply on dataset switch.
+  applyDatasetNavVisibility();
 
   const open = () => {
     drawer.classList.remove('hidden');

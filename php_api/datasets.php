@@ -25,6 +25,7 @@ function datasets_registry(): array {
             'label'               => 'NGT',
             'table'               => 'form_data',
             'has_extern_subview'  => true,         // signio (extern=1) / signbank (extern IS NULL) toggle applies
+            'hide_nav_menu_items' => false,        // show the full hamburger menu
             'matched_zog_clause'  => "(({f}.extern = '1' AND {mt}.zOg IN ('labels','extern'))"
                                    . " OR ({f}.extern IS NULL AND {mt}.zOg = 'Glos'))",
             'signbank_dataset_id' => 2,            // local install
@@ -35,6 +36,7 @@ function datasets_registry(): array {
             'label'               => 'LSM',
             'table'               => 'lsm_data',
             'has_extern_subview'  => false,        // no signio/signbank toggle for LSM
+            'hide_nav_menu_items' => true,         // hide everything in the hamburger except logout
             'matched_zog_clause'  => "{mt}.zOg = 'lsm'",
             'signbank_dataset_id' => 3,            // local Signbank LSM dataset
             'signbank_acronym'    => 'LSM',
