@@ -160,6 +160,26 @@ function renderThumbCol(row, ctx, rowWrap) {
     t('rowmenu.phonology'),
   ));
 
+  // Notes + Logbook live in the thumb column right under Phonology so
+  // they're one click away (the hamburger menu was too hidden for these).
+  col.appendChild(el('button', {
+    type: 'button',
+    class: 'thumb-action-btn thumb-action-btn-secondary',
+    onclick: () => ctx.openNotes(row),
+  },
+    el('i', { class: 'fas fa-comments' }),
+    t('rowmenu.notes'),
+  ));
+
+  col.appendChild(el('button', {
+    type: 'button',
+    class: 'thumb-action-btn thumb-action-btn-secondary',
+    onclick: () => ctx.openLogbook(row),
+  },
+    el('i', { class: 'fas fa-clock-rotate-left' }),
+    t('rowmenu.logbook'),
+  ));
+
   col.appendChild(el('div', { class: 'row-id' },
     el('i', { class: 'fas fa-hashtag' }),
     String(row.id),
@@ -318,8 +338,6 @@ function renderActionsCol(row, ctx, rowWrap) {
   const summary = el('summary', {}, el('i', { class: 'fas fa-ellipsis-vertical' }));
   const pop = el('div', { class: 'menu-pop' });
   pop.appendChild(itemBtn('record', 'fa-video', t('rowmenu.record'), () => ctx.openRecord(row)));
-  pop.appendChild(itemBtn('notes', 'fa-comments', t('rowmenu.notes'), () => ctx.openNotes(row)));
-  pop.appendChild(itemBtn('logbook', 'fa-clock-rotate-left', t('rowmenu.logbook'), () => ctx.openLogbook(row)));
   if (ctx.contextIsSignbank()) {
     if (row.signbank) {
       pop.appendChild(itemBtn('signbank-compare', 'fa-magnifying-glass',

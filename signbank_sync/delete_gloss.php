@@ -40,11 +40,11 @@ $log = [[
 
 if ($res['ok']) {
     $session = current_session() ?? ['userId' => 0, 'username' => 'unknown'];
-    $logEntry = sprintf(
-        'Signbank ontkoppeld (was glossid %s) op %s door: %s',
-        $glossid, date('j/n/Y @ H:i'),
+    $logEntry = logboek_entry(sprintf(
+        'Signbank ontkoppeld (was glossid %s) door: %s',
+        $glossid,
         $session['username'] ?: $session['userId']
-    );
+    ));
     signbank_set_connection($pdo, $id, null, $logEntry, $ds['code']);
     $log[] = [
         't' => date('H:i:s'), 'level' => 'ok',

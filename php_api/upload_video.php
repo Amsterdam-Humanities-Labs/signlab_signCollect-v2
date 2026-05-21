@@ -40,7 +40,7 @@ if (!$current) json_response(['error' => 'gloss_not_found'], 404);
 $arr = parse_json_array($current['zelfopname']);
 if (!in_array($filename, $arr, true)) $arr[] = $filename;
 
-$logEntry = "Zelfopname toegevoegd ($filename) op " . date('j/n/Y @ H:i') . " door: " . ($session['username'] ?: $session['userId']);
+$logEntry = logboek_entry("Zelfopname toegevoegd ($filename) door: " . ($session['username'] ?: $session['userId']));
 $upd = $pdo->prepare(
     "UPDATE `$table`
      SET zelfopname = ?,

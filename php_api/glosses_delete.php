@@ -13,7 +13,7 @@ $pdo   = db();
 $ds    = require_dataset($pdo, $session, $body);
 $table = $ds['table'];
 
-$logEntry = "Verborgen op " . date('j/n/Y @ H:i') . " door: " . ($session['username'] ?: $session['userId']);
+$logEntry = logboek_entry('Glos verborgen door: ' . ($session['username'] ?: $session['userId']));
 
 $stmt = $pdo->prepare(
     "UPDATE `$table`

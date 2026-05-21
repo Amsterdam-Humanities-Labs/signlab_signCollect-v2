@@ -88,11 +88,11 @@ $logStep('ok', "Signbank assigned glossid {$glossid}", $createRes['body']);
 
 // 2) store the connection on our side
 $session = current_session() ?? ['userId' => 0, 'username' => 'unknown'];
-$logEntry = sprintf(
-    'Signbank gekoppeld als glossid %s op %s door: %s',
-    $glossid, date('j/n/Y @ H:i'),
+$logEntry = logboek_entry(sprintf(
+    'Signbank gekoppeld als glossid %s door: %s',
+    $glossid,
     $session['username'] ?: $session['userId']
-);
+));
 signbank_set_connection($pdo, $id, $glossid, $logEntry, $ds['code']);
 $logStep('ok', "Stored signbank glossid in {$table}");
 

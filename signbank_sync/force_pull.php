@@ -106,8 +106,8 @@ $logStep('info', "Updating " . count($updates) . " local field(s)", ['fields' =>
 $cols = array_keys($updates);
 $set  = implode(', ', array_map(fn($c) => "`$c` = ?", $cols));
 $args = array_values($updates);
-$logEntry = sprintf('Signbank pull (force) op %s door: %s', date('j/n/Y @ H:i'),
-                    $session['username'] ?: $session['userId']);
+$logEntry = logboek_entry(sprintf('Signbank pull (force) door: %s',
+                                  $session['username'] ?: $session['userId']));
 $args[] = $logEntry;
 $args[] = $id;
 $sql = "UPDATE `$table` SET $set,

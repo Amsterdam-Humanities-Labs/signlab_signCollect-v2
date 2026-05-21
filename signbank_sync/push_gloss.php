@@ -81,12 +81,11 @@ if ($verify['ok']) {
 // Append outcome to gloss logboek.
 $session = current_session() ?? ['userId' => 0, 'username' => 'unknown'];
 $tag     = $res['ok'] ? 'OK' : ('FAIL ' . ($res['status'] ?: 'curl'));
-$logEntry = sprintf(
-    "Signbank push %s op %s door: %s",
+$logEntry = logboek_entry(sprintf(
+    'Signbank push %s door: %s',
     $tag,
-    date('j/n/Y @ H:i'),
     $session['username'] ?: $session['userId']
-);
+));
 $upd = $pdo->prepare(
     "UPDATE form_data
      SET logboek = CONCAT_WS('\n', NULLIF(CONVERT(logboek USING utf8mb4), ''), ?)

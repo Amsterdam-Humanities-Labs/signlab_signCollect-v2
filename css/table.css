@@ -123,6 +123,17 @@
   color: var(--primary);
 }
 .thumb-action-btn i { font-size: 11px; }
+.thumb-action-btn-secondary {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text-muted);
+  font-size: 11px;
+}
+.thumb-action-btn-secondary:hover {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+  color: var(--text);
+}
 
 .row-id {
   display: inline-flex; align-items: center; gap: 4px;

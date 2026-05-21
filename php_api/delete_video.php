@@ -20,7 +20,7 @@ if (!$current) json_response(['error' => 'gloss_not_found'], 404);
 
 $arr = array_values(array_filter(parse_json_array($current['zelfopname']), fn($f) => $f !== $filename));
 
-$logEntry = "Zelfopname verwijderd ($filename) op " . date('j/n/Y @ H:i') . " door: " . ($session['username'] ?: $session['userId']);
+$logEntry = logboek_entry("Zelfopname verwijderd ($filename) door: " . ($session['username'] ?: $session['userId']));
 $upd = $pdo->prepare(
     "UPDATE `$table`
      SET zelfopname = ?,

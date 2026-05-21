@@ -37,7 +37,7 @@ $stmt->execute([
     json_encode([]),
     json_encode([]),
     $externValue,
-    "Aangemaakt op " . date('j/n/Y @ H:i') . " door: " . ($session['username'] ?: $session['userId']),
+    logboek_entry('Glos aangemaakt door: ' . ($session['username'] ?: $session['userId'])),
 ]);
 
 $id = (int)$pdo->lastInsertId();

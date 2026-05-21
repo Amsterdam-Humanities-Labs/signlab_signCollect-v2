@@ -36,3 +36,20 @@ function parse_json_array($val): array {
     // bare string fallback (legacy zelfopname)
     return [$val];
 }
+
+/**
+ * Wrap a logbook entry with a canonical `[YYYY-MM-DD HH:MM]` timestamp
+ * prefix. Pass the bare action text; this helper takes care of the
+ * timestamp so the logbook viewer can parse it consistently.
+ *
+ *   logboek_entry('Glos bijgewerkt door Lisa')
+ *     → '[2026-05-21 19:42] Glos bijgewerkt door Lisa'
+ *
+ * Legacy free-form `op DD/M/YYYY @ HH:MM` text in existing rows is still
+ * parsed by logbook_get.php as a fallback, so this change is backward
+ * compatible — old entries keep their inline date, new entries get the
+ * bracketed prefix.
+ */
+function logboek_entry(string $text): string {
+    return '[' . date('Y-m-d H:i') . '] ' . $text;
+}
