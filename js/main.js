@@ -286,7 +286,14 @@ function makeCtx() {
     compareWithSignbank: (row) => compareGloss(row),
     signbankBaseUrl: signbankBaseUrl,
     datasetCode: () => state.dataset,
+    glosLocalLabel: () => activeDatasetGlosLocalLabel(),
   };
+}
+
+function activeDatasetGlosLocalLabel() {
+  const list = (state.user && state.user.datasets) || [];
+  const entry = list.find(d => d.code === state.dataset);
+  return (entry && entry.glosLocalLabel) || 'Glos NL';
 }
 
 function signbankBaseUrl() {
@@ -366,6 +373,10 @@ function setupAddModal() {
 
   $('#addForm').addEventListener('submit', async ev => {
     ev.preventDefault();
+    const submitBtn = ev.target.querySelector('button[type="submit"]');
+    // Reject re-entry if a previous click is still in flight.
+    if (submitBtn && submitBtn.disabled) return;
+
     const fd = new FormData(ev.target);
     const labels = Array.from(document.querySelectorAll('#addLabelsMulti .multi-list input:checked'))
       .map(i => i.value);
@@ -378,6 +389,26 @@ function setupAddModal() {
       sensesEngels: sensesEditors.sensesEngels(),
     };
     payload.context = state.context;
+
+    // Hard validation: every field must be filled. Senses/labels lists are
+    // "filled" when they have at least one non-empty entry.
+    const sensesNl = (payload.senses || []).filter(s => String(s || '').trim() !== '');
+    const sensesEn = (payload.sensesEngels || []).filter(s => String(s || '').trim() !== '');
+    const missing = [];
+    if (!payload.glos)          missing.push(t('row.gloss'));
+    if (!payload.glos_engels)   missing.push(t('row.gloss_engels'));
+    if (!payload.thema)         missing.push(t('row.thema'));
+    if (!labels.length)         missing.push(t('row.labels'));
+    if (!sensesNl.length)       missing.push(t('add.field.senses_nl'));
+    if (!sensesEn.length)       missing.push(t('add.field.senses_en'));
+    if (missing.length) {
+      toast(t('add.error.missing_fields', { fields: missing.join(', ') }), 'error');
+      return;
+    }
+
+    // Lock the submit button so an impatient double-click doesn't create
+    // duplicate glosses. Re-enable on completion (success or failure).
+    if (submitBtn) submitBtn.disabled = true;
     try {
       await api.create(payload);
       closeModal('#addModal');
@@ -385,16 +416,26 @@ function setupAddModal() {
       document.querySelectorAll('#addLabelsMulti .multi-list input').forEach(i => i.checked = false);
       sensesEditors.__reset_senses();
       sensesEditors.__reset_sensesEngels();
-      toast('Glos aangemaakt', 'success');  // no i18n key for "Glos aangemaakt"
+      toast(t('toast.gloss_created'), 'success');
       state.page = 1;
       refresh();
     } catch (e) {
-      toast('Aanmaken mislukt: ' + e.message, 'error');  // no i18n key for "Aanmaken mislukt"
+      toast(t('toast.gloss_create_failed', { msg: e.message }), 'error');
+    } finally {
+      if (submitBtn) submitBtn.disabled = false;
     }
   });
 }
 
 function openAddModal() {
+  // Reflect the active dataset in the form: LSM users see "Glos PT",
+  // NGT users see "Glos NL".
+  const localLabel = $('#addModal .add-form-label-glos-local');
+  if (localLabel) localLabel.textContent = activeDatasetGlosLocalLabel();
+  // Ensure the submit button isn't stuck disabled from a previous failed
+  // submit that didn't reach the finally block (very rare, but defensive).
+  const submitBtn = $('#addForm button[type="submit"]');
+  if (submitBtn) submitBtn.disabled = false;
   $('#addModal').classList.remove('hidden');
   setTimeout(() => $('#addForm input[name="glos"]').focus(), 50);
 }
@@ -985,7 +1026,7 @@ function renderSourceSection(row) {
   const div = el('div', { class: 'sb-section-body' });
 
   const grid = el('div', { class: 'sb-source-grid' });
-  grid.appendChild(field('Glos NL', row.glos));
+  grid.appendChild(field(activeDatasetGlosLocalLabel(), row.glos));
   grid.appendChild(field('Glos EN', row.glos_engels));
   grid.appendChild(field('Senses NL', (row.senses || []).join(' · ') || null));
   grid.appendChild(field('Senses EN', (row.sensesEngels || []).join(' · ') || null));

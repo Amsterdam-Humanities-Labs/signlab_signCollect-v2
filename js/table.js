@@ -184,8 +184,11 @@ function renderMainCol(row, ctx) {
   const col = el('div', { class: 'col-main' });
 
   const fields = el('div', { class: 'glos-fields' });
+  // Label for the primary-language gloss comes from the active dataset
+  // (NGT → "Glos NL", LSM → "Glos PT", future datasets configurable).
+  const glosLocalLabel = (ctx.glosLocalLabel && ctx.glosLocalLabel()) || 'Glos NL';
   fields.append(
-    field('Glos NL', row.glos,        val => save(row, { glos: val }), { uppercase: true }),
+    field(glosLocalLabel, row.glos,   val => save(row, { glos: val }), { uppercase: true }),
     field('Glos EN', row.glos_engels, val => save(row, { glos_engels: val }), { uppercase: true }),
   );
   col.appendChild(fields);

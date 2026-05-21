@@ -45,6 +45,7 @@ $s['datasets'] = array_values(array_map(fn($c) => [
     'label'             => $reg[$c]['label'] ?? $c,
     'hasExternSubview'  => (bool)($reg[$c]['has_extern_subview'] ?? true),
     'hideNavMenuItems'  => (bool)($reg[$c]['hide_nav_menu_items'] ?? false),
+    'glosLocalLabel'    => (string)($reg[$c]['glos_local_label'] ?? 'Glos NL'),
 ], array_filter($allowed, fn($c) => isset($reg[$c]))));
 $s['defaultDataset'] = in_array($defaultDataset, $allowed, true) ? $defaultDataset
                        : ($allowed[0] ?? dataset_default_code());

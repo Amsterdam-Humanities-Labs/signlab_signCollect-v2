@@ -134,6 +134,16 @@ const STRINGS = {
   'toast.error_loading':         { nl: 'Fout bij laden',         en: 'Error loading' },
   'toast.wait_compare_loaded':   { nl: 'Wacht tot de vergelijking geladen is', en: 'Wait for the comparison to finish loading' },
   'toast.no_differences':        { nl: 'Geen verschillen om te pushen', en: 'No differences to push' },
+  'toast.gloss_created':         { nl: 'Glos aangemaakt',                en: 'Gloss created' },
+  'toast.gloss_create_failed':   { nl: 'Aanmaken mislukt: {msg}',        en: 'Create failed: {msg}' },
+
+  // ── Add-gloss modal ───────────────────────────────────────────────────
+  'add.title':                   { nl: 'Nieuwe glos',                    en: 'New gloss' },
+  'add.submit':                  { nl: 'Aanmaken',                       en: 'Create' },
+  'add.field.senses_nl':         { nl: 'Senses NL',                      en: 'Senses NL' },
+  'add.field.senses_en':         { nl: 'Senses EN',                      en: 'Senses EN' },
+  'add.error.missing_fields':    { nl: 'Vul eerst alle velden in: {fields}',
+                                   en: 'Fill in all fields first: {fields}' },
 
   // ── Confirm prompts ───────────────────────────────────────────────────
   'confirm.hide_gloss':          { nl: 'Glos "{name}" verbergen?',           en: 'Hide gloss "{name}"?' },
