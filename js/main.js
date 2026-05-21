@@ -122,7 +122,10 @@ function populateOwnerSelect() {
   const myName = state.user.username || userNameMap.get(myId) || myId;
   sel.appendChild(el('option', { value: myId }, `${myName} ${t('multi.you_suffix')}`));
   sel.appendChild(el('option', { value: '' }, t('filter.owner.everyone')));
-  state.options.users
+  // Dropdown is dataset-scoped — show only users who can actually own a
+  // gloss in the active dataset. Falls back to the full list if the
+  // backend didn't supply the scoped subset.
+  (state.options.users_for_dataset || state.options.users || [])
     .filter(u => String(u.userId) !== myId)
     .sort((a, b) => Number(a.userId) - Number(b.userId))
     .forEach(u => sel.appendChild(el('option', { value: String(u.userId) }, u.user)));
@@ -259,7 +262,10 @@ function makeCtx() {
     userName,
     themaOptions: () => state.options.themas,
     labelOptions: () => state.options.labels,
-    userOptions:  () => state.options.users.map(u => ({
+    // Owner dropdown picker is dataset-scoped (use users_for_dataset);
+    // the full state.options.users list still feeds userNameMap so that
+    // rendering owner pills for cross-dataset users still resolves names.
+    userOptions:  () => (state.options.users_for_dataset || state.options.users || []).map(u => ({
       value: String(u.userId),
       label: u.user,
     })),
