@@ -4,6 +4,11 @@ require_once __DIR__ . '/session.php';
 
 $session = require_session();
 
+require_once __DIR__ . '/datasets.php';
+$pdo   = db();
+$ds    = require_dataset($pdo, $session, $body);
+$table = $ds['table'];
+
 require_once __DIR__ . '/../signbank_sync/sync_helpers.php';
 
 $body   = json_body();
@@ -51,8 +56,7 @@ $updates[] = "logboek = CONCAT_WS('\n', NULLIF(CONVERT(logboek USING utf8mb4), '
 $args[]    = $logEntry;
 
 $args[] = $id;
-$pdo = db();
-$stmt = $pdo->prepare("UPDATE form_data SET " . implode(', ', $updates) . " WHERE id = ?");
+$stmt = $pdo->prepare("UPDATE `$table` SET " . implode(', ', $updates) . " WHERE id = ?");
 $stmt->execute($args);
 
 $row = $pdo->prepare(
@@ -63,7 +67,7 @@ $row = $pdo->prepare(
             RepeatedMovement, AlternatingMovement,
             relativeOrienationMovement, relativeOrienationLocation, orientationChange,
             virtualObjectt, phonologyOther, mouthGesture, mouthing, phoneticVariation
-     FROM form_data WHERE id = ?"
+     FROM `$table` WHERE id = ?"
 );
 $row->execute([$id]);
 $r = $row->fetch();
@@ -81,6 +85,7 @@ if (!empty($r['signbank']) && $fields) {
         $changedOnly = [];
         foreach ($relevant as $k => $v) $changedOnly[$k] = is_array($v) ? json_encode($v) : $v;
         try {
+            // TODO(LSM-task-13): pass $ds['code'] once signbank_auto_sync_fields supports it
             $sync = signbank_auto_sync_fields($pdo, $id, $changedOnly);
             if ($sync !== null) {
                 $signbankSync = [
