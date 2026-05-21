@@ -35,8 +35,9 @@ $s['defaultContext'] = $defaultContext;
 // datasets payload for the JS switcher
 $reg = datasets_registry();
 $s['datasets'] = array_values(array_map(fn($c) => [
-    'code'  => $c,
-    'label' => $reg[$c]['label'] ?? $c,
+    'code'              => $c,
+    'label'             => $reg[$c]['label'] ?? $c,
+    'hasExternSubview'  => (bool)($reg[$c]['has_extern_subview'] ?? true),
 ], array_filter($allowed, fn($c) => isset($reg[$c]))));
 $s['defaultDataset'] = in_array($defaultDataset, $allowed, true) ? $defaultDataset
                        : ($allowed[0] ?? dataset_default_code());

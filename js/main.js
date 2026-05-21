@@ -1607,6 +1607,7 @@ async function onDatasetChange(code) {
   localStorage.setItem('menu_beta.dataset', code);
   state.page = 1;
   renderDatasetSwitcher();
+  applyContextToggleVisibility();
   await refresh();
 }
 
@@ -1618,6 +1619,7 @@ function setupContextToggle() {
   opts.forEach(b => b.classList.toggle('active', b.dataset.ctx === state.context));
   $('#contextTag').textContent = state.context === 'signbank' ? 'Signbank' : 'Signio';
   applyContextClass();
+  applyContextToggleVisibility();
   opts.forEach(btn => {
     btn.addEventListener('click', () => {
       const next = btn.dataset.ctx;
@@ -1630,6 +1632,24 @@ function setupContextToggle() {
       refresh();
     });
   });
+}
+
+function activeDatasetHasExternSubview() {
+  const list = (state.user && state.user.datasets) || [];
+  const entry = list.find(d => d.code === state.dataset);
+  // Default true (NGT-style) so unknown / pre-migration users behave as before.
+  return entry ? entry.hasExternSubview !== false : true;
+}
+
+function applyContextToggleVisibility() {
+  const wrap = document.querySelector('.context-toggle');
+  if (!wrap) return;
+  const show = activeDatasetHasExternSubview();
+  wrap.hidden = !show;
+  // The little "Signio / Signbank" badge next to the search field is part of
+  // the same UI surface — hide it too so the user doesn't see a stale label.
+  const tag = $('#contextTag');
+  if (tag && tag.parentElement) tag.parentElement.hidden = !show;
 }
 
 function applyContextClass() {

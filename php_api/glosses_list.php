@@ -66,10 +66,15 @@ if (!in_array('hidden', $statuses, true)) {
     $where[] = '(glosZichtbaar = 0 OR glosZichtbaar IS NULL)';
 }
 
-if ($context === 'signbank') {
-    $where[] = 'extern IS NULL';
-} else {
-    $where[] = 'extern = \'1\'';
+// Only apply the signio/signbank sub-view filter for datasets that
+// actually use it. LSM (and any future dataset with has_extern_subview=false)
+// doesn't split rows by `extern`, so we show everything from its table.
+if (!empty($ds['has_extern_subview'])) {
+    if ($context === 'signbank') {
+        $where[] = 'extern IS NULL';
+    } else {
+        $where[] = 'extern = \'1\'';
+    }
 }
 
 if ($ownerUserId !== '') {
