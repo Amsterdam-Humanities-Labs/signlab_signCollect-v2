@@ -28,8 +28,12 @@ const userNameMap = new Map();
 const userName = uid => userNameMap.get(String(uid)) || `#${uid}`;
 
 async function init() {
+  const saved = localStorage.getItem('menu_beta.dataset');
+  if (saved) setActiveDataset(saved);  // request will be 403'd if no longer allowed
+
   state.user = await api.currentUser();
-  state.dataset = state.user.activeDataset || 'ngt';
+  const allowedCodes = (state.user.datasets || []).map(d => d.code);
+  state.dataset = (saved && allowedCodes.includes(saved)) ? saved : (state.user.activeDataset || 'ngt');
   setActiveDataset(state.dataset);
   $('#userBadge').textContent = state.user.username;
 
@@ -92,6 +96,7 @@ async function init() {
   setupOverscrollPaging();
   setupNavDrawer();
   setupContextToggle();
+  renderDatasetSwitcher();
   $('#addGlossBtn').addEventListener('click', () => openAddModal());
 
   document.addEventListener('click', closeOpenDetails);
@@ -1574,6 +1579,35 @@ function renderSignbankResultBanner(res) {
     detail = `HTTP ${res.status ?? '?'}`;
   }
   return renderBanner('error', 'Signbank gaf een fout', detail);
+}
+
+/* ---------- Dataset switcher ---------- */
+
+function renderDatasetSwitcher() {
+  const wrap = document.querySelector('#datasetSwitcher');
+  if (!wrap) return;
+  const datasets = state.user.datasets || [];
+  if (datasets.length <= 1) { wrap.hidden = true; return; }
+  wrap.hidden = false;
+  wrap.replaceChildren();
+  datasets.forEach(d => {
+    const btn = el('button', {
+      type: 'button',
+      class: 'ds-btn' + (d.code === state.dataset ? ' active' : ''),
+      onclick: () => onDatasetChange(d.code),
+    }, d.label);
+    wrap.appendChild(btn);
+  });
+}
+
+async function onDatasetChange(code) {
+  if (code === state.dataset) return;
+  state.dataset = code;
+  setActiveDataset(code);
+  localStorage.setItem('menu_beta.dataset', code);
+  state.page = 1;
+  renderDatasetSwitcher();
+  await refresh();
 }
 
 /* ---------- Context toggle (Signbank / Signio) ---------- */
