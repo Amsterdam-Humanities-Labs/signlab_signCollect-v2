@@ -4,6 +4,11 @@ require_once __DIR__ . '/session.php';
 
 $session = require_session();
 
+require_once __DIR__ . '/datasets.php';
+$pdo   = db();
+$ds    = require_dataset($pdo, $session, $_POST);
+$table = $ds['table'];
+
 require_once __DIR__ . '/../signbank_sync/sync_helpers.php';
 
 $id = (int)($_POST['id'] ?? 0);
@@ -27,8 +32,7 @@ if (!is_file($dest) && !move_uploaded_file($tmp, $dest)) {
     json_response(['error' => 'move_failed'], 500);
 }
 
-$pdo = db();
-$row = $pdo->prepare("SELECT zelfopname FROM form_data WHERE id = ?");
+$row = $pdo->prepare("SELECT zelfopname FROM `$table` WHERE id = ?");
 $row->execute([$id]);
 $current = $row->fetch();
 if (!$current) json_response(['error' => 'gloss_not_found'], 404);
@@ -38,7 +42,7 @@ if (!in_array($filename, $arr, true)) $arr[] = $filename;
 
 $logEntry = "Zelfopname toegevoegd ($filename) op " . date('j/n/Y @ H:i') . " door: " . ($session['username'] ?: $session['userId']);
 $upd = $pdo->prepare(
-    "UPDATE form_data
+    "UPDATE `$table`
      SET zelfopname = ?,
          logboek = CONCAT_WS('\n', NULLIF(CONVERT(logboek USING utf8mb4), ''), ?)
      WHERE id = ?"
@@ -48,6 +52,7 @@ $upd->execute([json_encode(array_values($arr)), $logEntry, $id]);
 // Auto-push the new self-recorded video to Signbank when this row is connected.
 $signbankPush = null;
 try {
+    // TODO(LSM-task-14): pass $ds['code'] once signbank_upload_video_for supports it
     $push = signbank_upload_video_for($pdo, $id, $dest);
     if ($push !== null) {
         $signbankPush = [
