@@ -183,3 +183,21 @@ function signbank_serialize_senses_aligned(array $senses): string {
     $rows = array_map(fn($s) => [(string)$s], $senses);
     return json_encode($rows, JSON_UNESCAPED_UNICODE);
 }
+
+/**
+ * Returns the dataset id + acronym for use against the connected
+ * Signbank install, looked up from datasets.php by dataset code.
+ *   ['id' => '2', 'acronym' => 'NGT']
+ * Returns null when the dataset has no Signbank counterpart (id is null
+ * in the registry) — callers should treat that as "no-op the sync".
+ */
+function signbank_dataset_info_for(string $code): ?array {
+    require_once __DIR__ . '/../php_api/datasets.php';
+    $reg = datasets_registry();
+    if (!isset($reg[$code])) return null;
+    if ($reg[$code]['signbank_dataset_id'] === null) return null;
+    return [
+        'id'      => (string)$reg[$code]['signbank_dataset_id'],
+        'acronym' => (string)$reg[$code]['signbank_acronym'],
+    ];
+}

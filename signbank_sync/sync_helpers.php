@@ -144,8 +144,10 @@ function signbank_build_update_payload(array $changedRow): array {
     return $out;
 }
 
-function signbank_get_connected_glossid(PDO $pdo, int $form_data_id): ?string {
-    $stmt = $pdo->prepare("SELECT signbank FROM form_data WHERE id = ?");
+function signbank_get_connected_glossid(PDO $pdo, int $form_data_id, string $datasetCode = 'ngt'): ?string {
+    require_once __DIR__ . '/../php_api/datasets.php';
+    $table = dataset_table($datasetCode);
+    $stmt = $pdo->prepare("SELECT signbank FROM `$table` WHERE id = ?");
     $stmt->execute([$form_data_id]);
     $row = $stmt->fetch();
     if (!$row) return null;
@@ -153,9 +155,11 @@ function signbank_get_connected_glossid(PDO $pdo, int $form_data_id): ?string {
     return $sb === '' ? null : $sb;
 }
 
-function signbank_set_connection(PDO $pdo, int $form_data_id, ?string $glossid, string $logEntry): void {
+function signbank_set_connection(PDO $pdo, int $form_data_id, ?string $glossid, string $logEntry, string $datasetCode = 'ngt'): void {
+    require_once __DIR__ . '/../php_api/datasets.php';
+    $table = dataset_table($datasetCode);
     $stmt = $pdo->prepare(
-        "UPDATE form_data
+        "UPDATE `$table`
          SET signbank = ?,
              logboek  = CONCAT_WS('\n', NULLIF(CONVERT(logboek USING utf8mb4), ''), ?)
          WHERE id = ?"
@@ -191,13 +195,14 @@ function signbank_label_to_machine_value(string $sourceField, string $humanLabel
     return $reverse[$sourceField][$humanLabel] ?? $humanLabel;
 }
 
-function signbank_auto_sync_fields(PDO $pdo, int $form_data_id, array $changed): ?array {
-    $glossid = signbank_get_connected_glossid($pdo, $form_data_id);
+function signbank_auto_sync_fields(PDO $pdo, int $form_data_id, array $changed, string $datasetCode = 'ngt'): ?array {
+    $sb = signbank_dataset_info_for($datasetCode);
+    if ($sb === null) return null;
+    $glossid = signbank_get_connected_glossid($pdo, $form_data_id, $datasetCode);
     if ($glossid === null) return null;
     $payload = signbank_build_update_payload($changed);
     if (!$payload) return null;
-    $cfg = signbank_config();
-    $path = '/dictionary/api_update_gloss/' . rawurlencode($cfg['dataset_id']) . '/' . rawurlencode($glossid) . '/';
+    $path = '/dictionary/api_update_gloss/' . rawurlencode($sb['id']) . '/' . rawurlencode($glossid) . '/';
     $res = signbank_request('POST', $path, $payload);
     $res['fields_sent'] = array_keys($payload);
     $res['glossid']     = $glossid;
@@ -208,8 +213,10 @@ function signbank_auto_sync_fields(PDO $pdo, int $form_data_id, array $changed):
  * Multipart upload of a local file as the gloss's center video on Signbank.
  * No-op (returns null) if the row isn't connected.
  */
-function signbank_upload_video_for(PDO $pdo, int $form_data_id, string $localPath): ?array {
-    $glossid = signbank_get_connected_glossid($pdo, $form_data_id);
+function signbank_upload_video_for(PDO $pdo, int $form_data_id, string $localPath, string $datasetCode = 'ngt'): ?array {
+    $sb = signbank_dataset_info_for($datasetCode);
+    if ($sb === null) return null;
+    $glossid = signbank_get_connected_glossid($pdo, $form_data_id, $datasetCode);
     if ($glossid === null) return null;
     if (!is_file($localPath)) return ['ok' => false, 'error' => 'local file missing', 'path' => $localPath];
 
