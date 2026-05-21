@@ -15,7 +15,11 @@ $themas = $pdo->query(
      GROUP BY thema ORDER BY c DESC"
 )->fetchAll();
 
-$labels = $pdo->query("SELECT id, label, color FROM labels ORDER BY label")->fetchAll();
+// Labels are scoped per dataset — only show labels belonging to the active
+// dataset so LSM users don't see NGT labels (and vice versa).
+$labelStmt = $pdo->prepare("SELECT id, label, color FROM labels WHERE dataset = ? ORDER BY label");
+$labelStmt->execute([$ds['code']]);
+$labels = $labelStmt->fetchAll();
 
 // Filter the owner dropdown to users who actually have access to the active
 // dataset. Users without `allowed_datasets` (NULL) are treated as NGT-only
