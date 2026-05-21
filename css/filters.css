@@ -104,6 +104,30 @@
 .multi-select .multi-list label:hover { background: var(--surface-2); }
 .multi-select .multi-list input[type="checkbox"] { margin: 0; }
 
+/* Inline create-new-label row at the bottom of a labels multi-select. */
+.multi-list .label-create-row {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-2);
+  position: sticky; bottom: 0;
+}
+.multi-list .label-create-row input[type="text"] {
+  flex: 1;
+  font-size: 13px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: #fff;
+}
+.multi-list .label-create-row .btn-link {
+  background: transparent; border: none; color: var(--accent);
+  font-size: 13px; font-weight: 500;
+  cursor: pointer; padding: 4px 6px;
+}
+.multi-list .label-create-row .btn-link:disabled { opacity: .5; cursor: not-allowed; }
+.multi-list .label-create-row .btn-link:hover:not(:disabled) { text-decoration: underline; }
+
 .result-meta {
   display: flex; align-items: center;
   margin-bottom: 12px;

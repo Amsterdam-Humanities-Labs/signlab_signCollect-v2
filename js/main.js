@@ -158,6 +158,75 @@ function populateLabelsMulti(root, items, onChange) {
   }
 }
 
+/**
+ * Attach a "+ create new label" affordance to a labels multi-select. The
+ * user types a name, presses Enter (or clicks +), and we POST to
+ * labels_create.php; on success we add a checked checkbox row for the
+ * new label and refresh state.options.labels so other parts of the UI
+ * see it immediately.
+ */
+function attachLabelCreateRow(root) {
+  const list = document.querySelector(`${root} .multi-list`);
+  if (!list || list.querySelector('.label-create-row')) return;
+
+  const wrap = el('div', { class: 'label-create-row' });
+  const input = el('input', {
+    type: 'text',
+    placeholder: t('label.create_placeholder'),
+    maxlength: 255,
+    autocomplete: 'off',
+    spellcheck: false,
+  });
+  const addBtn = el('button', { type: 'button', class: 'btn-link' },
+    el('i', { class: 'fas fa-plus' }), ' ', t('btn.add')
+  );
+
+  async function submit() {
+    const name = (input.value || '').trim();
+    if (!name) { input.focus(); return; }
+    if (input.disabled) return;
+    input.disabled = true;
+    addBtn.disabled = true;
+    try {
+      const res = await api.createLabel(name);
+      if (!res || !res.label) throw new Error('no label returned');
+      // Avoid duplicate checkbox if a row with the same label name exists
+      // (the endpoint is idempotent, so this is the "already exists" path).
+      let existing = list.querySelector(`input[type="checkbox"][value="${CSS.escape(res.label)}"]`);
+      if (!existing) {
+        const lbl = el('label', {},
+          el('input', { type: 'checkbox', value: res.label, onchange: () => syncMulti(root, () => {}) }),
+          ' ', res.label
+        );
+        list.insertBefore(lbl, wrap);
+        existing = lbl.querySelector('input');
+        // Keep the in-memory options list in sync so other UIs see the new label.
+        if (state.options && Array.isArray(state.options.labels)) {
+          state.options.labels.push({ id: res.id, label: res.label, color: res.color });
+        }
+      }
+      existing.checked = true;
+      syncMulti(root, () => {});
+      input.value = '';
+      toast(res.created ? t('toast.label_created') : t('toast.label_exists'), 'success');
+    } catch (e) {
+      toast(t('toast.label_create_failed', { msg: e.message }), 'error');
+    } finally {
+      input.disabled = false;
+      addBtn.disabled = false;
+      input.focus();
+    }
+  }
+
+  input.addEventListener('keydown', ev => {
+    if (ev.key === 'Enter') { ev.preventDefault(); submit(); }
+  });
+  addBtn.addEventListener('click', submit);
+
+  wrap.append(input, addBtn);
+  list.appendChild(wrap);
+}
+
 function populateStatusMulti() {
   const root = '#statusMulti';
   document.querySelectorAll(`${root} .multi-list input`).forEach(inp => {
@@ -358,6 +427,7 @@ const sensesEditors = {};
 
 function setupAddModal() {
   populateLabelsMulti('#addLabelsMulti', state.options.labels.map(l => l.label), () => {});
+  attachLabelCreateRow('#addLabelsMulti');
 
   document.querySelectorAll('#addForm .senses-editor').forEach(node => {
     const name = node.dataset.name;
