@@ -17,7 +17,16 @@ $themas = $pdo->query(
 
 $labels = $pdo->query("SELECT id, label, color FROM labels ORDER BY label")->fetchAll();
 
-$users = $pdo->query("SELECT userId, user FROM users ORDER BY user")->fetchAll();
+// Filter the owner dropdown to users who actually have access to the active
+// dataset. Users without `allowed_datasets` (NULL) are treated as NGT-only
+// because the migration backfilled every existing user to ["ngt"].
+$userStmt = $pdo->prepare(
+    "SELECT userId, user FROM users
+     WHERE JSON_CONTAINS(COALESCE(allowed_datasets, JSON_ARRAY('ngt')), JSON_QUOTE(?), '$')
+     ORDER BY user"
+);
+$userStmt->execute([$ds['code']]);
+$users = $userStmt->fetchAll();
 
 json_response([
     'themas' => array_map(fn($r) => $r['thema'], $themas),
