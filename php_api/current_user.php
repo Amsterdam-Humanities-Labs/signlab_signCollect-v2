@@ -12,9 +12,10 @@ $s['signbankPublicUrl'] = rtrim((string)($cfg['public_url'] ?? 'https://signbank
 $defaultContext = 'signio';
 $defaultDataset = dataset_default_code();
 $allowed        = [$defaultDataset];
+$language       = 'nl';
 try {
     $pdo = db();
-    $stmt = $pdo->prepare("SELECT default_context, default_dataset, allowed_datasets FROM users WHERE userId = ?");
+    $stmt = $pdo->prepare("SELECT default_context, default_dataset, allowed_datasets, lang FROM users WHERE userId = ?");
     $stmt->execute([(int)$s['userId']]);
     $row = $stmt->fetch();
     if ($row) {
@@ -26,11 +27,16 @@ try {
             $d = json_decode($row['allowed_datasets'], true);
             if (is_array($d)) $allowed = array_values(array_filter($d, 'is_string'));
         }
+        // Normalize legacy 3-char codes (eng/nld) and unknowns to 2-char nl/en.
+        $rawLang = strtolower(trim((string)($row['lang'] ?? '')));
+        if (in_array($rawLang, ['en', 'eng', 'english'], true))        $language = 'en';
+        elseif (in_array($rawLang, ['nl', 'nld', 'dutch', 'nederlands'], true)) $language = 'nl';
     }
 } catch (Throwable $e) {
     // leave defaults
 }
 $s['defaultContext'] = $defaultContext;
+$s['language']       = $language;
 
 // datasets payload for the JS switcher
 $reg = datasets_registry();
