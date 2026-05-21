@@ -34,7 +34,7 @@ function datasets_registry(): array {
             'label'               => 'LSM',
             'table'               => 'lsm_data',
             'matched_zog_clause'  => "{mt}.zOg = 'lsm'",
-            'signbank_dataset_id' => null,         // fill after creating local LSM dataset
+            'signbank_dataset_id' => 3,            // local Signbank LSM dataset
             'signbank_acronym'    => 'LSM',
         ],
     ];
