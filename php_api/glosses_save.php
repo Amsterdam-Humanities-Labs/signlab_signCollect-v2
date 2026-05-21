@@ -90,8 +90,16 @@ function fmt_log_val($v) {
     if ($v === null || $v === '')                return '(leeg)';
     if (is_array($v)) {
         if (!$v) return '[]';
-        $joined = implode(', ', array_map(fn($x) => (string)$x, $v));
-        return mb_strlen($joined) > 60 ? mb_substr($joined, 0, 57) . '...' : $joined;
+        // Quote each item so empty strings stay visible ("" instead of
+        // a confusing blank); truncate the whole thing to keep the
+        // logbook line readable.
+        $parts = array_map(function ($x) {
+            $s = (string)$x;
+            $q = '"' . str_replace('"', '\\"', $s) . '"';
+            return mb_strlen($q) > 30 ? mb_substr($q, 0, 27) . '..."' : $q;
+        }, $v);
+        $joined = '[' . implode(', ', $parts) . ']';
+        return mb_strlen($joined) > 80 ? mb_substr($joined, 0, 77) . '...' : $joined;
     }
     $s = (string)$v;
     return mb_strlen($s) > 60 ? mb_substr($s, 0, 57) . '...' : $s;
