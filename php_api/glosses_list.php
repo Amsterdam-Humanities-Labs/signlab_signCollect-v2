@@ -1,10 +1,17 @@
 <?php
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/session.php';
+require_once __DIR__ . '/datasets.php';
 
 $session = require_session();
 
 $body         = json_body();
+
+$pdo    = db();
+$ds     = require_dataset($pdo, $session, $body);
+$table  = $ds['table'];                                        // e.g. form_data | lsm_data
+$studio = dataset_studio_video_exists($ds['code'], 'f');       // EXISTS subquery, aliased gloss table = f
+$mtZog  = dataset_matched_zog_clause($ds['code'], 'mt', 'f'); // AND-fragment for free-form joins
 $search       = trim((string)($body['search']   ?? ''));
 $thema        = trim((string)($body['thema']    ?? ''));
 $labels       = is_array($body['labels'] ?? null)   ? $body['labels']   : [];
@@ -41,25 +48,15 @@ $statusMap = [
     'no_thema'         => '(thema IS NULL OR thema = \'\')',
     'no_zelfopname'    => '(zelfopname IS NULL OR zelfopname = \'\' OR zelfopname = \'[]\')',
     'has_zelfopname'   => '(zelfopname IS NOT NULL AND zelfopname <> \'\' AND zelfopname <> \'[]\')',
-    'no_studio_video'  => 'NOT EXISTS (SELECT 1 FROM matched_transcriptions mt
-                            WHERE mt.m_transcription REGEXP \'^[0-9]+$\'
-                              AND CAST(mt.m_transcription AS UNSIGNED) = form_data.id
-                              AND (mt.added IS NULL OR UPPER(mt.added) <> \'DELETE\')
-                              AND ((form_data.extern = \'1\'   AND mt.zOg IN (\'labels\',\'extern\'))
-                                OR (form_data.extern IS NULL AND mt.zOg = \'Glos\')))',
-    'has_studio_video' => 'EXISTS (SELECT 1 FROM matched_transcriptions mt
-                            WHERE mt.m_transcription REGEXP \'^[0-9]+$\'
-                              AND CAST(mt.m_transcription AS UNSIGNED) = form_data.id
-                              AND (mt.added IS NULL OR UPPER(mt.added) <> \'DELETE\')
-                              AND ((form_data.extern = \'1\'   AND mt.zOg IN (\'labels\',\'extern\'))
-                                OR (form_data.extern IS NULL AND mt.zOg = \'Glos\')))',
-    'extern_duplicate' => 'extern = \'1\' AND glos IS NOT NULL AND glos <> \'\'
+    'no_studio_video'  => 'NOT ' . $studio,
+    'has_studio_video' => $studio,
+    'extern_duplicate' => "extern = '1' AND glos IS NOT NULL AND glos <> ''
                             AND glos IN (
-                              SELECT glos FROM form_data
-                              WHERE extern = \'1\' AND glos IS NOT NULL AND glos <> \'\'
+                              SELECT glos FROM `$table`
+                              WHERE extern = '1' AND glos IS NOT NULL AND glos <> ''
                                 AND (glosZichtbaar = 0 OR glosZichtbaar IS NULL)
                               GROUP BY glos HAVING COUNT(*) > 1
-                            )',
+                            )",
 ];
 foreach ($statuses as $s) {
     if (isset($statusMap[$s])) $where[] = $statusMap[$s];
@@ -82,23 +79,25 @@ if ($ownerUserId !== '') {
 
 $whereSql = $where ? ('WHERE ' . implode(' AND ', $where)) : '';
 
-$pdo = db();
-
-$countStmt = $pdo->prepare("SELECT COUNT(*) AS c FROM form_data {$whereSql}");
+$countStmt = $pdo->prepare("SELECT COUNT(*) AS c FROM `$table` f {$whereSql}");
 $countStmt->execute($args);
 $total = (int)$countStmt->fetch()['c'];
 
 $externDupActive = in_array('extern_duplicate', $statuses, true);
 $sortMap = [
-    'newest'         => 'form_data.id DESC',
-    'oldest'         => 'form_data.id ASC',
-    'glos_az'        => '(form_data.glos IS NULL OR form_data.glos = \'\') ASC, form_data.glos ASC, form_data.id DESC',
-    'glos_za'        => '(form_data.glos IS NULL OR form_data.glos = \'\') ASC, form_data.glos DESC, form_data.id DESC',
-    'latest_capture' => 'COALESCE(_lc.max_id, 0) DESC, form_data.id DESC',
-    'oldest_capture' => '(_lc.max_id IS NULL) ASC, _lc.max_id ASC, form_data.id ASC',
+    'newest'         => 'f.id DESC',
+    'oldest'         => 'f.id ASC',
+    'glos_az'        => "(f.glos IS NULL OR f.glos = '') ASC, f.glos ASC, f.id DESC",
+    'glos_za'        => "(f.glos IS NULL OR f.glos = '') ASC, f.glos DESC, f.id DESC",
+    'latest_capture' => 'COALESCE(_lc.max_id, 0) DESC, f.id DESC',
+    'oldest_capture' => '(_lc.max_id IS NULL) ASC, _lc.max_id ASC, f.id ASC',
 ];
 
 $needsCaptureJoin = in_array($sort, ['latest_capture', 'oldest_capture'], true);
+// Inside the subquery there is no `f` table, so we can't use the full NGT per-row zOg/extern clause.
+// Use a coarse filter: for LSM restrict to zOg='lsm'; for NGT skip the filter (1=1) to preserve
+// current behaviour (the subquery is only used for ordering, not correctness-critical filtering).
+$captureMtClause = $ds['code'] === 'ngt' ? '1=1' : "zOg = '" . addslashes($ds['code']) . "'";
 $captureJoin = '';
 if ($needsCaptureJoin) {
     $captureJoin = "LEFT JOIN (
@@ -106,18 +105,19 @@ if ($needsCaptureJoin) {
         FROM matched_transcriptions
         WHERE m_transcription REGEXP '^[0-9]+$'
           AND (added IS NULL OR UPPER(added) <> 'DELETE')
+          AND $captureMtClause
         GROUP BY CAST(m_transcription AS UNSIGNED)
-    ) _lc ON _lc.gid = form_data.id";
+    ) _lc ON _lc.gid = f.id";
 }
-$orderBy = 'ORDER BY ' . ($externDupActive ? 'form_data.glos ASC, form_data.id DESC' : ($sortMap[$sort] ?? $sortMap['glos_az']));
+$orderBy = 'ORDER BY ' . ($externDupActive ? 'f.glos ASC, f.id DESC' : ($sortMap[$sort] ?? $sortMap['glos_az']));
 
-$listSql = "SELECT form_data.id, form_data.glos, form_data.glos_engels, form_data.wie,
-                   form_data.thema, form_data.labels, form_data.glosZichtbaar,
-                   form_data.zelfopname, form_data.senses, form_data.sensesEngels,
-                   form_data.control_nodig,
-                   form_data.fonologie_fase1, form_data.fonologie_fase2,
-                   form_data.signbank
-            FROM form_data
+$listSql = "SELECT f.id, f.glos, f.glos_engels, f.wie,
+                   f.thema, f.labels, f.glosZichtbaar,
+                   f.zelfopname, f.senses, f.sensesEngels,
+                   f.control_nodig,
+                   f.fonologie_fase1, f.fonologie_fase2,
+                   f.signbank
+            FROM `$table` f
             {$captureJoin}
             {$whereSql}
             {$orderBy}
