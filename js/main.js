@@ -1855,10 +1855,11 @@ function setupNavDrawer() {
 
   $('#navLogout').addEventListener('click', (ev) => {
     ev.preventDefault();
-    // Clear the shared sessionObject cookie on the apex domain and the local path.
-    document.cookie = 'sessionObject=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.signcollect.nl';
-    document.cookie = 'sessionObject=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
-    location.href = '/login.html';
+    // Send the user to /logout.html so they get the confirmation page (and
+    // its proper cookie-clearing flow). The logout page does the cookie
+    // teardown itself; we don't pre-clear here so the user can still hit
+    // Annuleren and return to /index.html with their session intact.
+    location.href = '/logout.html';
   });
 
   // Default closed
