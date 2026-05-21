@@ -83,23 +83,26 @@ if (!$updates) json_response(['error' => 'no_editable_fields'], 400);
 // becomes "field: old → new" with values truncated to keep the logbook
 // readable. Empty / no-op saves still log "Bijgewerkt …" so the writer
 // is always credited.
+// Logbook is stored in the legacy `logboek` column whose charset can't
+// hold non-BMP / arrow characters reliably, so we stick to plain ASCII
+// punctuation in the summary text.
 function fmt_log_val($v) {
-    if ($v === null || $v === '')                return '∅';
+    if ($v === null || $v === '')                return '(leeg)';
     if (is_array($v)) {
         if (!$v) return '[]';
         $joined = implode(', ', array_map(fn($x) => (string)$x, $v));
-        return mb_strlen($joined) > 60 ? mb_substr($joined, 0, 57) . '…' : $joined;
+        return mb_strlen($joined) > 60 ? mb_substr($joined, 0, 57) . '...' : $joined;
     }
     $s = (string)$v;
-    return mb_strlen($s) > 60 ? mb_substr($s, 0, 57) . '…' : $s;
+    return mb_strlen($s) > 60 ? mb_substr($s, 0, 57) . '...' : $s;
 }
 $user      = $session['username'] ?: $session['userId'];
 $summaries = [];
 foreach ($changedFields as $name => $delta) {
-    $summaries[] = sprintf('%s: %s → %s', $name, fmt_log_val($delta['old']), fmt_log_val($delta['new']));
+    $summaries[] = sprintf('%s: %s -> %s', $name, fmt_log_val($delta['old']), fmt_log_val($delta['new']));
 }
 $logText = $summaries
-    ? sprintf('Bijgewerkt door %s — %s', $user, implode('; ', $summaries))
+    ? sprintf('Bijgewerkt door %s -- %s', $user, implode('; ', $summaries))
     : sprintf('Bijgewerkt door %s (geen waarde-wijzigingen)', $user);
 
 $updates[] = "logboek = CONCAT_WS('\n', NULLIF(CONVERT(logboek USING utf8mb4), ''), ?)";
