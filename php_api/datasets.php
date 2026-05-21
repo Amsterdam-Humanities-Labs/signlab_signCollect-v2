@@ -62,7 +62,10 @@ function dataset_resolve(?string $code, array $userAllowed) {
 /** Whitelisted table-name lookup — safe to interpolate via backticks. */
 function dataset_table(string $code): string {
     $reg = datasets_registry();
-    return $reg[$code]['table'] ?? 'form_data';
+    if (!isset($reg[$code])) {
+        throw new InvalidArgumentException("Unknown dataset code: $code");
+    }
+    return $reg[$code]['table'];
 }
 
 /**
@@ -71,7 +74,10 @@ function dataset_table(string $code): string {
  */
 function dataset_matched_zog_clause(string $code, string $mtAlias = 'mt', string $fAlias = 'f'): string {
     $reg = datasets_registry();
-    $tpl = $reg[$code]['matched_zog_clause'] ?? "{mt}.zOg = '_never_matches_'";
+    if (!isset($reg[$code])) {
+        throw new InvalidArgumentException("Unknown dataset code: $code");
+    }
+    $tpl = $reg[$code]['matched_zog_clause'];
     return strtr($tpl, ['{mt}' => $mtAlias, '{f}' => $fAlias]);
 }
 
