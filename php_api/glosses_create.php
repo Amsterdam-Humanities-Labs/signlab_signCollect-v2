@@ -16,9 +16,12 @@ $sensesEngels  = is_array($body['sensesEngels'] ?? null) ? array_values($body['s
 $context       = (string)($body['context'] ?? 'signio');
 $externValue   = $context === 'signbank' ? null : '1';
 
-$pdo = db();
+require_once __DIR__ . '/datasets.php';
+$pdo   = db();
+$ds    = require_dataset($pdo, $session, $body);
+$table = $ds['table'];
 $stmt = $pdo->prepare(
-    "INSERT INTO form_data
+    "INSERT INTO `$table`
        (glos, glos_engels, thema, labels, senses, sensesEngels,
         wie, control_nodig, zelfopname, glosZichtbaar, extern, logboek)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)"
