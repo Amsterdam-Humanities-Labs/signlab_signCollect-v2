@@ -314,6 +314,10 @@
   border-radius: var(--radius);
   background: var(--surface);
   overflow: hidden;
+  /* .studio-list is a flex column; without this, cards shrink below their
+     content height and the aspect-ratio video cells overflow invisibly,
+     leaving the videos/controls/delete unreachable (no scroll) on short screens. */
+  flex-shrink: 0;
   transition: box-shadow .12s, opacity .12s;
 }
 .studio-card:hover { box-shadow: var(--shadow); }
@@ -414,7 +418,7 @@
   background: #000;
   border-radius: var(--radius-sm);
   overflow: hidden;
-  aspect-ratio: 1 / 1.15;
+  aspect-ratio: 1440 / 1252; /* match studio post video dimensions (≈1.15:1) so no letterbox bars */
 }
 .cam-cell video {
   width: 100%; height: 100%;
@@ -516,6 +520,16 @@
   border-top: 1px solid var(--border);
   display: flex; justify-content: flex-end; gap: 8px;
   background: var(--surface-2);
+}
+/* addModal's footer is a child of the scrollable <form> (the Create button is
+   type=submit, so it must stay inside the form). Pin it to the bottom so
+   Cancel/Create don't scroll out of view on short (14") screens. The negative
+   margins cancel the form's 18px padding so the bar spans full width and sits
+   flush at the bottom edge. */
+#addModal form footer {
+  position: sticky;
+  bottom: 0;
+  margin: 4px -18px -18px;
 }
 
 .confirm-body { font-size: 14px; }

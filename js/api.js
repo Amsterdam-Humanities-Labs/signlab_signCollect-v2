@@ -49,6 +49,7 @@ export const api = {
   },
   deleteVideo:    (id, filename) => post('delete_video.php', { id, filename }),
   deleteStudioVideo: (id) => post('studio_video_delete.php', { id }),
+  undeleteStudioVideo: (id) => post('studio_video_undelete.php', { id }),
   getPhonology:   (id) => call(`phonology_get.php?id=${encodeURIComponent(id)}`),
   createLabel:    (label, color) => post('labels_create.php', { label, color }),
   notesList:      (id) => call(`notes_list.php?id=${encodeURIComponent(id)}`),

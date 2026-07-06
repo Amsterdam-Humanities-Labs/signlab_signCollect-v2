@@ -150,6 +150,7 @@ const STRINGS = {
   'toast.gloss_hidden':          { nl: 'Glos verborgen',         en: 'Gloss hidden' },
   'toast.video_uploaded':        { nl: 'Zelfopname geüpload',    en: 'Selfie video uploaded' },
   'toast.video_deleted':         { nl: 'Zelfopname verwijderd',  en: 'Selfie video deleted' },
+  'toast.video_restored':        { nl: 'Opname teruggezet',      en: 'Recording restored' },
   'toast.no_changes':            { nl: 'Geen wijzigingen',       en: 'No changes' },
   'toast.connected':             { nl: 'Verbonden met Signbank', en: 'Connected to Signbank' },
   'toast.disconnected':          { nl: 'Losgekoppeld van Signbank', en: 'Disconnected from Signbank' },
@@ -241,6 +242,7 @@ const STRINGS = {
   'studio.cam.r':                { nl: 'Rechts',                        en: 'Right' },
   'studio.deleted':              { nl: 'verwijderd',                    en: 'deleted' },
   'studio.delete':               { nl: 'Verwijderen',                   en: 'Delete' },
+  'studio.undelete':             { nl: 'Terugzetten',                   en: 'Undelete' },
   'studio.no_videos':            { nl: 'Geen studio-opnames',           en: 'No studio recordings' },
 
   // ── Empty state ───────────────────────────────────────────────────────
@@ -290,6 +292,8 @@ const STRINGS = {
                                    en: '{n} recordings ({d} deleted)' },
   'studio.confirm_delete_one':   { nl: 'Studio-opname "{name}" verwijderen?',
                                    en: 'Delete studio recording "{name}"?' },
+  'studio.confirm_undelete_one': { nl: 'Studio-opname "{name}" terugzetten?',
+                                   en: 'Undelete studio recording "{name}"?' },
 
   // ── Recorder ─────────────────────────────────────────────────────────────
   'recorder.start':              { nl: 'Opname starten',                en: 'Start recording' },

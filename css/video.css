@@ -13,7 +13,7 @@
 }
 .thumb-wrap.zoomed {
   position: absolute;
-  top: 0;
+  top: var(--zoom-top, 0);
   left: 0;
   width: 300%;
   max-width: 80vw;
@@ -60,6 +60,22 @@
   transition: opacity .15s;
 }
 .thumb-wrap:hover .play-overlay { opacity: 1; }
+
+.thumb-wrap + .thumb-wrap { margin-top: 6px; }
+
+.thumb-tag {
+  position: absolute;
+  top: 6px; left: 6px;
+  padding: 2px 8px;
+  background: rgba(15, 23, 42, .78);
+  color: #fff;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .3px;
+  pointer-events: none;
+  z-index: 2;
+}
 
 .thumb-files {
   display: flex; flex-wrap: wrap; gap: 4px; align-items: center;

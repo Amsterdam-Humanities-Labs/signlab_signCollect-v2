@@ -76,47 +76,64 @@ export function renderRow(row, ctx) {
   return wrap;
 }
 
+function makeVideoPane(videoSrc, label, rowWrap) {
+  const thumbWrap = el('div', { class: 'thumb-wrap' });
+  const v = el('video', {
+    muted: true, playsinline: true, preload: 'metadata', loop: true,
+  });
+  queueThumbLoad(v, videoSrc);
+  thumbWrap.appendChild(v);
+  thumbWrap.appendChild(el('span', { class: 'thumb-tag' }, label));
+
+  rowWrap.addEventListener('mouseenter', () => v.play().catch(() => {}));
+  rowWrap.addEventListener('mouseleave', () => { v.pause(); v.currentTime = 0; });
+
+  const applyAspect = () => {
+    if (v.videoWidth && v.videoHeight) {
+      thumbWrap.style.setProperty('--natural-aspect', `${v.videoWidth} / ${v.videoHeight}`);
+    }
+  };
+  v.addEventListener('loadedmetadata', applyAspect);
+  thumbWrap.addEventListener('click', () => {
+    if (thumbWrap.classList.contains('zoomed')) {
+      thumbWrap.classList.remove('zoomed');
+      return;
+    }
+    applyAspect();
+    thumbWrap.style.setProperty('--zoom-top', thumbWrap.offsetTop + 'px');
+    thumbWrap.classList.add('zoomed');
+  });
+  thumbWrap.addEventListener('mouseleave', () => thumbWrap.classList.remove('zoomed'));
+  return thumbWrap;
+}
+
 function renderThumbCol(row, ctx, rowWrap) {
   const col = el('div', { class: 'col-thumb' });
 
-  let videoSrc = null;
-  if (row.thumbnail_video && row.thumbnail_video.m_file) {
-    videoSrc = (ctx.datasetCode && ctx.datasetCode() === 'lsm')
-      ? lsmMp4Url(row.thumbnail_video.m_file)
-      : studioMp4Url(row.thumbnail_video.m_file, row.thumbnail_video.post_processed);
-  } else if (row.zelfopname.length) {
-    videoSrc = `${UPLOADS_BASE}/${encodeURIComponent(row.zelfopname[0])}`;
+  const mtSrc = (row.thumbnail_video && row.thumbnail_video.m_file)
+    ? ((ctx.datasetCode && ctx.datasetCode() === 'lsm')
+        ? lsmMp4Url(row.thumbnail_video.m_file)
+        : studioMp4Url(row.thumbnail_video.m_file, row.thumbnail_video.post_processed))
+    : null;
+  const zoSrc = row.zelfopname.length
+    ? `${UPLOADS_BASE}/${encodeURIComponent(row.zelfopname[0])}`
+    : null;
+
+  if (mtSrc) col.appendChild(makeVideoPane(mtSrc, 'Video', rowWrap));
+  let zoThumbWrap = null;
+  if (zoSrc) {
+    zoThumbWrap = makeVideoPane(zoSrc, 'Zelfopname', rowWrap);
+    col.appendChild(zoThumbWrap);
   }
 
-  const thumbWrap = el('div', { class: videoSrc ? 'thumb-wrap' : 'thumb-wrap empty' });
-  if (videoSrc) {
-    const v = el('video', {
-      muted: true, playsinline: true, preload: 'metadata', loop: true,
-    });
-    queueThumbLoad(v, videoSrc);
-    thumbWrap.appendChild(v);
-    rowWrap.addEventListener('mouseenter', () => v.play().catch(() => {}));
-    rowWrap.addEventListener('mouseleave', () => { v.pause(); v.currentTime = 0; });
-
-    const applyAspect = () => {
-      if (v.videoWidth && v.videoHeight) {
-        thumbWrap.style.setProperty('--natural-aspect', `${v.videoWidth} / ${v.videoHeight}`);
-      }
-    };
-    v.addEventListener('loadedmetadata', applyAspect);
-    thumbWrap.addEventListener('click', () => {
-      applyAspect();
-      thumbWrap.classList.add('zoomed');
-    });
-    thumbWrap.addEventListener('mouseleave', () => thumbWrap.classList.remove('zoomed'));
-  } else {
-    thumbWrap.classList.add('record-prompt');
+  if (!mtSrc && !zoSrc) {
+    const thumbWrap = el('div', { class: 'thumb-wrap empty record-prompt' });
     thumbWrap.title = t('thumb.click_to_record');
     thumbWrap.appendChild(el('i', { class: 'fas fa-video-slash' }));
     thumbWrap.appendChild(el('span', { class: 'record-prompt-label' }, t('rowmenu.record')));
     thumbWrap.addEventListener('click', () => ctx.openRecord(row));
+    col.appendChild(thumbWrap);
   }
-  col.appendChild(thumbWrap);
 
   const files = el('div', { class: 'thumb-files' });
   row.zelfopname.forEach((fname, idx) => {
@@ -139,7 +156,7 @@ function renderThumbCol(row, ctx, rowWrap) {
       }, '×')
     );
     pill.addEventListener('click', () => {
-      const v = thumbWrap.querySelector('video');
+      const v = zoThumbWrap?.querySelector('video');
       if (v) {
         v.src = `${UPLOADS_BASE}/${encodeURIComponent(fname)}`;
         v.play().catch(() => {});

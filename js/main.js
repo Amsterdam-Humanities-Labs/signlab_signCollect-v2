@@ -982,13 +982,14 @@ function renderStudioCard(video) {
   body.appendChild(grid);
   body.appendChild(controls);
 
+  const name = (video.m_file || '#' + video.id).replace(/\.\w+$/, '');
   if (!isDeleted) {
     const delBtn = el('button', {
       class: 'btn btn-danger btn-sm',
       onclick: async (ev) => {
         ev.preventDefault();
         ev.stopPropagation();
-        openConfirmModal(t('studio.confirm_delete_one', { name: (video.m_file || '#' + video.id).replace(/\.\w+$/, '') }), async () => {
+        openConfirmModal(t('studio.confirm_delete_one', { name }), async () => {
           try {
             await api.deleteStudioVideo(video.id);
             video.added = 'DELETE';
@@ -1006,6 +1007,30 @@ function renderStudioCard(video) {
       el('i', { class: 'fas fa-trash' }), ' ', t('studio.delete')
     );
     body.appendChild(el('div', { class: 'delete-row' }, delBtn));
+  } else {
+    const undelBtn = el('button', {
+      class: 'btn btn-sm',
+      onclick: async (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        openConfirmModal(t('studio.confirm_undelete_one', { name }), async () => {
+          try {
+            await api.undeleteStudioVideo(video.id);
+            video.added = '1';
+            video.deleted = false;
+            renderStudioList();
+            // also refresh the underlying gloss row
+            makeCtx().refreshRow(studioCurrentRow);
+            toast(t('toast.video_restored'), 'success');
+          } catch (e) {
+            toast(t('toast.save_failed') + ': ' + e.message, 'error');
+          }
+        });
+      }
+    },
+      el('i', { class: 'fas fa-rotate-left' }), ' ', t('studio.undelete')
+    );
+    body.appendChild(el('div', { class: 'delete-row' }, undelBtn));
   }
 
   card.appendChild(body);
