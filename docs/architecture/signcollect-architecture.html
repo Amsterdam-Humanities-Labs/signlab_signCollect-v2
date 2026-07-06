@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SignCollect menu_beta — Architecture &amp; Workflows</title>
+<style>
+  :root{
+    --fe:#2563eb; --fe-bg:#dbeafe; --fe-t:#1e3a8a;
+    --api:#d97706; --api-bg:#fef3c7; --api-t:#92400e;
+    --sync:#7c3aed; --sync-bg:#ede9fe; --sync-t:#4c1d95;
+    --db:#059669; --db-bg:#d1fae5; --db-t:#065f46;
+    --ext:#dc2626; --ext-bg:#fee2e2; --ext-t:#991b1b;
+    --fs:#0d9488; --fs-bg:#ccfbf1; --fs-t:#134e4a;
+    --ink:#0f172a; --mut:#475569; --line:#cbd5e1;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  @page{ size:A4 landscape; margin:0; }
+  html,body{ font-family:system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif; color:var(--ink); }
+  .page{ width:297mm; height:209mm; padding:9mm 11mm 7mm; page-break-after:always; position:relative; overflow:hidden; background:#fff; }
+  .page:last-child{ page-break-after:auto; }
+
+  .phead{ display:flex; justify-content:space-between; align-items:baseline; border-bottom:2.5px solid var(--ink); padding-bottom:2.5mm; margin-bottom:4mm; }
+  .phead h2{ font-size:17px; letter-spacing:.2px; }
+  .phead .crumb{ font-size:10px; color:var(--mut); font-weight:600; text-transform:uppercase; letter-spacing:1px; }
+  .pfoot{ position:absolute; bottom:4mm; left:11mm; right:11mm; display:flex; justify-content:space-between; font-size:8.5px; color:var(--mut); }
+
+  .lead{ font-size:11px; color:var(--mut); margin-bottom:3mm; max-width:240mm; line-height:1.45;}
+  .lead b{color:var(--ink);}
+  code,.mono{ font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace; font-size:.92em; background:#f1f5f9; padding:0 3px; border-radius:3px; }
+
+  .cols{ display:flex; gap:5mm; }
+  .col{ flex:1; min-width:0; }
+
+  /* cards */
+  .card{ border:1.2px solid var(--line); border-radius:6px; padding:2.4mm 3mm; margin-bottom:2.6mm; background:#fff; break-inside:avoid;}
+  .card h4{ font-size:11px; margin-bottom:1.2mm; display:flex; align-items:center; gap:5px;}
+  .card p{ font-size:9.5px; color:var(--mut); line-height:1.4;}
+  .dot{ width:8px;height:8px;border-radius:50%; display:inline-block; flex:none;}
+  .t-fe{border-left:3.5px solid var(--fe);} .t-fe .dot{background:var(--fe);}
+  .t-api{border-left:3.5px solid var(--api);} .t-api .dot{background:var(--api);}
+  .t-sync{border-left:3.5px solid var(--sync);} .t-sync .dot{background:var(--sync);}
+  .t-db{border-left:3.5px solid var(--db);} .t-db .dot{background:var(--db);}
+  .t-ext{border-left:3.5px solid var(--ext);} .t-ext .dot{background:var(--ext);}
+  .t-fs{border-left:3.5px solid var(--fs);} .t-fs .dot{background:var(--fs);}
+
+  /* tables */
+  table.ref{ width:100%; border-collapse:collapse; font-size:9px; }
+  table.ref th{ text-align:left; background:var(--ink); color:#fff; padding:1.3mm 2mm; font-size:8.6px; text-transform:uppercase; letter-spacing:.5px;}
+  table.ref td{ padding:1.1mm 2mm; border-bottom:.6px solid #e2e8f0; vertical-align:top; line-height:1.35;}
+  table.ref tr:nth-child(even) td{ background:#f8fafc; }
+  table.ref code{ background:#eef2f7; white-space:nowrap;}
+  .pill{ display:inline-block; font-size:7.8px; font-weight:700; padding:.5px 5px; border-radius:8px; letter-spacing:.3px;}
+  .pill.get{ background:var(--db-bg); color:var(--db-t);} .pill.post{ background:var(--api-bg); color:var(--api-t);}
+
+  .legend{ display:flex; gap:4mm; flex-wrap:wrap; margin:2mm 0;}
+  .legend span{ font-size:9.5px; display:flex; align-items:center; gap:4px; color:var(--mut); font-weight:600;}
+
+  svg{ display:block; width:100%; height:auto; }
+  .diag{ width:100%; }
+
+  /* cover */
+  .cover{ display:flex; flex-direction:column; justify-content:center; height:100%; padding:0 8mm; }
+  .cover .kicker{ font-size:13px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--fe); margin-bottom:4mm;}
+  .cover h1{ font-size:42px; line-height:1.08; margin-bottom:5mm; letter-spacing:-.5px;}
+  .cover .sub{ font-size:15px; color:var(--mut); max-width:200mm; line-height:1.5; margin-bottom:10mm;}
+  .toc{ columns:2; column-gap:12mm; max-width:230mm; font-size:11.5px; }
+  .toc div{ padding:1.6mm 0; border-bottom:.7px solid #e2e8f0; display:flex; justify-content:space-between; break-inside:avoid;}
+  .toc .n{ color:var(--mut); font-weight:700; margin-right:3mm;}
+  .meta{ margin-top:10mm; font-size:9.5px; color:var(--mut);}
+
+  .note{ background:#fef9c3; border:1px solid #eab308; border-radius:5px; padding:2mm 3mm; font-size:9.5px; color:#854d0e; line-height:1.4; margin-bottom:2.6mm;}
+  ul.tight{ margin-left:4mm; font-size:9.5px; color:var(--mut); line-height:1.5;}
+  ul.tight li{ margin-bottom:.8mm;}
+  ul.tight b{color:var(--ink);}
+  h3.sec{ font-size:12px; margin:1mm 0 1.6mm; border-bottom:1.5px solid var(--line); padding-bottom:1mm;}
+</style>
+</head>
+<body>
+
+<!-- ============================ PAGE 1 : COVER ============================ -->
+<div class="page">
+  <div class="cover">
+    <div class="kicker">SignCollect &middot; Developer Onboarding</div>
+    <h1>menu_beta<br>Architecture &amp; Workflows</h1>
+    <div class="sub">How the SignCollect gloss-management interface works end to end: the browser SPA, the PHP REST API, the MySQL database, the Signbank synchronisation layer, and the satellite tools reachable from the menu.</div>
+    <div class="toc">
+      <div><span><span class="n">02</span>System overview</span><span>all tiers on one map</span></div>
+      <div><span><span class="n">03</span>Menu &amp; tool ecosystem</span><span>every nav-drawer entry</span></div>
+      <div><span><span class="n">04</span>Frontend modules</span><span>js/ responsibilities &amp; boot</span></div>
+      <div><span><span class="n">05</span>Backend endpoint reference</span><span>php_api/ &amp; signbank_sync/</span></div>
+      <div><span><span class="n">06</span>Database map</span><span>tables, columns, relations</span></div>
+      <div><span><span class="n">07</span>Workflow: list &amp; filter</span><span>boot + search pipeline</span></div>
+      <div><span><span class="n">08</span>Workflow: adding glosses</span><span>single + batch</span></div>
+      <div><span><span class="n">09</span>Workflow: editing &amp; auto-sync</span><span>inline edits, phonology</span></div>
+      <div><span><span class="n">10</span>Workflow: video recording</span><span>zelfopname pipeline</span></div>
+      <div><span><span class="n">11</span>Workflow: Signbank lifecycle</span><span>broadcast, compare, pull</span></div>
+      <div><span><span class="n">12</span>Auth, sessions &amp; datasets</span><span>access control model</span></div>
+    </div>
+    <div class="legend" style="margin-top:9mm;">
+      <span><span class="dot" style="background:var(--fe)"></span>Frontend (browser)</span>
+      <span><span class="dot" style="background:var(--api)"></span>PHP API</span>
+      <span><span class="dot" style="background:var(--sync)"></span>Signbank sync layer</span>
+      <span><span class="dot" style="background:var(--db)"></span>MySQL</span>
+      <span><span class="dot" style="background:var(--fs)"></span>File / video storage</span>
+      <span><span class="dot" style="background:var(--ext)"></span>External service</span>
+    </div>
+    <div class="meta">Generated June 2026 from the live codebase at <code>/web/menu_beta</code> &middot; colour code above is used consistently in every diagram.</div>
+  </div>
+</div>
+
+<!-- ============================ PAGE 2 : SYSTEM OVERVIEW ============================ -->
+<div class="page">
+  <div class="phead"><h2>System overview</h2><div class="crumb">02 · the whole machine on one map</div></div>
+  <div class="lead">SignCollect menu_beta is a <b>single-page app</b> (no framework, vanilla JS modules) talking JSON to a <b>flat-file PHP REST layer</b>. All gloss data lives in MySQL database <code>admin_gebarenoverleg</code>. Glosses can be linked to <b>Global Signbank</b> (signbank.cls.ru.nl); once linked, edits and video uploads auto-propagate. Satellite tools at the site root share the same database and session cookie.</div>
+  <div id="overview" class="diag"></div>
+</div>
+
+<!-- ============================ PAGE 3 : MENU MAP ============================ -->
+<div class="page">
+  <div class="phead"><h2>Menu &amp; tool ecosystem</h2><div class="crumb">03 · every entry in the nav drawer</div></div>
+  <div class="lead">The hamburger menu in <code>index.html</code> is the hub of the SignCollect suite. <b>menu_beta itself</b> is the gloss list/editor; the other entries link to standalone tools at the signcollect.nl root that share the database and the <code>sessionObject</code> cookie.</div>
+  <div class="cols">
+    <div class="col">
+      <h3 class="sec">Core — this app</h3>
+      <div class="card t-fe"><h4><span class="dot"></span>Gloss list &amp; editor (menu_beta)</h4><p><code>/menu_beta/index.html</code> — search, filter, paginate glosses; inline editing, senses, labels, phonology, notes, logbook, video recording, Signbank sync. Backend: <code>php_api/</code> + <code>signbank_sync/</code> → <code>form_data</code> / <code>lsm_data</code>.</p></div>
+      <h3 class="sec">Manage section</h3>
+      <div class="card t-api"><h4><span class="dot"></span>Batch toevoegen — batch glosses</h4><p><code>/batch_add.html</code> → <code>batch_add.php</code>. Paste a word list; parses it and INSERTs new glosses into <code>form_data</code> (optionally linking Signbank IDs and merging labels into existing rows).</p></div>
+      <div class="card t-api"><h4><span class="dot"></span>Labels toevoegen — label manager</h4><p><code>/labels_add.html</code> → <code>labels_add.php</code>. Create / rename / recolour / delete labels in the <code>labels</code> table; renames cascade into the <code>form_data.labels</code> JSON arrays.</p></div>
+      <div class="card t-api"><h4><span class="dot"></span>Themas aanpassen — theme editor</h4><p><code>/themas.html</code> → <code>themas_change.php</code>. Renames a thema category by UPDATE-ing every matching <code>form_data.thema</code> value.</p></div>
+      <h3 class="sec">Admin &amp; stats (role-gated)</h3>
+      <div class="card t-api"><h4><span class="dot"></span>Gebruikers beheren (admin only)</h4><p><code>/users.html</code> → <code>users_api.php</code>. Add / edit / block / delete accounts in <code>users</code>; reads visit history from <code>activity_log</code>.</p></div>
+      <div class="card t-api"><h4><span class="dot"></span>Gebruikersactiviteit (gomer only)</h4><p><code>/stats/</code> — usage statistics dashboard fed by <code>activity_log</code>.</p></div>
+    </div>
+    <div class="col">
+      <h3 class="sec">Main section — sibling tools</h3>
+      <div class="card t-fe"><h4><span class="dot"></span>Glos Wizard (legacy editor)</h4><p><code>/menu.html</code> — the original 248&nbsp;KB monolithic gloss interface that menu_beta is replacing. Same <code>form_data</code> CRUD via its own inline AJAX endpoints.</p></div>
+      <div class="card t-fe"><h4><span class="dot"></span>Video tooling</h4><p><b>Video Crop fix</b> <code>/videoFix/</code> &middot; <b>Studio Videos</b> <code>/studioIndex/</code> (browses <code>matched_transcriptions</code>) &middot; <b>Video Downloader</b> <code>/downloadVideos/downloadThemaVideo.html</code>.</p></div>
+      <div class="card t-fe"><h4><span class="dot"></span>Capture &amp; research interfaces</h4><p><b>Motion Capture</b> <code>mocap.signcollect.nl</code> &middot; <b>Zinnen</b> <code>/zin/zinnen.html</code> &middot; <b>NMM</b> <code>/nmm/fastView.html</code> &middot; <b>Health Holland</b> <code>/hh/index.html</code>.</p></div>
+      <h3 class="sec">Account</h3>
+      <div class="card t-api"><h4><span class="dot"></span>Login / logout</h4><p><code>/login.html</code> → <code>login_sc.php</code> validates against <code>users</code> and sets the <code>sessionObject</code> cookie. Both logout buttons route through <code>/logout.html</code> (confirmation + cookie clear).</p></div>
+      <div class="note"><b>Orientation tip:</b> if a tool is reachable from the menu but is <i>not</i> under <code>/web/menu_beta/</code>, it is a site-root tool with its own PHP backend — but it still reads/writes the <b>same MySQL tables</b>, so changes there appear in menu_beta immediately.</div>
+      <div id="menuflow" class="diag"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ PAGE 4 : FRONTEND ============================ -->
+<div class="page">
+  <div class="phead"><h2>Frontend modules</h2><div class="crumb">04 · /menu_beta/js — vanilla ES modules, no framework</div></div>
+  <div class="lead"><code>index.html</code> contains all markup (filter bar, list container, every modal); the JS modules wire it up. State (active dataset, context, filters, page) lives in <code>main.js</code>. Every server call goes through <b>api.js</b>, the single fetch wrapper that attaches the dataset parameter and handles 401 → login redirect.</div>
+  <div class="cols">
+    <div class="col">
+      <div class="card t-fe"><h4><span class="dot"></span>main.js — orchestrator</h4><p>Boot sequence, global state, filter bar listeners (search debounce 300&nbsp;ms), pagination, all modal controllers (add, record, notes, logbook, Signbank broadcast/compare), dataset &amp; context switching, nav drawer.</p></div>
+      <div class="card t-fe"><h4><span class="dot"></span>api.js — API client</h4><p>One function per endpoint (<code>list, create, save, uploadVideo, notesList, broadcastToSignbank, …</code>). JSON POST/GET with <code>credentials:'same-origin'</code>; central error → toast handling.</p></div>
+      <div class="card t-fe"><h4><span class="dot"></span>table.js — row renderer</h4><p>Renders each gloss row: thumbnail column (lazy video previews, FIFO queue, max 4 concurrent loads), main column (gloss + senses inline editors), meta column (labels / thema / owner pills), actions column (record, notes, logbook, phonology, Signbank buttons).</p></div>
+      <div class="card t-fe"><h4><span class="dot"></span>recorder.js — VideoRecorder</h4><p>Wraps <code>getUserMedia</code> + <code>MediaRecorder</code>; captures WebM (VP9/VP8) blobs for the zelfopname upload pipeline (page 10).</p></div>
+    </div>
+    <div class="col">
+      <div class="card t-fe"><h4><span class="dot"></span>phonology.js — phonology editor</h4><p>Modal with 19 fields: 14 dropdowns + 5 free-text, options loaded from <code>data/phonology_options.json</code>. Every change auto-saves through <code>glosses_save.php</code> (machine_value stored locally, human label pushed to Signbank).</p></div>
+      <div class="card t-fe"><h4><span class="dot"></span>senses.js / sensesPair.js</h4><p>Editors for the <code>senses</code> / <code>sensesEngels</code> JSON arrays — add/remove/reorder sense rows, side-by-side NL↔EN pairing.</p></div>
+      <div class="card t-fe"><h4><span class="dot"></span>labelEditor.js</h4><p>Inline label picker with colour pills; can create a new dataset-scoped label on the fly via <code>labels_create.php</code>.</p></div>
+      <div class="card t-fe"><h4><span class="dot"></span>i18n.js &amp; util.js</h4><p><code>i18n.js</code>: NL/EN UI strings keyed by the user's <code>lang</code> preference. <code>util.js</code>: DOM helpers, debounce, toasts.</p></div>
+      <div class="card t-fe" style="border-left-color:var(--mut)"><h4><span class="dot" style="background:var(--mut)"></span>css/</h4><p><code>theme.css</code> layout &amp; nav · <code>filters.css</code> filter bar · <code>table.css</code> rows &amp; thumbnails · <code>modals.css</code> dialogs · <code>video.css</code> players.</p></div>
+    </div>
+    <div class="col">
+      <h3 class="sec">Boot sequence</h3>
+      <div id="bootflow" class="diag"></div>
+      <div class="note" style="margin-top:2.5mm"><b>Convention:</b> after any mutation the frontend either re-renders the single row from the snapshot returned by <code>glosses_save.php</code>, or calls <code>refresh()</code> to re-run <code>glosses_list.php</code> with the current filter state.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ PAGE 5 : ENDPOINTS ============================ -->
+<div class="page">
+  <div class="phead"><h2>Backend endpoint reference</h2><div class="crumb">05 · php_api/ (CRUD) &amp; signbank_sync/ (integration)</div></div>
+  <div class="cols">
+    <div class="col" style="flex:1.18">
+      <h3 class="sec" style="border-color:var(--api)">php_api/ — core REST endpoints</h3>
+      <table class="ref">
+        <tr><th style="width:34mm">Endpoint</th><th style="width:9mm"></th><th>Purpose</th><th style="width:34mm">Touches</th></tr>
+        <tr><td><code>current_user.php</code></td><td><span class="pill get">GET</span></td><td>Profile of logged-in user: role, language, allowed + active dataset, default context</td><td>users</td></tr>
+        <tr><td><code>filters_options.php</code></td><td><span class="pill get">GET</span></td><td>Dropdown data for the filter bar: themas, labels (id/label/colour), users</td><td>form/lsm_data, labels, users</td></tr>
+        <tr><td><code>glosses_list.php</code></td><td><span class="pill post">POST</span></td><td>Paginated gloss list — search, thema, labels, statuses, owner, context, sort, page</td><td>form/lsm_data, matched_transcriptions</td></tr>
+        <tr><td><code>glosses_create.php</code></td><td><span class="pill post">POST</span></td><td>Create gloss (gloss NL/EN, thema, labels, senses); writes logboek entry</td><td>form/lsm_data <b>INSERT</b></td></tr>
+        <tr><td><code>glosses_save.php</code></td><td><span class="pill post">POST</span></td><td>Save changed fields, diff old→new into logboek; <b>auto-syncs to Signbank if linked</b></td><td>form/lsm_data <b>UPDATE</b> + Signbank</td></tr>
+        <tr><td><code>glosses_delete.php</code></td><td><span class="pill post">POST</span></td><td>Hard-delete a gloss row</td><td>form/lsm_data <b>DELETE</b></td></tr>
+        <tr><td><code>upload_video.php</code></td><td><span class="pill post">POST</span></td><td>Multipart WebM upload → SHA-256 filename; appends to zelfopname; pushes to Signbank if linked</td><td>/web/uploads, form/lsm_data, Signbank</td></tr>
+        <tr><td><code>delete_video.php</code></td><td><span class="pill post">POST</span></td><td>Remove a filename from the zelfopname JSON array</td><td>form/lsm_data</td></tr>
+        <tr><td><code>studio_video_delete.php</code></td><td><span class="pill post">POST</span></td><td>Soft-delete a studio recording (sets <code>added='DELETE'</code>)</td><td>matched_transcriptions</td></tr>
+        <tr><td><code>phonology_get.php</code></td><td><span class="pill get">GET</span></td><td>Fetch the 19 phonology fields + fase flags for the editor modal</td><td>form/lsm_data</td></tr>
+        <tr><td><code>labels_create.php</code></td><td><span class="pill post">POST</span></td><td>Create a dataset-scoped label (idempotent), with colour</td><td>labels <b>INSERT</b></td></tr>
+        <tr><td><code>notes_add.php</code> / <code>notes_list.php</code></td><td><span class="pill post">P/G</span></td><td>Chat-style comment thread per gloss</td><td>gloss_notes</td></tr>
+        <tr><td><code>logbook_get.php</code></td><td><span class="pill get">GET</span></td><td>Parse the logboek column into a structured edit history</td><td>form/lsm_data</td></tr>
+      </table>
+      <div class="note" style="margin-top:2mm"><b>Shared infrastructure (not endpoints):</b> <code>session.php</code> — cookie auth, <code>require_session()</code> → 401 · <code>db.php</code> — PDO singleton, <code>json_response()</code>, <code>logboek_entry()</code> timestamping · <code>datasets.php</code> — dataset registry, <code>require_dataset()</code> → 403.</div>
+    </div>
+    <div class="col">
+      <h3 class="sec" style="border-color:var(--sync)">signbank_sync/ — Signbank integration</h3>
+      <table class="ref">
+        <tr><th style="width:30mm">Endpoint</th><th>Purpose</th></tr>
+        <tr><td><code>broadcast_gloss.php</code></td><td>Create the gloss on Signbank, store the returned glossid in <code>form_data.signbank</code>, then auto-push phonology + video</td></tr>
+        <tr><td><code>fetch_gloss.php</code></td><td>Fetch the remote version and compute a field-by-field local↔remote diff for the compare modal</td></tr>
+        <tr><td><code>force_push.php</code></td><td>Overwrite Signbank with local values (all or selected fields)</td></tr>
+        <tr><td><code>force_pull.php</code></td><td>Overwrite local fields with the Signbank version</td></tr>
+        <tr><td><code>delete_gloss.php</code></td><td>Disconnect: NULL out <code>form_data.signbank</code></td></tr>
+        <tr><td><code>push_gloss.php</code></td><td>Legacy single-gloss push (superseded by broadcast + auto-sync)</td></tr>
+        <tr><td><code>client.php</code></td><td><i>(library)</i> HTTP client — base URL, Bearer / X-API-Key auth from <code>config.php</code> (gitignored)</td></tr>
+        <tr><td><code>sync_helpers.php</code></td><td><i>(library)</i> field-name mapping, phonology machine_value→label translation, <code>signbank_auto_sync_fields()</code>, <code>signbank_upload_video_for()</code></td></tr>
+      </table>
+      <h3 class="sec" style="border-color:var(--ext); margin-top:3mm">Signbank API surface used</h3>
+      <table class="ref">
+        <tr><th>Call</th><th>Used by</th></tr>
+        <tr><td><span class="pill post">POST</span> <code>/dictionary/api_create_gloss/{ds}/</code></td><td>broadcast</td></tr>
+        <tr><td><span class="pill post">POST</span> <code>/dictionary/api_update_gloss/{ds}/{id}/</code></td><td>auto-sync, force_push</td></tr>
+        <tr><td><span class="pill post">POST</span> <code>/dictionary/api_update_gloss/{ds}/{id}/video</code></td><td>video push</td></tr>
+        <tr><td><span class="pill get">GET</span> <code>/dictionary/get_gloss_data/{ds}/{id}/</code></td><td>fetch/compare, force_pull</td></tr>
+      </table>
+      <h3 class="sec" style="border-color:var(--api); margin-top:3mm">Site-root backends (satellite tools)</h3>
+      <table class="ref">
+        <tr><td><code>batch_add.php</code></td><td>batch INSERT/UPDATE into form_data</td></tr>
+        <tr><td><code>labels_add.php</code></td><td>labels CRUD + cascade into form_data.labels</td></tr>
+        <tr><td><code>themas_change.php</code></td><td>bulk rename form_data.thema</td></tr>
+        <tr><td><code>users_api.php</code></td><td>users CRUD + activity_log</td></tr>
+        <tr><td><code>login_sc.php</code></td><td>auth → sessionObject cookie</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ PAGE 6 : DATABASE ============================ -->
+<div class="page">
+  <div class="phead"><h2>Database map</h2><div class="crumb">06 · MySQL — admin_gebarenoverleg</div></div>
+  <div class="lead">One row in <code>form_data</code> (NGT) or <code>lsm_data</code> (LSM, identical structure) <b>is</b> a gloss. Multi-value fields are JSON arrays in TEXT columns — there are <b>no foreign-key constraints</b>; relations below are by convention. The <code>logboek</code> column is an append-only audit trail (<code>[YYYY-MM-DD HH:MM]</code>-prefixed lines).</div>
+  <div id="erd" class="diag"></div>
+</div>
+
+<!-- ============================ PAGE 7 : LIST & FILTER ============================ -->
+<div class="page">
+  <div class="phead"><h2>Workflow — boot, list &amp; filter</h2><div class="crumb">07 · the read path everything else builds on</div></div>
+  <div class="lead">On load the SPA fetches the user profile and filter options, then every filter interaction funnels into one call: <code>glosses_list.php</code>. The response rows already include joined video metadata, the thumbnail choice, and duplicate-gloss warnings.</div>
+  <div id="seq-list" class="diag"></div>
+</div>
+
+<!-- ============================ PAGE 8 : ADD GLOSS ============================ -->
+<div class="page">
+  <div class="phead"><h2>Workflow — adding glosses</h2><div class="crumb">08 · single (menu_beta modal) and batch (site-root tool)</div></div>
+  <div class="cols">
+    <div class="col" style="flex:1.5">
+      <h3 class="sec">Single gloss — “Nieuwe glos” modal</h3>
+      <div id="seq-add" class="diag"></div>
+    </div>
+    <div class="col">
+      <h3 class="sec">Batch glosses — batch_add.html</h3>
+      <div class="card t-api"><h4><span class="dot"></span>Flow</h4><p>1. User pastes a word list into the textarea at <code>/batch_add.html</code> and picks thema / labels / optional Signbank IDs.<br>2. The page parses the list client-side and POSTs to <code>batch_add.php</code>.<br>3. PHP INSERTs a <code>form_data</code> row per new word; for words that already exist it <b>merges labels</b> into the existing JSON array instead of duplicating.</p></div>
+      <div class="card t-db"><h4><span class="dot"></span>Defaults on insert (both paths)</h4><p><code>glosZichtbaar = 0</code> (visible) · <code>extern = '1'</code> when created in Signio context, <code>NULL</code> for Signbank context · <code>wie = [creatorUserId]</code> · <code>logboek</code> gets a creation entry with timestamp + username.</p></div>
+      <div class="note"><b>Duplicate guard:</b> <code>glosses_list.php</code> returns a <code>duplicates</code> array per row (other glosses with the same name), which table.js renders as a warning — batch adds are the most common source of these.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ PAGE 9 : EDIT & AUTO-SYNC ============================ -->
+<div class="page">
+  <div class="phead"><h2>Workflow — editing &amp; Signbank auto-sync</h2><div class="crumb">09 · one save endpoint behind every editor</div></div>
+  <div class="lead">All editors — inline gloss/senses/labels/thema, and every field of the phonology modal — call the same endpoint: <code>glosses_save.php</code>. It diffs old vs new, writes the audit trail, and transparently mirrors the change to Signbank when the gloss is linked (<code>form_data.signbank</code> holds a glossid).</div>
+  <div id="seq-edit" class="diag"></div>
+</div>
+
+<!-- ============================ PAGE 10 : VIDEO ============================ -->
+<div class="page">
+  <div class="phead"><h2>Workflow — video recording (zelfopname)</h2><div class="crumb">10 · camera → content-addressed storage → optional Signbank push</div></div>
+  <div class="lead">Self-recordings are captured in the browser and stored <b>content-addressed</b>: the file name is the SHA-256 of the blob, which makes re-uploads of identical videos naturally idempotent. Studio recordings follow a separate path (the studio pipeline writes <code>matched_transcriptions</code>; menu_beta only reads and soft-deletes those).</div>
+  <div id="seq-video" class="diag"></div>
+</div>
+
+<!-- ============================ PAGE 11 : SIGNBANK ============================ -->
+<div class="page">
+  <div class="phead"><h2>Workflow — Signbank lifecycle</h2><div class="crumb">11 · broadcast · compare · force push / pull · disconnect</div></div>
+  <div class="cols">
+    <div class="col" style="flex:1.55">
+      <h3 class="sec">Broadcast — linking a gloss to Signbank</h3>
+      <div id="seq-broadcast" class="diag"></div>
+    </div>
+    <div class="col">
+      <h3 class="sec">Once linked — the other operations</h3>
+      <div class="card t-sync"><h4><span class="dot"></span>Compare (fetch_gloss.php)</h4><p>GETs <code>get_gloss_data</code> from Signbank, builds a side-by-side field diff against the local row, and offers three resolutions in the modal: push the diff, force push, or force pull.</p></div>
+      <div class="card t-sync"><h4><span class="dot"></span>Force push / force pull</h4><p><code>force_push.php</code> overwrites Signbank with local values (optionally only selected fields). <code>force_pull.php</code> overwrites the local row with Signbank's version. Both log to logboek.</p></div>
+      <div class="card t-sync"><h4><span class="dot"></span>Auto-sync (passive)</h4><p>Not a button: every <code>glosses_save.php</code> and <code>upload_video.php</code> on a linked gloss pushes the <i>changed fields only</i> — see pages 09–10.</p></div>
+      <div class="card t-sync"><h4><span class="dot"></span>Disconnect (delete_gloss.php)</h4><p>NULLs <code>form_data.signbank</code>. The gloss stays on Signbank; only the link is severed, so auto-sync stops.</p></div>
+      <div class="note"><b>Field translation</b> happens in <code>sync_helpers.php</code>: local column names map to Signbank field names (<code>glos</code> → “Annotation ID Gloss (Dutch)”), and phonology machine_values (e.g. <code>"2"</code>) are translated to human labels via <code>data/phonology_options.json</code> before pushing.</div>
+      <div class="card t-ext"><h4><span class="dot"></span>Configuration</h4><p><code>signbank_sync/config.php</code> (gitignored; see <code>config.example.php</code>): base_url, api_key, auth scheme (Bearer or X-API-Key), timeout. Dataset mapping: NGT → Signbank dataset 2, LSM → dataset 3.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ PAGE 12 : AUTH ============================ -->
+<div class="page">
+  <div class="phead"><h2>Auth, sessions &amp; datasets</h2><div class="crumb">12 · who may see and edit what</div></div>
+  <div class="cols">
+    <div class="col">
+      <h3 class="sec">Session model</h3>
+      <div class="card t-api"><h4><span class="dot"></span>sessionObject cookie</h4><p>Login at <code>/login.html</code> → <code>login_sc.php</code> validates against <code>users</code> and sets a JSON cookie: <code>{userId, username, role, expiresAt}</code>. All fetches send it (<code>credentials:'same-origin'</code>).</p></div>
+      <div class="card t-api"><h4><span class="dot"></span>require_session()</h4><p>Every endpoint starts with this guard (<code>php_api/session.php</code>). Missing/expired cookie → <b>401</b>, and api.js redirects to <code>/login.html?redirect=&lt;current page&gt;</code>. Logout routes through <code>/logout.html</code> (confirm + clear cookie).</p></div>
+      <h3 class="sec" style="margin-top:3mm">Role-gated UI</h3>
+      <ul class="tight">
+        <li><b>admin</b> — sees “Gebruikers beheren” (users.html) in the drawer.</li>
+        <li><b>gomer (hardcoded)</b> — sees the “Statistieken” section.</li>
+        <li>everyone else — Main + Manage + Account sections only.</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3 class="sec">Dataset registry (php_api/datasets.php)</h3>
+      <table class="ref">
+        <tr><th></th><th>ngt</th><th>lsm</th></tr>
+        <tr><td><b>MySQL table</b></td><td>form_data</td><td>lsm_data</td></tr>
+        <tr><td><b>Signbank dataset</b></td><td>2 (acronym NGT)</td><td>3 (acronym LSM)</td></tr>
+        <tr><td><b>Context subview</b></td><td>yes — Signio / Signbank</td><td>no</td></tr>
+        <tr><td><b>Video uploads</b></td><td>/web/uploads/&lt;sha&gt;.webm</td><td>/uploads/lsm/…</td></tr>
+      </table>
+      <div class="card t-db" style="margin-top:2.5mm"><h4><span class="dot"></span>require_dataset()</h4><p>Each request names its dataset; the guard checks it against <code>users.allowed_datasets</code> (JSON array) → <b>403</b> if not permitted. This is what keeps LSM-only users out of NGT data. The resolved entry supplies the table name and Signbank IDs to all downstream code.</p></div>
+      <div class="card t-fe"><h4><span class="dot"></span>Switchers in the header</h4><p><b>Dataset switcher</b> (NGT ↔ LSM): swaps <code>state.dataset</code>; every subsequent request carries it. <b>Context toggle</b> (Signio ↔ Signbank, NGT only): filters on <code>extern='1'</code> vs <code>extern IS NULL</code>.</p></div>
+    </div>
+    <div class="col">
+      <h3 class="sec">Request lifecycle (every API call)</h3>
+      <div id="seq-auth" class="diag"></div>
+      <div class="note" style="margin-top:2.5mm"><b>Where to start reading code:</b> boot &amp; state → <code>js/main.js</code> · any save behaviour → <code>php_api/glosses_save.php</code> · Signbank field mapping → <code>signbank_sync/sync_helpers.php</code> · access control → <code>php_api/session.php</code> + <code>datasets.php</code>.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- shared drawing helpers ---------- */
+const TIER = {
+  fe:  {b:'#2563eb', bg:'#dbeafe', t:'#1e3a8a'},
+  api: {b:'#d97706', bg:'#fef3c7', t:'#92400e'},
+  sync:{b:'#7c3aed', bg:'#ede9fe', t:'#4c1d95'},
+  db:  {b:'#059669', bg:'#d1fae5', t:'#065f46'},
+  ext: {b:'#dc2626', bg:'#fee2e2', t:'#991b1b'},
+  fs:  {b:'#0d9488', bg:'#ccfbf1', t:'#134e4a'},
+  mut: {b:'#64748b', bg:'#f1f5f9', t:'#334155'}
+};
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const DEFS = `<defs>
+  <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#334155"/></marker>
+  <marker id="arrL" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker>
+</defs>`;
+
+/* sequence diagram generator */
+function seq(id, cfg){
+  const W = cfg.w || 1180, pad = 8;
+  const n = cfg.actors.length, colW = (W - pad*2)/n;
+  const xs = cfg.actors.map((a,i)=> pad + colW*i + colW/2);
+  const headH = 30, top = 4, stepH = cfg.stepH || 31;
+  const H = top + headH + 12 + cfg.steps.length*stepH + 8;
+  let g = '';
+  xs.forEach(x => g += `<line x1="${x}" y1="${top+headH}" x2="${x}" y2="${H-4}" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="3 3"/>`);
+  cfg.actors.forEach((a,i)=>{
+    const c = TIER[a.t]||TIER.fe, w = Math.min(colW-8, a.w||172);
+    g += `<rect x="${xs[i]-w/2}" y="${top}" width="${w}" height="${headH}" rx="6" fill="${c.bg}" stroke="${c.b}" stroke-width="1.4"/>`;
+    g += `<text x="${xs[i]}" y="${top+headH/2+1}" text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="600" fill="${c.t}">${esc(a.l)}</text>`;
+  });
+  let y = top + headH + 12 + stepH/2;
+  for(const st of cfg.steps){
+    if(st.band !== undefined){
+      g += `<rect x="${pad+6}" y="${y-stepH/2+4}" width="${W-pad*2-12}" height="${stepH-7}" rx="4" fill="#fef9c3" stroke="#eab308" stroke-width="1" stroke-dasharray="4 3"/>`;
+      g += `<text x="${W/2}" y="${y+2}" text-anchor="middle" dominant-baseline="middle" font-size="10.5" font-style="italic" font-weight="600" fill="#854d0e">${esc(st.band)}</text>`;
+    } else if(st.f === st.t){
+      const x = xs[st.f];
+      g += `<path d="M ${x} ${y-7} h 26 v 13 h -26" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#arr)"/>`;
+      g += `<text x="${x+32}" y="${y}" font-size="10.3" dominant-baseline="middle" fill="#0f172a">${esc(st.l)}</text>`;
+    } else {
+      const x1 = xs[st.f], x2 = xs[st.t];
+      const dash = st.d ? ' stroke-dasharray="5 3" stroke="#64748b"' : ' stroke="#334155"';
+      g += `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke-width="1.3"${dash} marker-end="url(#arr)"/>`;
+      g += `<text x="${(x1+x2)/2}" y="${y-5.5}" text-anchor="middle" font-size="10.3" fill="${st.d?'#475569':'#0f172a'}"${st.d?' font-style="italic"':''}>${esc(st.l)}</text>`;
+    }
+    y += stepH;
+  }
+  document.getElementById(id).innerHTML =
+    `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${DEFS}${g}</svg>`;
+}
+
+/* box helpers for the hand-laid diagrams */
+function box(x,y,w,h,title,tier,opts={}){
+  const c = TIER[tier];
+  let s = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="8" fill="${opts.plain?'#fff':c.bg}" stroke="${c.b}" stroke-width="1.6"/>`;
+  s += `<text x="${x+10}" y="${y+17}" font-size="12" font-weight="700" fill="${c.t}">${esc(title)}</text>`;
+  if(opts.sub) s += `<text x="${x+10}" y="${y+30}" font-size="9" fill="${c.t}" opacity=".8">${esc(opts.sub)}</text>`;
+  return s;
+}
+function chips(x,y,w,items,tier,chipH=15,gap=4){
+  const c = TIER[tier]; let s='', cx=x, cy=y;
+  for(const it of items){
+    const cw = it.length*5.1 + 12;
+    if(cx + cw > x + w){ cx = x; cy += chipH + gap; }
+    s += `<rect x="${cx}" y="${cy}" width="${cw}" height="${chipH}" rx="7" fill="#fff" stroke="${c.b}" stroke-width=".9"/>`;
+    s += `<text x="${cx+cw/2}" y="${cy+chipH/2+1}" text-anchor="middle" dominant-baseline="middle" font-size="8.6" font-family="ui-monospace,Menlo,monospace" fill="${c.t}">${esc(it)}</text>`;
+    cx += cw + gap;
+  }
+  return s;
+}
+function arrowParts(x1,y1,x2,y2,label,opts={}){
+  const col = opts.c || '#334155';
+  const dash = opts.d ? ` stroke-dasharray="5 3"` : '';
+  let path;
+  if(opts.via){ path = `M ${x1} ${y1} L ${opts.via[0]} ${opts.via[1]} L ${x2} ${y2}`; }
+  else { const mx=(x1+x2)/2; path = `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`; }
+  let line = `<path d="${path}" fill="none" stroke="${col}" stroke-width="1.5"${dash} marker-end="url(#arr)"/>`;
+  let lab = '';
+  if(label){
+    const lx = opts.lx ?? (x1+x2)/2, ly = opts.ly ?? (y1+y2)/2 - 6;
+    const lw = label.length*5.0+8;
+    lab += `<rect x="${lx-lw/2}" y="${ly-8}" width="${lw}" height="14" rx="3" fill="#fff" opacity=".92"/>`;
+    lab += `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" font-size="9.2" font-weight="600" fill="${col}">${esc(label)}</text>`;
+  }
+  return {line, lab};
+}
+function arrow(x1,y1,x2,y2,label,opts={}){
+  const p = arrowParts(x1,y1,x2,y2,label,opts);
+  return p.line + p.lab;
+}
+function badge(x,y,n,col='#0f172a'){
+  return `<circle cx="${x}" cy="${y}" r="8.5" fill="${col}"/>`+
+         `<text x="${x}" y="${y+0.5}" text-anchor="middle" dominant-baseline="middle" font-size="10" font-weight="700" fill="#fff">${n}</text>`;
+}
+
+/* ---------- PAGE 2 : overview diagram ---------- */
+(function(){
+  const W=1180,H=614; let g='', lines='', labs='';
+  const A = (...a)=>{ const p=arrowParts(...a); lines+=p.line; labs+=p.lab; };
+  // BROWSER tier
+  g += box(14,8,318,206,'Browser — menu_beta SPA','fe',{sub:'index.html · vanilla JS modules · sessionObject cookie'});
+  g += chips(26,46,296,['main.js','table.js','api.js','phonology.js','recorder.js','senses.js','sensesPair.js','labelEditor.js','i18n.js','util.js'],'fe');
+  g += `<text x="26" y="140" font-size="9.5" fill="#1e3a8a">Gloss list · filters · inline editors · modals:</text>`;
+  g += `<text x="26" y="153" font-size="9.5" fill="#1e3a8a">add / record / phonology / notes / logbook /</text>`;
+  g += `<text x="26" y="166" font-size="9.5" fill="#1e3a8a">Signbank broadcast &amp; compare</text>`;
+  g += `<text x="26" y="192" font-size="9" fill="#475569">data/phonology_options.json → dropdown options</text>`;
+
+  g += box(14,238,318,170,'Satellite tools (site root)','fe',{sub:'same DB, same session cookie — linked from the nav drawer'});
+  g += chips(26,278,296,['batch_add.html','labels_add.html','themas.html','users.html','menu.html (legacy wizard)','studioIndex','videoFix','zin','nmm','hh','mocap.signcollect.nl'],'fe');
+
+  g += box(14,432,318,76,'Video playback','fs',{sub:'<video> elements in rows & modals'});
+  g += `<text x="26" y="478" font-size="9.3" fill="#134e4a">zelfopname from /uploads · studio clips from CDN</text>`;
+  g += `<text x="26" y="492" font-size="9.3" fill="#134e4a">gebarenoverleg_media/studioFilesMini/{raw|post}</text>`;
+
+  // SERVER tier
+  g += box(420,8,330,150,'php_api/ — REST layer','api',{sub:'flat-file PHP endpoints · JSON in/out'});
+  g += chips(432,46,306,['glosses_list','glosses_create','glosses_save','glosses_delete','upload_video','delete_video','phonology_get','labels_create','notes_*','logbook_get','filters_options','current_user'],'api');
+  g += `<text x="432" y="148" font-size="9" fill="#92400e">shared: session.php · db.php · datasets.php</text>`;
+
+  g += box(420,182,330,118,'signbank_sync/ — integration layer','sync',{sub:'client.php + sync_helpers.php (field mapping)'});
+  g += chips(432,222,306,['broadcast_gloss','fetch_gloss','force_push','force_pull','delete_gloss','auto-sync hooks'],'sync');
+
+  g += box(420,324,330,84,'Site-root PHP (satellite backends)','api',{plain:false,sub:'one script per tool'});
+  g += chips(432,362,306,['batch_add.php','labels_add.php','themas_change.php','users_api.php','login_sc.php'],'api');
+
+  g += box(420,432,330,76,'File storage','fs',{sub:'content-addressed self-recordings'});
+  g += `<text x="432" y="478" font-size="9.3" fill="#134e4a">/web/uploads/&lt;sha256&gt;.webm  ·  /uploads/lsm/…</text>`;
+  g += `<text x="432" y="492" font-size="9.3" fill="#134e4a">studio MP4s served via signcollect.nl CDN path</text>`;
+
+  // DATA tier
+  g += box(840,8,326,238,'MySQL — admin_gebarenoverleg','db',{sub:'PDO via /web/mysql_config.php · no FK constraints'});
+  g += chips(852,46,302,['form_data (NGT glosses)','lsm_data (LSM glosses)','matched_transcriptions (videos)','users','labels','gloss_notes','activity_log'],'db',17,5);
+  g += `<text x="852" y="180" font-size="9.3" fill="#065f46">JSON-array columns: labels · senses · sensesEngels</text>`;
+  g += `<text x="852" y="193" font-size="9.3" fill="#065f46">wie · zelfopname · control_nodig · allowed_datasets</text>`;
+  g += `<text x="852" y="212" font-size="9.3" fill="#065f46">logboek = append-only audit trail per gloss</text>`;
+  g += `<text x="852" y="231" font-size="9.3" fill="#065f46">form_data.signbank = remote glossid when linked</text>`;
+
+  g += box(840,290,326,118,'Global Signbank','ext',{sub:'signbank.cls.ru.nl · Bearer / X-API-Key (config.php)'});
+  g += chips(852,330,302,['api_create_gloss/{ds}/','api_update_gloss/{ds}/{id}/','api_update_gloss/…/video','get_gloss_data/{ds}/{id}/'],'ext',16,5);
+  g += `<text x="852" y="398" font-size="9.3" fill="#991b1b">NGT → dataset 2 · LSM → dataset 3</text>`;
+
+  // arrows: lines render under the boxes, labels on top
+  A(332,80,420,80,'fetch JSON + cookie',{c:'#2563eb'});
+  A(332,120,420,238,'broadcast / compare / force ops',{c:'#7c3aed',lx:372,ly:170});
+  A(332,320,420,362,'form POST / AJAX',{c:'#d97706',lx:372,ly:336});
+  A(750,80,840,80,'SQL (PDO)',{c:'#059669'});
+  A(750,366,840,140,'SQL',{c:'#059669',lx:800,ly:262});
+  A(750,240,840,330,'HTTPS REST',{c:'#dc2626',lx:790,ly:282});
+  A(584,158,584,182,'',{c:'#7c3aed'});
+  labs += `<text x="594" y="174" font-size="9.2" font-weight="600" fill="#7c3aed">auto-sync from glosses_save / upload_video</text>`;
+  A(500,158,500,432,'store .webm',{c:'#0d9488',lx:467,ly:420});
+  A(420,470,332,470,'video streams',{c:'#0d9488'});
+
+  document.getElementById('overview').innerHTML =
+    `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${DEFS}${lines}${g}${labs}</svg>`;
+})();
+
+/* ---------- PAGE 3 : tiny menu flow ---------- */
+(function(){
+  const W=560,H=180; let g='';
+  g += box(10,10,150,52,'Nav drawer','fe',{sub:'index.html burger menu'});
+  g += box(220,10,150,38,'menu_beta','fe');
+  g += box(220,62,150,38,'Site-root tools','api');
+  g += box(220,114,150,38,'External hosts','ext');
+  g += box(430,40,120,80,'MySQL','db',{sub:'shared tables'});
+  g += arrow(160,28,220,28,'',{c:'#2563eb'});
+  g += arrow(160,42,220,80,'',{c:'#d97706'});
+  g += arrow(160,52,220,132,'',{c:'#dc2626'});
+  g += arrow(370,30,430,70,'php_api/',{c:'#059669',lx:402,ly:38});
+  g += arrow(370,80,430,86,'own PHP',{c:'#059669',lx:402,ly:96});
+  g += `<text x="376" y="140" font-size="9" fill="#475569">mocap.signcollect.nl — separate stack</text>`;
+  document.getElementById('menuflow').innerHTML =
+    `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${DEFS}${g}</svg>`;
+})();
+
+/* ---------- PAGE 4 : boot flow ---------- */
+seq('bootflow', { w:560, stepH:34, actors:[
+    {l:'main.js', t:'fe', w:110},
+    {l:'php_api', t:'api', w:110},
+    {l:'MySQL', t:'db', w:100}
+  ], steps:[
+    {f:0,t:1,l:'GET current_user.php'},
+    {f:1,t:2,l:'SELECT users'},
+    {f:1,t:0,l:'profile + datasets + lang',d:1},
+    {f:0,t:0,l:'apply i18n, role gates'},
+    {f:0,t:1,l:'GET filters_options.php'},
+    {f:1,t:0,l:'themas, labels, users',d:1},
+    {f:0,t:1,l:'POST glosses_list.php'},
+    {f:1,t:0,l:'{rows, total, page}',d:1},
+    {f:0,t:0,l:'table.js renders rows'}
+  ]});
+
+/* ---------- PAGE 6 : database map ---------- */
+(function(){
+  const W=1180,H=566; let g='';
+  function tbl(x,y,w,title,sub,rows,tier){
+    const c = TIER[tier]; const rh = 14.5; const h = 40 + rows.length*rh + 6;
+    let s = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="7" fill="#fff" stroke="${c.b}" stroke-width="1.6"/>`;
+    s += `<rect x="${x}" y="${y}" width="${w}" height="34" rx="7" fill="${c.bg}" stroke="${c.b}" stroke-width="1.6"/>`;
+    s += `<rect x="${x+1}" y="${y+27}" width="${w-2}" height="8" fill="${c.bg}"/>`;
+    s += `<text x="${x+10}" y="${y+15}" font-size="11.5" font-weight="700" fill="${c.t}">${esc(title)}</text>`;
+    s += `<text x="${x+10}" y="${y+28}" font-size="8.3" fill="${c.t}" opacity=".85">${esc(sub)}</text>`;
+    rows.forEach((r,i)=>{
+      const ry = y + 40 + i*rh + 10;
+      const [name, note] = r;
+      s += `<text x="${x+10}" y="${ry}" font-size="9" font-family="ui-monospace,Menlo,monospace" fill="#0f172a"${name.startsWith('id')||name.includes('PK')?' font-weight="700"':''}>${esc(name)}</text>`;
+      if(note) s += `<text x="${x+w-8}" y="${ry}" font-size="8.2" text-anchor="end" fill="#64748b">${esc(note)}</text>`;
+    });
+    return {svg:s, h};
+  }
+  let t, boxes='', lines='', tops='';
+  t = tbl(14,10,300,'form_data  /  lsm_data','one row = one gloss · lsm_data is structurally identical',[
+    ['id','PK, auto-inc'],
+    ['glos / glos_engels','gloss NL / EN'],
+    ['thema','category'],
+    ['senses / sensesEngels','JSON arrays'],
+    ['labels','JSON array of names'],
+    ['wie','JSON array of userIds'],
+    ['zelfopname','JSON array of .webm files'],
+    ['control_nodig','JSON, QA flags'],
+    ['glosZichtbaar','1 = hidden'],
+    ['extern','\'1\' Signio · NULL Signbank'],
+    ['signbank','remote glossid when linked'],
+    ['logboek','append-only audit TEXT'],
+    ['fonologie_fase1 / 2','phase checkboxes'],
+    ['+ 19 phonology columns','machine_values'],
+  ],'db'); boxes += t.svg;
+
+  t = tbl(394,10,260,'matched_transcriptions','studio + processed recordings',[
+    ['id','PK'],
+    ['m_transcription','→ gloss id (string)'],
+    ['m_file','studio video file'],
+    ['l_file / r_file','L/R camera (mocap)'],
+    ['thumbnail','1 = row thumbnail'],
+    ['post_processed','1 = processed'],
+    ['definitive_outcome','status'],
+    ['date','recorded at'],
+    ['zOg','dataset tag'],
+    ['added','\'DELETE\' = soft-deleted'],
+  ],'db'); boxes += t.svg;
+
+  t = tbl(394,250,260,'gloss_notes','chat-style comments per gloss',[
+    ['id','PK'],
+    ['dataset','ngt / lsm'],
+    ['gloss_id','→ form/lsm_data.id'],
+    ['user_id','→ users.userId'],
+    ['note_text',''],
+    ['created_at','indexed'],
+  ],'db'); boxes += t.svg;
+
+  t = tbl(734,10,250,'users','accounts & permissions',[
+    ['userId','PK'],
+    ['user / username','login / display'],
+    ['role','admin | user'],
+    ['default_context','signio | signbank'],
+    ['default_dataset','ngt | lsm'],
+    ['allowed_datasets','JSON array'],
+    ['lang','nl | en'],
+  ],'db'); boxes += t.svg;
+
+  t = tbl(734,200,250,'labels','dataset-scoped tags',[
+    ['id','PK'],
+    ['label','name'],
+    ['color','#RRGGBB'],
+    ['dataset','ngt | lsm'],
+  ],'db'); boxes += t.svg;
+
+  t = tbl(734,340,250,'activity_log','feeds users.html & /stats',[
+    ['user, action, timestamp',''],
+  ],'db'); boxes += t.svg;
+
+  boxes += box(14,290,300,85,'Global Signbank','ext',{sub:'external — not in this DB'});
+  boxes += `<text x="26" y="342" font-size="9.3" fill="#991b1b">glossid referenced by <tspan font-family="ui-monospace,Menlo,monospace">form_data.signbank</tspan></text>`;
+  boxes += `<text x="26" y="360" font-size="9.3" fill="#991b1b">NGT = dataset 2 · LSM = dataset 3</text>`;
+
+  boxes += box(394,420,260,80,'/web/uploads/','fs',{sub:'filesystem — not in this DB'});
+  boxes += `<text x="406" y="472" font-size="9.3" fill="#134e4a">&lt;sha256&gt;.webm files, names listed in</text>`;
+  boxes += `<text x="406" y="486" font-size="9.3" font-family="ui-monospace,Menlo,monospace" fill="#134e4a">form_data.zelfopname</text>`;
+
+  // relation lines (drawn under the boxes), numbered badges in the gaps
+  const REL = [
+    [394,60, 314,60,  {c:'#059669'},        354,48 ],  // 1 m_transcription → id
+    [394,300,314,200, {c:'#059669'},        352,262],  // 2 gloss_id → id
+    [654,310,734,100, {c:'#059669'},        694,216],  // 3 user_id → userId
+    [314,108,734,46,  {c:'#059669',d:1},    694,58 ],  // 4 wie[] → userId
+    [314,128,734,250, {c:'#059669',d:1},    520,225],  // 5 labels[] by name
+    [160,259,160,290, {c:'#dc2626',d:1},    186,274],  // 6 signbank → glossid
+    [314,140,394,455, {c:'#0d9488',d:1},    354,330],  // 7 zelfopname[] → files
+  ];
+  REL.forEach(r => { lines += arrowParts(r[0],r[1],r[2],r[3],'',r[4]).line; });
+  REL.forEach((r,i)=> { tops += badge(r[5],r[6], i+1, r[4].c); });
+
+  // legend
+  const LEG = [
+    ['#059669','matched_transcriptions.m_transcription → form_data.id — a gloss’s studio recordings'],
+    ['#059669','gloss_notes.gloss_id (+ dataset) → form_data / lsm_data.id'],
+    ['#059669','gloss_notes.user_id → users.userId'],
+    ['#059669','form_data.wie[] (JSON) → users.userId — the gloss owners'],
+    ['#059669','form_data.labels[] (JSON) ↔ labels.label — matched by name, dataset-scoped'],
+    ['#dc2626','form_data.signbank → glossid on Global Signbank (external system)'],
+    ['#0d9488','form_data.zelfopname[] (JSON) → .webm files in /web/uploads'],
+  ];
+  LEG.forEach((l,i)=>{
+    const col = i<4 ? 0 : 1;
+    const x = 24 + col*580, y = 532 + (i - col*4)*19;
+    tops += badge(x, y, i+1, l[0]);
+    tops += `<text x="${x+16}" y="${y+1}" font-size="9.6" dominant-baseline="middle" fill="#0f172a">${esc(l[1])}</text>`;
+  });
+  tops += `<text x="604" y="590" font-size="9.3" font-style="italic" fill="#475569">Dashed = soft JSON reference, resolved in PHP (no FK constraints). Migrations: /menu_beta/migrations/*.sql</text>`;
+
+  document.getElementById('erd').innerHTML =
+    `<svg viewBox="0 0 ${W} 604" xmlns="http://www.w3.org/2000/svg">${DEFS}${lines}${boxes}${tops}</svg>`;
+})();
+
+/* ---------- PAGE 7 : list & filter ---------- */
+seq('seq-list', { stepH:32, actors:[
+    {l:'User', t:'mut', w:90},
+    {l:'main.js / table.js', t:'fe'},
+    {l:'api.js', t:'fe', w:110},
+    {l:'glosses_list.php', t:'api'},
+    {l:'MySQL', t:'db', w:120}
+  ], steps:[
+    {f:0,t:1,l:'opens /menu_beta/index.html'},
+    {f:1,t:3,l:'boot: current_user.php + filters_options.php (see p.04)'},
+    {f:0,t:1,l:'types search / picks thema, labels, status, owner, sort'},
+    {f:1,t:1,l:'debounce 300 ms, collect filter state'},
+    {f:1,t:2,l:'api.list({search, thema, labels[], statuses[], owner, context, sort, page, dataset})'},
+    {f:2,t:3,l:'POST glosses_list.php'},
+    {f:3,t:3,l:'require_session() · require_dataset()'},
+    {f:3,t:4,l:'SELECT form_data WHERE filters… (context: extern = \'1\' vs IS NULL) LIMIT page'},
+    {f:3,t:4,l:'SELECT matched_transcriptions → studio videos, thumbnail flags'},
+    {f:4,t:3,l:'rows + video metadata',d:1},
+    {f:3,t:2,l:'{rows[], total, page, pageSize} — rows include duplicates[] + thumbnail_video',d:1},
+    {f:2,t:1,l:'resolved JSON',d:1},
+    {f:1,t:1,l:'renderRow() per gloss · thumb queue (max 4 concurrent)'},
+    {f:1,t:0,l:'list + pagination rendered',d:1}
+  ]});
+
+/* ---------- PAGE 8 : add gloss ---------- */
+seq('seq-add', { w:700, stepH:32, actors:[
+    {l:'User', t:'mut', w:80},
+    {l:'Add modal (main.js)', t:'fe'},
+    {l:'php_api', t:'api', w:150},
+    {l:'MySQL', t:'db', w:110}
+  ], steps:[
+    {f:0,t:1,l:'click “Nieuwe glos”'},
+    {f:1,t:1,l:'open modal: glos NL/EN, thema, labels, senses NL/EN'},
+    {f:0,t:1,l:'fill fields; optionally type a new label'},
+    {band:'optional — new label needed'},
+    {f:1,t:2,l:'POST labels_create.php {label, color, dataset}'},
+    {f:2,t:3,l:'INSERT labels (idempotent)'},
+    {f:2,t:1,l:'{id, label, color}',d:1},
+    {band:'submit'},
+    {f:1,t:2,l:'POST glosses_create.php {glos, glos_engels, thema, labels[], senses[], sensesEngels[], context, dataset}'},
+    {f:2,t:3,l:'INSERT row — JSON arrays, defaults, logboek'},
+    {f:3,t:2,l:'new id',d:1},
+    {f:2,t:1,l:'{id}',d:1},
+    {f:1,t:1,l:'refresh() → glosses_list.php'},
+    {f:1,t:0,l:'new gloss appears in list',d:1}
+  ]});
+
+/* ---------- PAGE 9 : edit & auto-sync ---------- */
+seq('seq-edit', { stepH:32, actors:[
+    {l:'User', t:'mut', w:84},
+    {l:'inline editor / phonology.js', t:'fe'},
+    {l:'glosses_save.php', t:'api'},
+    {l:'MySQL', t:'db', w:110},
+    {l:'sync_helpers.php', t:'sync'},
+    {l:'Signbank', t:'ext', w:120}
+  ], steps:[
+    {f:0,t:1,l:'edits a field (gloss, senses, labels, thema, phonology dropdown…)'},
+    {f:1,t:2,l:'api.save(id, {field: newValue}) — POST'},
+    {f:2,t:3,l:'SELECT current row'},
+    {f:2,t:2,l:'diff old vs new, validate types (scalar / JSON / int)'},
+    {f:2,t:3,l:'UPDATE row · APPEND logboek “[date] Bijgewerkt door user — field: old → new”'},
+    {band:'only if linked — form_data.signbank holds a glossid'},
+    {f:2,t:4,l:'signbank_auto_sync_fields(changed fields only)'},
+    {f:4,t:4,l:'map field names · machine_value → human label'},
+    {f:4,t:5,l:'POST /dictionary/api_update_gloss/{ds}/{glossid}/'},
+    {f:5,t:4,l:'sync status',d:1},
+    {f:4,t:2,l:'signbank_sync result',d:1},
+    {band:'always'},
+    {f:2,t:1,l:'updated row snapshot (+ signbank_sync status)',d:1},
+    {f:1,t:0,l:'row re-rendered in place · toast on sync failure',d:1}
+  ]});
+
+/* ---------- PAGE 10 : video ---------- */
+seq('seq-video', { stepH:32, actors:[
+    {l:'User', t:'mut', w:84},
+    {l:'recorder.js', t:'fe', w:140},
+    {l:'upload_video.php', t:'api'},
+    {l:'/web/uploads', t:'fs', w:130},
+    {l:'MySQL', t:'db', w:110},
+    {l:'Signbank', t:'ext', w:120}
+  ], steps:[
+    {f:0,t:1,l:'click record icon on a gloss row'},
+    {f:1,t:1,l:'getUserMedia() → camera preview in modal'},
+    {f:0,t:1,l:'record … stop'},
+    {f:1,t:1,l:'MediaRecorder → WebM blob (VP9/VP8)'},
+    {f:1,t:2,l:'api.uploadVideo(glossId, blob) — multipart POST'},
+    {f:2,t:2,l:'SHA-256(blob) → filename <hash>.webm'},
+    {f:2,t:3,l:'write file (content-addressed → duplicate uploads are no-ops)'},
+    {f:2,t:4,l:'read zelfopname JSON · append filename if new · UPDATE + logboek'},
+    {band:'only if linked to Signbank'},
+    {f:2,t:5,l:'signbank_upload_video_for() → POST …/api_update_gloss/{ds}/{id}/video (multipart)'},
+    {f:5,t:2,l:'push status',d:1},
+    {band:'always'},
+    {f:2,t:1,l:'{filename, zelfopname[], signbank_push?}',d:1},
+    {f:1,t:0,l:'row refreshes — video playable from /uploads/<hash>.webm',d:1}
+  ]});
+
+/* ---------- PAGE 11 : broadcast ---------- */
+seq('seq-broadcast', { w:720, stepH:32, actors:[
+    {l:'User', t:'mut', w:80},
+    {l:'main.js', t:'fe', w:110},
+    {l:'broadcast_gloss.php', t:'sync'},
+    {l:'MySQL', t:'db', w:100},
+    {l:'Signbank', t:'ext', w:120}
+  ], steps:[
+    {f:0,t:1,l:'“Push naar Signbank” on an unlinked gloss'},
+    {f:1,t:2,l:'POST broadcast_gloss.php {id, dataset}'},
+    {f:2,t:3,l:'SELECT row (glos must be set)'},
+    {f:2,t:4,l:'POST api_create_gloss/{ds}/ — Lemma + Annotation ID Gloss NL/EN, Senses'},
+    {f:4,t:2,l:'{glossid}',d:1},
+    {f:2,t:3,l:'UPDATE signbank = glossid · logboek “gekoppeld”'},
+    {band:'auto-push of existing content'},
+    {f:2,t:4,l:'api_update_gloss → phonology fields (translated)'},
+    {f:2,t:4,l:'…/video → newest zelfopname recording, if any'},
+    {f:2,t:1,l:'{ok, glossid, log[] of all stages}',d:1},
+    {f:1,t:0,l:'status modal with per-stage log',d:1}
+  ]});
+
+/* ---------- PAGE 12 : auth lifecycle ---------- */
+seq('seq-auth', { w:560, stepH:33, actors:[
+    {l:'Browser', t:'fe', w:100},
+    {l:'any endpoint', t:'api', w:120},
+    {l:'MySQL', t:'db', w:100}
+  ], steps:[
+    {f:0,t:1,l:'request + sessionObject cookie + dataset'},
+    {f:1,t:1,l:'require_session()'},
+    {f:1,t:0,l:'401 if missing/expired → login.html',d:1},
+    {f:1,t:1,l:'require_dataset()'},
+    {f:1,t:0,l:'403 if dataset not allowed',d:1},
+    {f:1,t:2,l:'query resolved table (form_data | lsm_data)'},
+    {f:2,t:1,l:'rows',d:1},
+    {f:1,t:0,l:'JSON response',d:1}
+  ]});
+
+/* footers */
+document.querySelectorAll('.page').forEach((p,i,all)=>{
+  if(i===0) return;
+  const f = document.createElement('div');
+  f.className='pfoot';
+  f.innerHTML = `<span>SignCollect · menu_beta architecture &amp; workflows</span><span>page ${String(i+1).padStart(2,'0')} / ${all.length}</span>`;
+  p.appendChild(f);
+});
+</script>
+</body>
+</html>
