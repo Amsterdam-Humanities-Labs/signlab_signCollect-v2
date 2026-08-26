@@ -23,3 +23,24 @@ dist/
 # Server-only secrets (Signbank API key etc.)
 signbank_sync/config.php
 php_api/upload_tokens.php
+
+# --- logs, backups, caches and generated data (added 2026-08-26 cleanup) ---
+*.log
+*.bak
+*.bak.*
+*.bak-*
+*.bak_*
+*.backup
+*.backup.*
+*.backup_*
+*_backup_*
+*.orig
+*.old
+*.outdated
+*.tmp
+__pycache__/
+*.pyc
+.claude/
+.mcp.json
+.playwright-mcp/
+.superpowers/
