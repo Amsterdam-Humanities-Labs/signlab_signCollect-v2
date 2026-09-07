@@ -5,7 +5,7 @@ require_once __DIR__ . '/php_api/session.php';    // context_codes()
 
 header('Content-Type: application/json');
 
-// Allow activity tracking POSTs from signcollect subdomains (e.g. mocap.signcollect.nl)
+// Allow activity tracking POSTs from signcollect subdomains (e.g. mocap.dev2.taila8bdbd.ts.net)
 $origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '';
 if ($origin && preg_match('#^https://[a-z0-9-]+\.signcollect\.nl$#i', $origin)) {
     header('Access-Control-Allow-Origin: ' . $origin);
@@ -23,6 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     switch ($action) {
         case 'list':
+            requireAdmin();
             listUsers();
             break;
         case 'add':
@@ -52,28 +53,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     echo json_encode(['error' => 'Invalid request method']);
 }
 
+/**
+ * Authorise an admin-only action.
+ *
+ * Identity comes from the session, which current_session() validates against
+ * the database. It used to come from $_POST['requestingUserId'] - a value the
+ * caller supplies - so anyone who knew an admin's numeric id could send it and
+ * be treated as that admin.
+ */
 function requireAdmin() {
-    global $conn;
-    $requestingUserId = isset($_POST['requestingUserId']) ? intval($_POST['requestingUserId']) : 0;
-    if ($requestingUserId <= 0) {
+    $s = current_session();
+    if ($s === null) {
         echo json_encode(['error' => 'Unauthorized']);
         exit;
     }
-    $stmt = $conn->prepare("SELECT role FROM users WHERE userId = ?");
-    $stmt->bind_param("i", $requestingUserId);
-    $stmt->execute();
-    $stmt->bind_result($role);
-    if ($stmt->fetch()) {
-        $stmt->close();
-        if ($role !== 'admin') {
-            echo json_encode(['error' => 'Unauthorized: admin role required']);
-            exit;
-        }
-    } else {
-        $stmt->close();
-        echo json_encode(['error' => 'Unauthorized: user not found']);
+    if (($s['role'] ?? 'user') !== 'admin') {
+        echo json_encode(['error' => 'Unauthorized: admin role required']);
         exit;
     }
+    return $s;
 }
 
 /** JSON column → validated array of codes; NULL/garbage → $fallback. */
@@ -285,7 +283,15 @@ function toggleBlock() {
 
 function updateActivity() {
     global $conn;
-    $userId = isset($_POST['userId']) ? intval($_POST['userId']) : 0;
+    // The userId comes from the session, not from the request. It used to be
+    // read straight off $_POST, which let anyone write activity and last_page
+    // onto any account they cared to name.
+    $s = current_session();
+    if ($s === null) {
+        echo json_encode(['error' => 'Unauthorized']);
+        return;
+    }
+    $userId = (int)$s['userId'];
     $page = isset($_POST['page']) ? $_POST['page'] : '';
 
     if ($userId <= 0) {

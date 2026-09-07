@@ -1,19 +1,90 @@
 <?php
 
+/**
+ * Shared secret used to sign the session cookie. Absent on a host that has
+ * not been migrated yet, in which case signatures are not required - see
+ * current_session(). Kept outside the docroot rules by name: apache denies
+ * dotfiles, so /web/.session_secret is never served.
+ */
+function session_secret(): ?string {
+    static $cached = false;
+    if ($cached !== false) return $cached;
+    $cached = null;
+    $path = '/web/.session_secret';
+    if (is_readable($path)) {
+        $v = trim((string)file_get_contents($path));
+        if ($v !== '') $cached = $v;
+    }
+    return $cached;
+}
+
+/** HMAC over the identity fields only. Role is deliberately not signed - it
+ *  is never taken from the cookie, so signing it would imply it is trusted. */
+function session_signature(array $c, string $secret): string {
+    return hash_hmac('sha256', implode('|', [
+        (string)($c['userId']    ?? ''),
+        (string)($c['username']  ?? ''),
+        (string)($c['expiresAt'] ?? ''),
+    ]), $secret);
+}
+
+/**
+ * The caller's session, or null.
+ *
+ * sessionObject is client-side JSON, so nothing in it is trusted on its own:
+ *
+ *  - When a secret is configured the cookie must carry a valid HMAC, which
+ *    is what stops a caller inventing someone else's userId.
+ *  - role and username always come from the database, never from the cookie.
+ *    Before this, writing {"role":"admin"} by hand was enough to be an admin.
+ *  - A blocked or deleted user has no session, however good their cookie is.
+ */
 function current_session(): ?array {
+    static $cached = false;
+    if ($cached !== false) return $cached;
+    $cached = null;
+
     if (!isset($_COOKIE['sessionObject'])) return null;
-    $raw = $_COOKIE['sessionObject'];
-    $parsed = json_decode($raw, true);
+    $parsed = json_decode($_COOKIE['sessionObject'], true);
     if (!is_array($parsed) || empty($parsed['userId'])) return null;
+
     if (!empty($parsed['expiresAt'])) {
         $exp = strtotime($parsed['expiresAt']);
         if ($exp !== false && $exp < time()) return null;
     }
-    return [
+
+    // Signature, when this host has been given a secret. A host that has not
+    // been migrated keeps working: identity is still only as good as the
+    // cookie there, but role forgery is closed either way by the lookup below.
+    $secret = session_secret();
+    if ($secret !== null) {
+        $sig = (string)($parsed['sig'] ?? '');
+        if ($sig === '' || !hash_equals(session_signature($parsed, $secret), $sig)) return null;
+    }
+
+    require_once __DIR__ . '/db.php';
+    try {
+        $stmt = db()->prepare("SELECT user, role, blocked FROM users WHERE userId = ?");
+        $stmt->execute([(int)$parsed['userId']]);
+        $row = $stmt->fetch();
+    } catch (Throwable $e) {
+        return null;
+    }
+    if (!$row) return null;
+    if ((int)($row['blocked'] ?? 0) === 1) return null;
+
+    $cached = [
         'userId'   => (string)$parsed['userId'],
-        'username' => $parsed['username'] ?? '',
-        'role'     => $parsed['role'] ?? 'user',
+        'username' => (string)$row['user'],
+        'role'     => (string)($row['role'] ?: 'user'),
     ];
+    return $cached;
+}
+
+/** True when the caller is an authenticated admin. */
+function session_is_admin(): bool {
+    $s = current_session();
+    return $s !== null && ($s['role'] ?? 'user') === 'admin';
 }
 
 function require_session(): array {
