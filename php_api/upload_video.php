@@ -1,4 +1,9 @@
 <?php
+
+// signcollect-lib's install-root resolver: sc_path(), sc_dir(), sc_root().
+// Vendored shim - it finds /web/lib/paths.php, or falls back to /web.
+require_once __DIR__ . '/../sc_paths.php';
+
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/session.php';
 
@@ -31,7 +36,7 @@ if (!$hash) json_response(['error' => 'hash_failed'], 500);
 // Create it instead of refusing, and when even that is impossible say which
 // path could not be made, so the answer is "chown the docroot" and not a
 // bare "uploads_dir_missing".
-$dir = '/web/uploads';
+$dir = sc_path('uploads');
 if (!is_dir($dir) && !@mkdir($dir, 0775, true) && !is_dir($dir)) {
     json_response(['error' => 'uploads_dir_unwritable', 'path' => $dir], 500);
 }

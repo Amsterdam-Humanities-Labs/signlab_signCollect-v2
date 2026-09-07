@@ -1,4 +1,9 @@
 <?php
+
+// signcollect-lib's install-root resolver: sc_path(), sc_dir(), sc_root().
+// Vendored shim - it finds /web/lib/paths.php, or falls back to /web.
+require_once __DIR__ . '/../sc_paths.php';
+
 /**
  * POST { id }  →  create the corresponding gloss on Signbank and store
  * the returned glossid in form_data.signbank.
@@ -110,7 +115,7 @@ if ($updateRes !== null) {
 // 4) if a zelfopname exists, push the first one as the gloss video too.
 $zelf = signbank_decode_json_array($row['zelfopname'] ?? null);
 if ($zelf) {
-    $localFile = '/web/uploads/' . $zelf[0];
+    $localFile = sc_dir('uploads') . $zelf[0];
     $videoRes = signbank_upload_video_for($pdo, $id, $localFile, $ds['code']);
     if ($videoRes && $videoRes['ok']) {
         $logStep('ok', 'Zelfopname uploaded to Signbank as gloss video', $videoRes['body']);

@@ -1,4 +1,9 @@
 <?php
+
+// signcollect-lib's install-root resolver: sc_path(), sc_dir(), sc_root().
+// Vendored shim - it finds /web/lib/paths.php, or falls back to /web.
+require_once __DIR__ . '/../sc_paths.php';
+
 /**
  * Glos Wizard search - "does this sign already exist?", asked of both halves
  * of the collection at once.
@@ -126,7 +131,7 @@ function local_preview_video(array $row): string {
     $file   = is_array($center[0] ?? null) ? (string)($center[0]['file'] ?? '') : '';
 
     if ($file !== '') {
-        $file = str_replace('/web/', '/', $file);
+        $file = str_replace(sc_dir(), '/', $file);
         if ((string)($row['processed'] ?? '') === '2') {
             return str_replace('/raw/', '/post/', $file);
         }
