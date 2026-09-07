@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="css/table.css">
   <link rel="stylesheet" href="css/modals.css">
   <link rel="stylesheet" href="css/video.css">
+  <link rel="stylesheet" href="css/wizard.css">
 </head>
 <body>
 
@@ -42,7 +43,7 @@
   <nav class="nav-drawer-body">
     <section>
       <h4 data-i18n="menu.section.main">Hoofdmenu</h4>
-      <a href="https://signcollect.nl/menu_old/menu.html"><i class="fas fa-wand-magic-sparkles"></i> <span data-i18n="menu.item.glos_wizard">Glos Wizard</span></a>
+      <a href="#glos-wizard" id="navGlosWizard"><i class="fas fa-wand-magic-sparkles"></i> <span data-i18n="menu.item.glos_wizard">Glos Wizard</span></a>
       <a href="https://signcollect.nl/videoFix/index.html"><i class="fas fa-crop"></i> <span data-i18n="menu.item.video_crop">Video Crop fix</span></a>
       <a href="https://signcollect.nl/studioIndex/"><i class="fas fa-clapperboard"></i> <span data-i18n="menu.item.studio">Studio Videos</span></a>
       <a href="https://mocap.signcollect.nl"><i class="fas fa-bullseye"></i> <span data-i18n="menu.item.mocap">Motion Capture</span></a>
@@ -221,6 +222,53 @@
       <button type="button" class="btn" id="sbForcePullBtn" hidden>
         <i class="fas fa-cloud-arrow-down"></i> <span data-i18n="sb.btn.force_pull">Pull alles ← Signbank</span>
       </button>
+      <button type="button" class="btn" data-close data-i18n="btn.close">Sluiten</button>
+    </footer>
+  </div>
+</div>
+
+<!-- Glos Wizard modal -->
+<div class="modal-backdrop hidden" id="glosWizardModal">
+  <div class="modal large">
+    <header>
+      <h3><i class="fas fa-wand-magic-sparkles"></i> <span data-i18n="wizard.title">Glos Wizard</span></h3>
+      <button class="close" data-close>&times;</button>
+    </header>
+    <div class="wizard-body">
+      <div class="wizard-controls">
+        <label class="wizard-field wizard-field-list">
+          <span data-i18n="wizard.list">Glos lijst</span>
+          <textarea id="wizardBatchList" rows="3"
+            placeholder="" data-i18n-attr="placeholder:wizard.list.placeholder"></textarea>
+        </label>
+        <label class="wizard-field">
+          <span data-i18n="wizard.glos">Glos</span>
+          <input type="text" id="wizardGlosInput" autocomplete="off"
+            placeholder="" data-i18n-attr="placeholder:wizard.glos.placeholder">
+        </label>
+        <div class="wizard-actions">
+          <button type="button" class="btn" id="wizardSearchBtn">
+            <i class="fas fa-search"></i> <span data-i18n="wizard.btn.search">Zoeken</span>
+          </button>
+          <button type="button" class="btn" id="wizardBatchStartBtn" data-i18n="wizard.btn.batch_start">Batch activeren</button>
+          <button type="button" class="btn" id="wizardBatchNextBtn" hidden data-i18n="wizard.btn.batch_next">Volgende</button>
+          <button type="button" class="btn btn-primary" id="wizardCreateBtn">
+            <i class="fas fa-plus"></i> <span class="label" data-i18n="wizard.btn.create">Als nieuwe glos toevoegen</span>
+          </button>
+        </div>
+      </div>
+      <div class="wizard-status">
+        <span class="wizard-message" id="wizardMessage"></span>
+        <span class="wizard-progress" id="wizardBatchProgress"></span>
+      </div>
+      <div class="wizard-results" id="wizardResults">
+        <div class="empty-state">
+          <i class="fas fa-magnifying-glass"></i>
+          <p data-i18n="wizard.hint">Zoek een woord om te zien of het gebaar al bestaat.</p>
+        </div>
+      </div>
+    </div>
+    <footer>
       <button type="button" class="btn" data-close data-i18n="btn.close">Sluiten</button>
     </footer>
   </div>

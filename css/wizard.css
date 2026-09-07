@@ -1,0 +1,114 @@
+/* Glos Wizard — the "does this sign exist yet?" modal.
+   Cards are deliberately the same width for both sources so a Signbank hit
+   and a local hit read as two answers to one question, not two lists. */
+
+.wizard-body {
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+}
+
+.wizard-controls {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr);
+  gap: 12px 16px;
+  align-items: start;
+}
+.wizard-field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: var(--text-muted); }
+.wizard-field textarea,
+.wizard-field input {
+  font: inherit;
+  font-weight: 400;
+  color: var(--text);
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  resize: vertical;
+}
+.wizard-field input { font-size: 16px; letter-spacing: .5px; }
+.wizard-field textarea:disabled { background: var(--surface-2); color: var(--text-muted); }
+
+.wizard-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.wizard-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 20px;
+  font-size: 13px;
+}
+.wizard-message.ok   { color: var(--success); font-weight: 600; }
+.wizard-message.warn { color: var(--warning); font-weight: 600; }
+.wizard-progress { color: var(--text-muted); font-size: 12px; }
+
+.wizard-banner {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+.wizard-banner.warn { background: #fff7e6; color: #92600a; border: 1px solid #f5dfae; }
+
+.wizard-results { min-height: 120px; max-height: 52vh; overflow-y: auto; }
+
+.wizard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.wizard-card {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: var(--shadow-sm);
+}
+.wizard-card.signcollect { border-left-color: var(--accent); }
+.wizard-card.signbank    { border-left-color: #1c7ed6; }
+
+.wizard-card > header { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.wizard-card h4 { margin: 0; font-size: 14px; word-break: break-word; }
+.wizard-card h4 a { color: var(--primary); text-decoration: none; }
+.wizard-card h4 a:hover { text-decoration: underline; }
+
+.wizard-src {
+  font-size: 10px; text-transform: uppercase; letter-spacing: .4px; font-weight: 700;
+  padding: 2px 6px; border-radius: 999px; white-space: nowrap;
+}
+.wizard-src.signcollect { background: #fdecec; color: #b5323c; }
+.wizard-src.signbank    { background: #e7f1fd; color: #1560a8; }
+
+.wizard-reason { margin: 0; font-size: 12.5px; color: var(--text-muted); }
+.wizard-en     { margin: 0; font-size: 12px; color: var(--text-muted); font-style: italic; }
+
+.wizard-video {
+  width: 100%;
+  aspect-ratio: 1 / 1.1;
+  background: #1a1a2e;
+  border-radius: var(--radius-sm);
+  object-fit: contain;
+}
+
+.wizard-card > footer { margin-top: auto; }
+.wizard-done { color: var(--success); font-size: 12.5px; font-weight: 600; }
+
+.wizard-truncated { margin: 10px 0 0; font-size: 12px; color: var(--text-muted); text-align: center; }
+
+@media (max-width: 640px) {
+  .wizard-controls { grid-template-columns: 1fr; }
+}

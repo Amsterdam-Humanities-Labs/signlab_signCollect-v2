@@ -5,6 +5,7 @@ import { renderRow, resetThumbQueue } from './table.js';
 import { renderSenses } from './senses.js';
 import { VideoRecorder, fmtTime } from './recorder.js';
 import { buildPhonologyForm } from './phonology.js';
+import { setupGlosWizard, openGlosWizard } from './glosWizard.js';
 
 const state = {
   search: '',
@@ -100,6 +101,7 @@ async function init() {
   setupSignbankModal();
   setupCompareModal();
   setupOverscrollPaging();
+  setupGlosWizard();
   setupNavDrawer();
   setupContextToggle();
   renderDatasetSwitcher();
@@ -1893,6 +1895,15 @@ function setupNavDrawer() {
   window.addEventListener('keydown', (ev) => {
     if (ev.key === 'Escape' && !drawer.classList.contains('hidden')) close();
   });
+
+  $('#navGlosWizard').addEventListener('click', (ev) => {
+    ev.preventDefault();
+    close();
+    openGlosWizard();
+  });
+  // /menu_beta/index.html#glos-wizard opens straight into it, which is what
+  // the old /menu_old/menu.html link did from elsewhere in the interface.
+  if (location.hash === '#glos-wizard') openGlosWizard();
 
   $('#navLogout').addEventListener('click', (ev) => {
     ev.preventDefault();

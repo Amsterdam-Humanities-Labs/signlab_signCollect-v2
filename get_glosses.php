@@ -1,8 +1,11 @@
 <?php
 header('Content-Type: application/json');
 
-// Path to the JSON file
-$jsonFilePath = '/web/menu_old/glosses_transformed.json';
+// The Signbank ECV dump. It used to be read out of /web/menu_old, which was
+// only ever where the legacy interface happened to keep it; signbank_ecv.php
+// owns the canonical path now.
+require_once __DIR__ . '/php_api/signbank_ecv.php';
+$jsonFilePath = signbank_ecv_path();
 
 // Check if the JSON file exists
 if (!file_exists($jsonFilePath)) {

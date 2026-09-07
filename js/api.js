@@ -52,6 +52,10 @@ export const api = {
   undeleteStudioVideo: (id) => post('studio_video_undelete.php', { id }),
   getPhonology:   (id) => call(`phonology_get.php?id=${encodeURIComponent(id)}`),
   createLabel:    (label, color) => post('labels_create.php', { label, color }),
+  // Glos Wizard: search both collections at once, then ask what a new
+  // gloss should be called before creating it.
+  wizardSearch:   (q) => call(`wizard_search.php?q=${encodeURIComponent(q)}`),
+  wizardSuggest:  (glos) => call(`wizard_suggest.php?glos=${encodeURIComponent(glos)}`),
   notesList:      (id) => call(`notes_list.php?id=${encodeURIComponent(id)}`),
   notesAdd:       (id, note_text) => post('notes_add.php', { id, note_text }),
   logbookGet:     (id) => call(`logbook_get.php?id=${encodeURIComponent(id)}`),
