@@ -197,7 +197,7 @@ the field called now" Slack messages.
 There's no way to ask "*does Signbank already have an NGT gloss with
 this annotation text?*" without downloading the entire ~12 MB
 `/dictionary/package/?dataset_name=NGT&since_timestamp=0` ZIP and
-grepping it locally (which is exactly what `/web/glosses_transformed.json`
+grepping it locally (which is exactly what `/web/signbank_data/glosses_transformed.json`
 is).
 
 ### Proposed

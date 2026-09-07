@@ -5,15 +5,29 @@
  * URL. It is rebuilt out of band by the Signbank connector script, so
  * nothing here writes it - we only read whatever is currently on disk.
  *
- * The dump lives at the docroot root, not inside any one interface. That is
- * where the other consumers already look (nmm/findSBid.py and
- * nmm/liteConvert.py both open /web/glosses_transformed.json); only
- * get_glosses.php and the old Glos Wizard read the copy under /web/menu_old,
- * which no longer exists.
+ * The dump lives in the connector's own directory, /web/signbank_data, and
+ * not inside any one interface - it is shared data that four components read
+ * (this one, zin getSenses.php, hh getGlosses.php, nmm findSBid.py and
+ * liteConvert.py), and it belongs to whatever rebuilds it.
+ *
+ * It used to sit at the docroot root, /web/glosses_transformed.json, and on
+ * a host that predates the connector it still does: the web server cannot
+ * write /web, so a host where the dump can be rebuilt keeps it somewhere the
+ * web user owns. Both are checked, new location first, so this accessor
+ * answers correctly on either kind of host without anything having to know
+ * which one it is on.
  */
 
 function signbank_ecv_path(): string {
-    return '/web/glosses_transformed.json';
+    static $resolved = null;
+    if ($resolved !== null) return $resolved;
+    foreach (['/web/signbank_data/glosses_transformed.json',
+              '/web/glosses_transformed.json'] as $candidate) {
+        if (is_readable($candidate)) return $resolved = $candidate;
+    }
+    // Neither exists: name the one a rebuild would create, so the error a
+    // caller reports points at where the file is supposed to be.
+    return $resolved = '/web/signbank_data/glosses_transformed.json';
 }
 
 function signbank_ecv_available(): bool {

@@ -1,7 +1,7 @@
 <?php
 /**
- * The Signbank connector: rebuilds /web/glosses_transformed.json from the
- * live Signbank.
+ * The Signbank connector: rebuilds the Signbank gloss dump
+ * (/web/signbank_data/glosses_transformed.json) from the live Signbank.
  *
  * That file is the ECV dump four components read by absolute path
  * (menu_beta php_api/signbank_ecv.php, zin getSenses.php, hh getGlosses.php,
@@ -45,12 +45,12 @@
  * rename(2) is atomic within a filesystem: a reader either opens the old
  * inode or the new one, never a half-written file.
  *
- * The target is resolved through its symlink first. On a demo host
- * /web/glosses_transformed.json is a symlink into a directory the web user
- * owns, because /web itself is not writable by www-data and rename needs
- * write permission on the *directory*, not the file. On a host where the web
- * user can write /web directly, the same code renames in /web. See
- * scripts/host-config.sh in the deploy repo.
+ * The dump lives in the connector's own directory because rename needs write
+ * permission on the *directory*, not the file, and /web is not writable by
+ * www-data. A target that is a symlink is resolved first, so a host that
+ * publishes the dump under another name still gets an atomic replace of the
+ * real file rather than a replaced link. See scripts/host-config.sh in the
+ * deploy repo for how the directory is created.
  *
  * ---------------------------------------------------------------------------
  * Scheduling (pythonCron)
@@ -86,10 +86,17 @@ require_once __DIR__ . '/client.php';
  * to the config they come from.
  * ---------------------------------------------------------------------- */
 
-/** The published dump - the path every consumer opens. */
+/**
+ * The published dump - the path every consumer opens.
+ *
+ * Defaults into the connector's own directory rather than the docroot root:
+ * /web is not writable by the web server, and a file this job has to replace
+ * atomically has to live somewhere it can. ecv_path overrides it for a host
+ * that keeps the dump elsewhere.
+ */
 function signbank_ecv_published_path(): string {
     $cfg = signbank_config();
-    return (string)($cfg['ecv_path'] ?? '/web/glosses_transformed.json');
+    return (string)($cfg['ecv_path'] ?? (signbank_state_dir() . '/glosses_transformed.json'));
 }
 
 /**
