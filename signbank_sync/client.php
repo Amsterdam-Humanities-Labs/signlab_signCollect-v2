@@ -6,6 +6,67 @@
  * Auth: HTTP Bearer token via "Authorization: Bearer <api_key>" header.
  */
 
+/**
+ * Values that are in the api_key slot but are not a credential: the example
+ * placeholder, and the inert string a demo host is provisioned with so that
+ * signbank_config() does not throw on every page load (current_user.php
+ * calls it) before anyone has supplied a key.
+ */
+function signbank_key_placeholders(): array {
+    return ['', 'YOUR_BEARER_TOKEN_HERE', 'demo-instance-no-signbank-access'];
+}
+
+/**
+ * The directory this install's Signbank connector owns: the runtime key, the
+ * refresh state, and - on a host where the web user cannot write the docroot
+ * root - the gloss dump itself. One directory, so one chown decides who may
+ * refresh.
+ */
+function signbank_state_dir(): string {
+    $cfg = signbank_config();
+    return rtrim((string)($cfg['state_dir'] ?? '/web/signbank_data'), '/');
+}
+
+/**
+ * The key an admin set in the interface, kept out of config.php so that
+ * setting it needs write access to one small file rather than to a PHP file
+ * inside the docroot. Named with a leading dot: apache denies dotfiles, the
+ * same protection /web/.session_secret relies on.
+ */
+function signbank_key_path(): string {
+    return signbank_state_dir() . '/.signbank_key';
+}
+
+function signbank_runtime_key(): ?string {
+    $p = signbank_key_path();
+    if (!is_readable($p)) return null;
+    $v = trim((string)@file_get_contents($p));
+    return $v === '' ? null : $v;
+}
+
+/** 'runtime' | 'config' | 'none' - where the key in use came from. */
+function signbank_key_source(): string {
+    try {
+        $cfg = signbank_config();
+    } catch (Throwable $e) {
+        return 'none';
+    }
+    return (string)($cfg['key_source'] ?? 'none');
+}
+
+/**
+ * Config, with the runtime key layered over the provisioned one.
+ *
+ * Two places may hold a key, in this order:
+ *
+ *   1. <state_dir>/.signbank_key - written by an admin on the Signbank page,
+ *      or by scripts/host-config.sh at deploy time.
+ *   2. config.php - gitignored upstream, provisioned per host.
+ *
+ * Neither is ever committed. A host with neither still boots: config.php
+ * carries a placeholder, key_source reports 'none', and the connector page
+ * says the connection is unconfigured instead of pretending otherwise.
+ */
 function signbank_config(): array {
     static $cfg = null;
     if ($cfg !== null) return $cfg;
@@ -14,7 +75,23 @@ function signbank_config(): array {
         throw new RuntimeException('signbank_sync/config.php is missing - copy config.example.php');
     }
     $cfg = require $path;
-    if (!is_array($cfg) || empty($cfg['api_key']) || $cfg['api_key'] === 'YOUR_BEARER_TOKEN_HERE') {
+    if (!is_array($cfg)) {
+        throw new RuntimeException('signbank_sync/config.php did not return an array');
+    }
+
+    // Resolved here rather than through signbank_state_dir(), which would
+    // call back into this function before $cfg is cached.
+    $keyFile = rtrim((string)($cfg['state_dir'] ?? '/web/signbank_data'), '/') . '/.signbank_key';
+    $runtime = is_readable($keyFile) ? trim((string)@file_get_contents($keyFile)) : '';
+    if ($runtime !== '' && !in_array($runtime, signbank_key_placeholders(), true)) {
+        $cfg['api_key']    = $runtime;
+        $cfg['key_source'] = 'runtime';
+    } else {
+        $cfg['key_source'] = in_array((string)($cfg['api_key'] ?? ''),
+                                      signbank_key_placeholders(), true) ? 'none' : 'config';
+    }
+
+    if ($cfg['key_source'] === 'none' && ($cfg['api_key'] ?? '') === '') {
         throw new RuntimeException('signbank_sync/config.php is missing api_key');
     }
     return $cfg;
@@ -31,6 +108,18 @@ function signbank_request(string $method, string $path, ?array $payload = null):
     $cfg = signbank_config();
     $url = rtrim($cfg['base_url'], '/') . $path;
     $start = microtime(true);
+
+    // No key configured: fail here rather than sending the placeholder as a
+    // bearer token and reporting Signbank's 403 as if the key were wrong.
+    // The shape is the one every caller already handles.
+    if (($cfg['key_source'] ?? 'none') === 'none') {
+        return [
+            'ok' => false, 'status' => 0, 'body' => null, 'raw' => '',
+            'error' => 'no Signbank API key configured - set one on the Signbank page',
+            'duration_ms' => 0, 'content_type' => '',
+            'request' => ['method' => $method, 'url' => $url, 'headers' => [], 'payload' => $payload],
+        ];
+    }
 
     $authScheme = strtolower((string)($cfg['auth_scheme'] ?? 'bearer'));
     if ($authScheme === 'x-api-key') {
