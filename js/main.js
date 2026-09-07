@@ -44,9 +44,10 @@ async function init() {
   state.options.users.forEach(u => userNameMap.set(String(u.userId), u.user));
 
   state.ownerUserId = String(state.user.userId);
-  if (state.user.defaultContext === 'signbank' || state.user.defaultContext === 'signio') {
-    state.context = state.user.defaultContext;
-  }
+  // Backend already clamps defaultContext into the user's allowed list, but
+  // guard here too so a stale/unknown value can never select a forbidden view.
+  const allowedCtx = allowedContexts();
+  state.context = allowedCtx.includes(state.user.defaultContext) ? state.user.defaultContext : allowedCtx[0];
 
   populateThemaSelect();
   populateOwnerSelect();
@@ -1799,6 +1800,13 @@ function setupContextToggle() {
   });
 }
 
+/** Contexts this user may open. Missing/empty (pre-migration) → both. */
+function allowedContexts() {
+  const list = (state.user && Array.isArray(state.user.allowedContexts)) ? state.user.allowedContexts : [];
+  const valid = list.filter(c => c === 'signio' || c === 'signbank');
+  return valid.length ? valid : ['signio', 'signbank'];
+}
+
 function activeDatasetHasExternSubview() {
   const list = (state.user && state.user.datasets) || [];
   const entry = list.find(d => d.code === state.dataset);
@@ -1842,7 +1850,11 @@ function applyDatasetNavVisibility() {
 function applyContextToggleVisibility() {
   const wrap = document.querySelector('.context-toggle');
   if (!wrap) return;
-  const show = activeDatasetHasExternSubview();
+  // Only offer the buttons the user is allowed to use; with a single allowed
+  // context there is nothing to toggle, so hide the whole control.
+  const allowed = allowedContexts();
+  wrap.querySelectorAll('.ctx-opt').forEach(b => { b.hidden = !allowed.includes(b.dataset.ctx); });
+  const show = activeDatasetHasExternSubview() && allowed.length > 1;
   wrap.hidden = !show;
   // The little "Signio / Signbank" badge next to the search field is part of
   // the same UI surface — hide it too so the user doesn't see a stale label.

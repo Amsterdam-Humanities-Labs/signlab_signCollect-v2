@@ -13,11 +13,10 @@ $thema         = (string)($body['thema']        ?? '');
 $labels        = is_array($body['labels'] ?? null)       ? array_values($body['labels'])       : [];
 $senses        = is_array($body['senses'] ?? null)       ? array_values($body['senses'])       : [];
 $sensesEngels  = is_array($body['sensesEngels'] ?? null) ? array_values($body['sensesEngels']) : [];
-$context       = (string)($body['context'] ?? 'signio');
-$externValue   = $context === 'signbank' ? null : '1';
-
 require_once __DIR__ . '/datasets.php';
 $pdo   = db();
+$context       = require_context($pdo, $session, $body);   // 403 if the user may not use it
+$externValue   = $context === 'signbank' ? null : '1';
 $ds    = require_dataset($pdo, $session, $body);
 $table = $ds['table'];
 $stmt = $pdo->prepare(

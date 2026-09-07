@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>signCollect - Gebruikers Beheren</title>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+        crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="/userProtect.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 40px 20px;
+        }
+        .page-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .page-header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .page-header-left i {
+            font-size: 32px;
+            color: #0f3460;
+        }
+        .page-header-left h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin: 0;
+        }
+        .btn-back {
+            padding: 10px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: #fff;
+            color: #1a1a2e;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: border-color 0.2s, transform 0.15s;
+        }
+        .btn-back:hover {
+            border-color: #0f3460;
+            transform: translateY(-1px);
+            color: #0f3460;
+        }
+        .btn-add {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #0f3460, #1a1a2e);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .btn-add:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(15, 52, 96, 0.4);
+            color: #fff;
+        }
+        .users-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        }
+        .users-table thead th {
+            background: #1a1a2e;
+            color: #fff;
+            padding: 14px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border: none;
+        }
+        .users-table tbody tr {
+            transition: background 0.15s;
+        }
+        .users-table tbody tr:hover {
+            background: rgba(15, 52, 96, 0.04);
+        }
+        .users-table tbody td {
+            padding: 12px 16px;
+            font-size: 14px;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            vertical-align: middle;
+        }
+        .users-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        .badge-active {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-blocked {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-admin {
+            background: #ede9fe;
+            color: #5b21b6;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-user {
+            background: #e0f2fe;
+            color: #075985;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-access {
+            display: inline-block;
+            padding: 3px 9px;
+            margin: 1px 2px 1px 0;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            background: #f1f5f9;
+            color: #334155;
+        }
+        .badge-access.is-default {
+            background: #0f3460;
+            color: #fff;
+        }
+        .badge-admin, .badge-user, .badge-active, .badge-blocked { white-space: nowrap; }
+        .access-cell { white-space: nowrap; line-height: 1.9; }
+        .table-wrap { overflow-x: auto; }
+        .access-group { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 6px; }
+        .access-group label { font-weight: 500; }
+        .access-group input[type=checkbox] { margin-right: 4px; }
+        .btn-edit {
+            padding: 6px 14px;
+            border: 2px solid #0f3460;
+            border-radius: 8px;
+            background: transparent;
+            color: #0f3460;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            margin-right: 6px;
+        }
+        .btn-edit:hover {
+            background: #0f3460;
+            color: #fff;
+        }
+        .btn-block {
+            padding: 6px 14px;
+            border: 2px solid #dc3545;
+            border-radius: 8px;
+            background: transparent;
+            color: #dc3545;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn-block:hover {
+            background: #dc3545;
+            color: #fff;
+        }
+        .btn-unblock {
+            padding: 6px 14px;
+            border: 2px solid #198754;
+            border-radius: 8px;
+            background: transparent;
+            color: #198754;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn-unblock:hover {
+            background: #198754;
+            color: #fff;
+        }
+        .btn-delete {
+            padding: 6px 14px;
+            border: 2px solid #6c757d;
+            border-radius: 8px;
+            background: transparent;
+            color: #6c757d;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            margin-left: 6px;
+        }
+        .btn-delete:hover {
+            background: #6c757d;
+            color: #fff;
+        }
+        .last-login {
+            color: #6c757d;
+            font-size: 13px;
+        }
+        .modal-content {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        .modal-header {
+            background: #1a1a2e;
+            color: #fff;
+            border-radius: 16px 16px 0 0;
+            padding: 20px 24px;
+        }
+        .modal-header .btn-close {
+            filter: invert(1);
+        }
+        .modal-body {
+            padding: 28px 24px;
+        }
+        .modal-body .form-label {
+            font-weight: 600;
+            color: #1a1a2e;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .modal-body .form-control,
+        .modal-body .form-select {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        .modal-body .form-control:focus,
+        .modal-body .form-select:focus {
+            border-color: #0f3460;
+            box-shadow: 0 0 0 3px rgba(15, 52, 96, 0.15);
+        }
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #eee;
+        }
+        .modal-footer .btn-secondary {
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 600;
+        }
+        .modal-footer .btn-primary {
+            border-radius: 10px;
+            padding: 10px 24px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #0f3460, #1a1a2e);
+            border: none;
+        }
+        .modal-footer .btn-primary:hover {
+            box-shadow: 0 4px 12px rgba(15, 52, 96, 0.4);
+        }
+        .toast-msg {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 9999;
+            min-width: 280px;
+        }
+        @media (max-width: 768px) {
+            .page-card { padding: 24px 16px; }
+            .users-table thead th,
+            .users-table tbody td { padding: 10px 8px; font-size: 13px; }
+            .btn-edit, .btn-block, .btn-unblock { padding: 5px 10px; font-size: 12px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-card">
+    <div class="page-header">
+        <div class="page-header-left">
+            <i class="fas fa-users-cog"></i>
+            <h1>Gebruikers Beheren</h1>
+        </div>
+        <div>
+            <a href="/menu_beta/index.html" class="btn-back"><i class="fas fa-arrow-left me-2"></i>Terug</a>
+            <button class="btn-add ms-2" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                <i class="fas fa-user-plus me-2"></i>Gebruiker toevoegen
+            </button>
+        </div>
+    </div>
+
+    <div class="table-wrap">
+    <table class="users-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Gebruikersnaam</th>
+                <th>Taal</th>
+                <th>Rol</th>
+                <th>Toegang</th>
+                <th>Laatste login</th>
+                <th>Laatste activiteit</th>
+                <th>Status</th>
+                <th>Acties</th>
+            </tr>
+        </thead>
+        <tbody id="usersTable"></tbody>
+    </table>
+    </div>
+</div>
+
+<!-- Toast notification -->
+<div class="toast-msg" id="toastContainer"></div>
+
+<!-- Add User Modal -->
+<div class="modal fade" id="addUserModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i>Gebruiker toevoegen</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Gebruikersnaam</label>
+                    <input type="text" class="form-control" id="addUsername" placeholder="Voer gebruikersnaam in">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Wachtwoord</label>
+                    <input type="password" class="form-control" id="addPassword" placeholder="Voer wachtwoord in">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Taal</label>
+                    <select class="form-select" id="addLang">
+                        <option value="nld">Nederlands</option>
+                        <option value="eng">English</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Rol</label>
+                    <select class="form-select" id="addRole">
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Datasets</label>
+                    <div class="access-group" id="addDatasetsGroup">
+                        <label><input type="checkbox" value="ngt" checked> NGT</label>
+                        <label><input type="checkbox" value="lsm"> LSM</label>
+                    </div>
+                    <select class="form-select" id="addDefaultDataset" title="Standaard dataset">
+                        <option value="ngt">Standaard: NGT</option>
+                        <option value="lsm">Standaard: LSM</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Signio / Signbank</label>
+                    <div class="access-group" id="addContextsGroup">
+                        <label><input type="checkbox" value="signio" checked> Signio</label>
+                        <label><input type="checkbox" value="signbank" checked> Signbank</label>
+                    </div>
+                    <select class="form-select" id="addDefaultContext" title="Standaard weergave">
+                        <option value="signio">Standaard: Signio</option>
+                        <option value="signbank">Standaard: Signbank</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
+                <button type="button" class="btn btn-primary" onclick="addUser()">
+                    <i class="fas fa-check me-1"></i>Toevoegen
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit User Modal -->
+<div class="modal fade" id="editUserModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-user-edit me-2"></i>Gebruiker bewerken</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editUserId">
+                <div class="mb-3">
+                    <label class="form-label">Gebruikersnaam</label>
+                    <input type="text" class="form-control" id="editUsername">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Nieuw wachtwoord <span style="font-weight:400;color:#6c757d">(leeg = ongewijzigd)</span></label>
+                    <input type="password" class="form-control" id="editPassword" placeholder="Laat leeg om niet te wijzigen">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Taal</label>
+                    <select class="form-select" id="editLang">
+                        <option value="nld">Nederlands</option>
+                        <option value="eng">English</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Rol</label>
+                    <select class="form-select" id="editRole">
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Datasets</label>
+                    <div class="access-group" id="editDatasetsGroup">
+                        <label><input type="checkbox" value="ngt" checked> NGT</label>
+                        <label><input type="checkbox" value="lsm"> LSM</label>
+                    </div>
+                    <select class="form-select" id="editDefaultDataset" title="Standaard dataset">
+                        <option value="ngt">Standaard: NGT</option>
+                        <option value="lsm">Standaard: LSM</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Signio / Signbank</label>
+                    <div class="access-group" id="editContextsGroup">
+                        <label><input type="checkbox" value="signio" checked> Signio</label>
+                        <label><input type="checkbox" value="signbank" checked> Signbank</label>
+                    </div>
+                    <select class="form-select" id="editDefaultContext" title="Standaard weergave">
+                        <option value="signio">Standaard: Signio</option>
+                        <option value="signbank">Standaard: Signbank</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
+                <button type="button" class="btn btn-primary" onclick="saveUser()">
+                    <i class="fas fa-save me-1"></i>Opslaan
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Admin check - redirect non-admins
+    if (userRole !== 'admin') {
+        window.location.href = '/menu_beta/index.html';
+    }
+
+    $(document).ready(function() {
+        loadUsers();
+    });
+
+    function showToast(msg, type) {
+        var id = 'toast-' + Date.now();
+        var bgClass = type === 'success' ? 'bg-success' : 'bg-danger';
+        var html = '<div id="' + id + '" class="alert ' + bgClass + ' text-white d-flex align-items-center" style="border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.15);animation:fadeIn 0.3s" role="alert">' +
+            '<i class="fas ' + (type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle') + ' me-2"></i>' + escapeHtml(msg) + '</div>';
+        $('#toastContainer').append(html);
+        setTimeout(function() { $('#' + id).fadeOut(300, function() { $(this).remove(); }); }, 3000);
+    }
+
+    var usersById = {};   // last loaded list, keyed by userId (for editUser)
+
+    var DATASET_LABELS = { ngt: 'NGT', lsm: 'LSM' };
+    var CONTEXT_LABELS = { signio: 'Signio', signbank: 'Signbank' };
+
+    function accessBadges(codes, def, labels) {
+        return (codes || []).map(function(c) {
+            var cls = 'badge-access' + (c === def ? ' is-default' : '');
+            var title = c === def ? ' title="Standaard"' : '';
+            return '<span class="' + cls + '"' + title + '>' + escapeHtml(labels[c] || c) + '</span>';
+        }).join('');
+    }
+
+    function loadUsers() {
+        $.post('users_api.php', { action: 'list' }, function(response) {
+            var users = typeof response === 'string' ? JSON.parse(response) : response;
+            var html = '';
+            usersById = {};
+            users.forEach(function(u) {
+                usersById[u.userId] = u;
+                var accessCell =
+                    '<div class="access-cell">' +
+                        accessBadges(u.allowed_datasets, u.default_dataset, DATASET_LABELS) + '<br>' +
+                        accessBadges(u.allowed_contexts, u.default_context, CONTEXT_LABELS) +
+                    '</div>';
+                var statusBadge = u.blocked == 1
+                    ? '<span class="badge-blocked"><i class="fas fa-ban me-1"></i>Geblokkeerd</span>'
+                    : '<span class="badge-active"><i class="fas fa-check-circle me-1"></i>Actief</span>';
+                var roleBadge = u.role === 'admin'
+                    ? '<span class="badge-admin"><i class="fas fa-shield-alt me-1"></i>Admin</span>'
+                    : '<span class="badge-user"><i class="fas fa-user me-1"></i>User</span>';
+                var blockBtn = u.blocked == 1
+                    ? '<button class="btn-unblock" onclick="toggleBlock(' + u.userId + ')"><i class="fas fa-unlock me-1"></i>Deblokkeren</button>'
+                    : '<button class="btn-block" onclick="toggleBlock(' + u.userId + ')"><i class="fas fa-lock me-1"></i>Blokkeren</button>';
+                var lastLogin = u.last_login
+                    ? '<span class="last-login">' + u.last_login + '</span>'
+                    : '<span class="last-login" style="font-style:italic">Nooit</span>';
+                var lastActivity = u.last_activity
+                    ? '<span class="last-login">' + u.last_activity + '</span>' +
+                      (u.last_page ? '<br><span class="last-login" style="font-size:11px;color:#0f3460"><i class="fas fa-file me-1"></i>' + escapeHtml(u.last_page) + '</span>' : '')
+                    : '<span class="last-login" style="font-style:italic">Nooit</span>';
+                var langDisplay = u.lang === 'nld' ? 'NL' : u.lang === 'eng' ? 'EN' : (u.lang || '-');
+
+                html += '<tr>' +
+                    '<td>' + u.userId + '</td>' +
+                    '<td><strong>' + escapeHtml(u.user) + '</strong></td>' +
+                    '<td>' + langDisplay + '</td>' +
+                    '<td>' + roleBadge + '</td>' +
+                    '<td>' + accessCell + '</td>' +
+                    '<td>' + lastLogin + '</td>' +
+                    '<td>' + lastActivity + '</td>' +
+                    '<td>' + statusBadge + '</td>' +
+                    '<td class="actions-cell">' +
+                        '<button class="btn-edit" onclick="editUser(' + u.userId + ')"><i class="fas fa-pen me-1"></i>Bewerken</button>' +
+                        blockBtn +
+                        '<button class="btn-delete" onclick="deleteUser(' + u.userId + ')"><i class="fas fa-trash me-1"></i>Verwijderen</button>' +
+                    '</td>' +
+                    '</tr>';
+            });
+            $('#usersTable').html(html);
+        });
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    /* ---- access fields (datasets / contexts) ---- */
+
+    function readChecked(groupId) {
+        return $('#' + groupId + ' input[type=checkbox]:checked').map(function() { return this.value; }).get();
+    }
+    function setChecked(groupId, codes) {
+        $('#' + groupId + ' input[type=checkbox]').each(function() {
+            this.checked = codes.indexOf(this.value) !== -1;
+        });
+    }
+    // Only allowed codes can be the default: disable the others in the select
+    // and move the default if it just got unchecked.
+    function syncDefaultSelect(groupId, selectId) {
+        var allowed = readChecked(groupId);
+        var sel = document.getElementById(selectId);
+        var stillValid = false;
+        Array.prototype.forEach.call(sel.options, function(o) {
+            o.disabled = allowed.indexOf(o.value) === -1;
+            if (!o.disabled && o.value === sel.value) stillValid = true;
+        });
+        if (!stillValid && allowed.length) sel.value = allowed[0];
+    }
+    function bindAccessGroups(prefix) {
+        $('#' + prefix + 'DatasetsGroup').on('change', 'input', function() { syncDefaultSelect(prefix + 'DatasetsGroup', prefix + 'DefaultDataset'); });
+        $('#' + prefix + 'ContextsGroup').on('change', 'input', function() { syncDefaultSelect(prefix + 'ContextsGroup', prefix + 'DefaultContext'); });
+    }
+    bindAccessGroups('add');
+    bindAccessGroups('edit');
+
+    function fillAccessForm(prefix, u) {
+        setChecked(prefix + 'DatasetsGroup', u.allowed_datasets || ['ngt']);
+        setChecked(prefix + 'ContextsGroup', u.allowed_contexts || ['signio', 'signbank']);
+        $('#' + prefix + 'DefaultDataset').val(u.default_dataset || 'ngt');
+        $('#' + prefix + 'DefaultContext').val(u.default_context || 'signio');
+        syncDefaultSelect(prefix + 'DatasetsGroup', prefix + 'DefaultDataset');
+        syncDefaultSelect(prefix + 'ContextsGroup', prefix + 'DefaultContext');
+    }
+    // Returns null (after showing a toast) when nothing is allowed.
+    function readAccessForm(prefix) {
+        var datasets = readChecked(prefix + 'DatasetsGroup');
+        var contexts = readChecked(prefix + 'ContextsGroup');
+        if (!datasets.length) { showToast('Kies minstens één dataset', 'error'); return null; }
+        if (!contexts.length) { showToast('Kies minstens Signio of Signbank', 'error'); return null; }
+        return {
+            allowed_datasets: datasets,
+            default_dataset:  $('#' + prefix + 'DefaultDataset').val(),
+            allowed_contexts: contexts,
+            default_context:  $('#' + prefix + 'DefaultContext').val()
+        };
+    }
+
+    function addUser() {
+        if (typeof UserLoggedId === 'undefined' || !UserLoggedId) {
+            showToast('Sessie verlopen, log opnieuw in', 'error');
+            return;
+        }
+
+        var username = $('#addUsername').val().trim();
+        var password = $('#addPassword').val();
+        if (!username || !password) {
+            showToast('Vul gebruikersnaam en wachtwoord in', 'error');
+            return;
+        }
+
+        var access = readAccessForm('add');
+        if (!access) return;
+
+        var data = $.extend({
+            action: 'add',
+            requestingUserId: UserLoggedId,
+            user: username,
+            pass: password,
+            lang: $('#addLang').val(),
+            role: $('#addRole').val()
+        }, access);
+
+        $.post('users_api.php', data, function(response) {
+            var result = typeof response === 'string' ? JSON.parse(response) : response;
+            if (result.success) {
+                bootstrap.Modal.getInstance(document.getElementById('addUserModal')).hide();
+                $('#addUsername').val('');
+                $('#addPassword').val('');
+                fillAccessForm('add', {});
+                loadUsers();
+                showToast('Gebruiker succesvol toegevoegd', 'success');
+            } else {
+                showToast(result.error || 'Fout bij toevoegen', 'error');
+            }
+        }).fail(function(xhr) {
+            showToast('Serverfout (' + xhr.status + ') bij toevoegen', 'error');
+        });
+    }
+
+    function editUser(userId) {
+        var u = usersById[userId];
+        if (!u) { showToast('Gebruiker niet gevonden, herlaad de pagina', 'error'); return; }
+        $('#editUserId').val(u.userId);
+        $('#editUsername').val(u.user);
+        $('#editPassword').val('');
+        $('#editLang').val(u.lang || '');
+        $('#editRole').val(u.role);
+        fillAccessForm('edit', u);
+        new bootstrap.Modal(document.getElementById('editUserModal')).show();
+    }
+
+    function saveUser() {
+        var access = readAccessForm('edit');
+        if (!access) return;
+
+        var data = $.extend({
+            action: 'update',
+            requestingUserId: UserLoggedId,
+            userId: $('#editUserId').val(),
+            user: $('#editUsername').val(),
+            lang: $('#editLang').val(),
+            role: $('#editRole').val()
+        }, access);
+        var pass = $('#editPassword').val();
+        if (pass) {
+            data.pass = pass;
+        }
+
+        $.post('users_api.php', data, function(response) {
+            var result = typeof response === 'string' ? JSON.parse(response) : response;
+            if (result.success) {
+                bootstrap.Modal.getInstance(document.getElementById('editUserModal')).hide();
+                loadUsers();
+                showToast('Gebruiker succesvol bijgewerkt', 'success');
+            } else {
+                showToast(result.error || 'Fout bij opslaan', 'error');
+            }
+        });
+    }
+
+    function deleteUser(userId) {
+        var u = usersById[userId];
+        if (!u) { showToast('Gebruiker niet gevonden, herlaad de pagina', 'error'); return; }
+        var username = u.user;
+        if (!confirm('Weet je zeker dat je "' + username + '" wilt verwijderen?')) {
+            return;
+        }
+        $.post('users_api.php', {
+            action: 'delete',
+            requestingUserId: UserLoggedId,
+            userId: userId
+        }, function(response) {
+            var result = typeof response === 'string' ? JSON.parse(response) : response;
+            if (result.success) {
+                loadUsers();
+                showToast('Gebruiker "' + username + '" verwijderd', 'success');
+            } else {
+                showToast(result.error || 'Fout bij verwijderen', 'error');
+            }
+        }).fail(function(xhr) {
+            showToast('Serverfout (' + xhr.status + ') bij verwijderen', 'error');
+        });
+    }
+
+    function toggleBlock(userId) {
+        $.post('users_api.php', {
+            action: 'block',
+            requestingUserId: UserLoggedId,
+            userId: userId
+        }, function(response) {
+            var result = typeof response === 'string' ? JSON.parse(response) : response;
+            if (result.success) {
+                loadUsers();
+                var msg = result.blocked == 1 ? 'Gebruiker geblokkeerd' : 'Gebruiker gedeblokkeerd';
+                showToast(msg, 'success');
+            } else {
+                showToast(result.error || 'Fout bij blokkeren/deblokkeren', 'error');
+            }
+        });
+    }
+</script>
+</body>
+</html>

@@ -62,3 +62,57 @@ function require_dataset(PDO $pdo, array $session, $bodyOrNull = null): array {
     if ($ds === false) json_response(['error' => 'forbidden_dataset', 'requested' => $requested], 403);
     return $ds;
 }
+
+/** The two NGT sub-views a user can be granted. Order = display order. */
+function context_codes(): array { return ['signio', 'signbank']; }
+
+/**
+ * Read a user's allowed contexts + default from the `users` row.
+ * A NULL / empty / unparsable allowed_contexts means "both" so that a row
+ * that predates the migration keeps working unchanged.
+ * Returns ['allowed' => string[], 'default' => string].
+ */
+function user_context_access(PDO $pdo, int $userId): array {
+    $allowed = context_codes();
+    $default = 'signio';
+    try {
+        $stmt = $pdo->prepare("SELECT default_context, allowed_contexts FROM users WHERE userId = ?");
+        $stmt->execute([$userId]);
+        $row = $stmt->fetch() ?: [];
+        if (!empty($row['allowed_contexts'])) {
+            $d = json_decode($row['allowed_contexts'], true);
+            if (is_array($d)) {
+                $d = array_values(array_intersect(context_codes(), array_filter($d, 'is_string')));
+                if ($d) $allowed = $d;
+            }
+        }
+        if (in_array($row['default_context'] ?? null, context_codes(), true)) {
+            $default = $row['default_context'];
+        }
+    } catch (Throwable $e) {
+        // pre-migration table: keep defaults
+    }
+    if (!in_array($default, $allowed, true)) $default = $allowed[0];
+    return ['allowed' => $allowed, 'default' => $default];
+}
+
+/**
+ * Resolve the active Signio/Signbank context for the current request.
+ *  - Reads the requested code from $body['context'] / $_GET['context'].
+ *  - Empty request → the user's default (already clamped to allowed).
+ *  - A code the user may not use → 403 forbidden_context and exit.
+ * Never silently rewrites a forbidden request to an allowed one.
+ */
+function require_context(PDO $pdo, array $session, $bodyOrNull = null): string {
+    $access = user_context_access($pdo, (int)$session['userId']);
+
+    $requested = null;
+    if (is_array($bodyOrNull) && isset($bodyOrNull['context'])) $requested = (string)$bodyOrNull['context'];
+    elseif (isset($_GET['context']))                            $requested = (string)$_GET['context'];
+
+    if ($requested === null || $requested === '') return $access['default'];
+    if (!in_array($requested, $access['allowed'], true)) {
+        json_response(['error' => 'forbidden_context', 'requested' => $requested], 403);
+    }
+    return $requested;
+}

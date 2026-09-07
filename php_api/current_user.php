@@ -9,19 +9,15 @@ $cfg = signbank_config();
 $s['signbankPublicUrl'] = rtrim((string)($cfg['public_url'] ?? 'https://signbank.cls.ru.nl'), '/');
 
 // Look up persisted user prefs (gracefully tolerates an unmigrated `users` table).
-$defaultContext = 'signio';
 $defaultDataset = dataset_default_code();
 $allowed        = [$defaultDataset];
 $language       = 'nl';
 try {
     $pdo = db();
-    $stmt = $pdo->prepare("SELECT default_context, default_dataset, allowed_datasets, lang FROM users WHERE userId = ?");
+    $stmt = $pdo->prepare("SELECT default_dataset, allowed_datasets, lang FROM users WHERE userId = ?");
     $stmt->execute([(int)$s['userId']]);
     $row = $stmt->fetch();
     if ($row) {
-        if (in_array($row['default_context'] ?? null, ['signio','signbank'], true)) {
-            $defaultContext = $row['default_context'];
-        }
         if (!empty($row['default_dataset'])) $defaultDataset = $row['default_dataset'];
         if (!empty($row['allowed_datasets'])) {
             $d = json_decode($row['allowed_datasets'], true);
@@ -35,8 +31,12 @@ try {
 } catch (Throwable $e) {
     // leave defaults
 }
-$s['defaultContext'] = $defaultContext;
 $s['language']       = $language;
+
+// Signio / Signbank access: allowed list + default clamped into it.
+$ctx = user_context_access(db(), (int)$s['userId']);
+$s['allowedContexts'] = $ctx['allowed'];
+$s['defaultContext']  = $ctx['default'];
 
 // datasets payload for the JS switcher
 $reg = datasets_registry();

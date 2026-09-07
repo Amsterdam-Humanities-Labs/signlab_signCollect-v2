@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Batch Add Words</title>
+  <!-- Mantine core CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mantine/core@7.2.2/esm/index.css">
+  <!-- Mantine hooks -->
+  <script src="https://cdn.jsdelivr.net/npm/@mantine/hooks@7.2.2/esm/index.js"></script>
+  <!-- Mantine core -->
+  <script src="https://cdn.jsdelivr.net/npm/@mantine/core@7.2.2/esm/index.js"></script>
+  <!-- Tabler icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-react@2.40.0/dist/index.css">
+</head>
+<body>
+  <div id="app" style="padding: 20px; max-width: 800px; margin: 0 auto;">
+    <div class="mantine-Paper-root" style="padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+      <h2 class="mantine-Title-root" style="margin-bottom: 20px;">Batch Add Words</h2>
+      
+      <div class="mantine-Textarea-root">
+        <label class="mantine-Textarea-label" for="wordList">Enter words (one per line):</label>
+        <textarea 
+          id="wordList" 
+          class="mantine-Textarea-input" 
+          rows="10"
+          style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 4px;"
+        ></textarea>
+      </div>
+
+      <div style="margin-top: 15px;">
+        <label class="mantine-Select-label" for="themaSelect">Select Thema:</label>
+        <div style="display: flex; gap: 10px;">
+          <select 
+            id="themaSelect" 
+            class="mantine-Select-input" 
+            style="flex: 1; padding: 10px; border: 1px solid #ced4da; border-radius: 4px;"
+          >
+            <option value="">Loading thema options...</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-top: 15px;">
+        <label class="mantine-Select-label">Select Label:</label>
+        <div style="display: flex; gap: 10px;">
+          <div id="bootstrap-multiselect-container"></div>
+        </div>
+      </div>
+
+      <div style="margin-top: 15px;">
+        <label class="mantine-Checkbox-label">
+          <input 
+            type="checkbox" 
+            id="checkDuplicatesWithSuffix" 
+            class="mantine-Checkbox-input"
+            style="margin-right: 10px;"
+          />
+          Check for duplicates with/without suffixes (e.g., WORD and WORD-A treated as duplicates)
+        </label>
+      </div>
+
+      <div style="margin-top: 15px;">
+        <label class="mantine-Checkbox-label">
+          <input 
+            type="checkbox" 
+            id="linkWithSignbankID" 
+            class="mantine-Checkbox-input"
+            style="margin-right: 10px;"
+          />
+          Koppelen met Signbank ID als glos is gevonden, anders nieuwe toevoegen
+        </label>
+      </div>
+
+      <div style="margin-top: 15px;">
+        <label class="mantine-Checkbox-label">
+          <input 
+            type="checkbox" 
+            id="checkWordExistsInSenses" 
+            class="mantine-Checkbox-input"
+            style="margin-right: 10px;"
+          />
+          Check if words already exist in senses (skip words that are already in senses field)
+        </label>
+      </div>
+
+      <div id="customThemaContainer" style="margin-top: 15px; display: none;">
+        <label class="mantine-TextInput-label" for="customThema">Enter Custom Thema:</label>
+        <input 
+          type="text" 
+          id="customThema" 
+          class="mantine-TextInput-input" 
+          style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 4px;"
+        />
+      </div>
+      
+      <button 
+        id="submitBtn"
+        class="mantine-Button-root mantine-Button-filled" 
+        style="background-color: #228be6; color: white; border: none; padding: 10px 15px; border-radius: 4px; margin-top: 15px; cursor: pointer;"
+      >
+        Add Words
+      </button>
+
+      <div id="loadingIndicator" style="display: none; margin-top: 20px;">
+        <div class="mantine-Loader-root" style="border: 3px solid #f3f3f3; border-top: 3px solid #228be6; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite;"></div>
+        <style>
+          @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        </style>
+      </div>
+
+      <div id="resultContainer" style="margin-top: 20px;">
+        <!-- Results will be displayed here -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const submitBtn = document.getElementById('submitBtn');
+      const wordList = document.getElementById('wordList');
+      const resultContainer = document.getElementById('resultContainer');
+      const loadingIndicator = document.getElementById('loadingIndicator');
+      const themaSelect = document.getElementById('themaSelect');
+      const customThemaContainer = document.getElementById('customThemaContainer');
+      const customThema = document.getElementById('customThema');
+      
+      // Global array for unique labels
+      var uniqueLabelsArray = [];
+
+      // First, fetch unique labels and then render the multi-select
+      getUniqueLabels().then(renderMantineMultiSelectToContainer);
+      
+      // Fetch thema options
+      fetchThemaOptions();
+      
+      // Handle thema selection change
+      themaSelect.addEventListener('change', function() {
+        if (themaSelect.value === 'custom') {
+          customThemaContainer.style.display = 'block';
+        } else {
+          customThemaContainer.style.display = 'none';
+        }
+      });
+
+      // Fetch unique labels from API and populate uniqueLabelsArray
+      function getUniqueLabels() {
+        return fetch('labels_add.php?action=get')
+          .then(response => response.json())
+          .then(data => {
+            if (data.labels && data.labels.length > 0) {
+              data.labels.forEach(label => {
+              uniqueLabelsArray.push(label.name);
+
+              });
+              }
+          })
+          .catch(error => {
+            console.error('Error fetching unique labels:', error);
+          });
+      }
+
+      // Render a plain multiple select element styled with Mantine classes using the unique labels
+      function renderMantineMultiSelectToContainer() {
+        const container = document.getElementById('bootstrap-multiselect-container');
+        if (!container) return;
+        // Clear container first
+        container.innerHTML = '';
+
+        // Create a <select> element with the multiple attribute
+        const select = document.createElement('select');
+        select.multiple = true;
+        select.className = 'mantine-Select-input';
+        select.style.width = '100%';
+        select.style.padding = '10px';
+        select.style.border = '1px solid #ced4da';
+        select.style.borderRadius = '4px';
+        select.style.height = '200px';
+        
+        // Populate the select options using uniqueLabelsArray
+        uniqueLabelsArray.forEach(label => {
+          const option = document.createElement('option');
+          option.value = label;
+          option.textContent = label;
+          select.appendChild(option);
+        });
+        
+        container.appendChild(select);
+      }
+
+      // Function to fetch thema options
+      function fetchThemaOptions() {
+        fetch('uniqueThema.php?extern=1')
+          .then(response => response.json())
+          .then(data => {
+            themaSelect.innerHTML = '';
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = '-- Select a Thema --';
+            themaSelect.appendChild(defaultOption);
+            
+            data.forEach(thema => {
+              const option = document.createElement('option');
+              option.value = thema;
+              option.textContent = thema;
+              themaSelect.appendChild(option);
+            });
+            
+            const customOption = document.createElement('option');
+            customOption.value = 'custom';
+            customOption.textContent = '-- Enter Custom Thema --';
+            themaSelect.appendChild(customOption);
+          })
+          .catch(error => {
+            console.error('Error fetching thema options:', error);
+            themaSelect.innerHTML = '<option value="">Error loading themas</option>';
+          });
+      }
+
+      // Update textarea content by removing successfully added words
+      function updateTextareaContent(data, originalLines) {
+        const successWords = new Set(data.success ? data.success.map(word => word.toLowerCase()) : []);
+        const problemWords = new Set([
+          ...(data.errors || []).map(word => word.toLowerCase().replace(" (insertion failed)", "")),
+          ...(data.specialChars || []).map(word => word.toLowerCase()),
+          ...(data.duplicatesInText || []).map(word => word.toLowerCase()),
+          ...(data.existsInSenses || []).map(word => word.toLowerCase())
+        ]);
+        
+        const remainingLines = originalLines.filter(line => {
+          const trimmedLine = line.trim();
+          if (!trimmedLine) return false;
+          if (problemWords.has(trimmedLine.toLowerCase())) return true;
+          if (successWords.has(trimmedLine.toLowerCase())) return false;
+          return true;
+        });
+        
+        wordList.value = remainingLines.join('\n');
+        if (remainingLines.length === 0) {
+          wordList.setAttribute('placeholder', 'All words processed successfully! Enter new words to add...');
+        }
+      }
+
+      // Function to search for glosses based on input with retry logic
+      function searchGlossesForWord(word) {
+        return fetch(`get_glosses.php?query=${encodeURIComponent(word)}`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.error) {
+              console.log(`No glosses found for "${word}"`);
+              return null;
+            }
+            return data.results;
+          })
+          .catch(error => {
+            console.error('Error searching for glosses:', error);
+            return null;
+          });
+      }
+
+      // Process words in batches to avoid overwhelming the server
+      async function processWordsInBatches(words, batchSize = 20, delayBetweenBatches = 1000) {
+        const results = [];
+        const totalWords = words.length;
+        let processedCount = 0;
+        
+        // Update loading indicator to show progress
+        loadingIndicator.innerHTML = `
+          <div class="mantine-Loader-root" style="border: 3px solid #f3f3f3; border-top: 3px solid #228be6; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 10px;"></div>
+          <span>Processing words (0/${totalWords})...</span>
+        `;
+        
+        // Process in batches
+        for (let i = 0; i < totalWords; i += batchSize) {
+          const batch = words.slice(i, i + batchSize);
+          console.log(`Processing batch ${i / batchSize + 1} (${batch.length} words)`);
+          
+          // Process each word in the current batch in parallel
+          const batchPromises = batch.map(word => searchGlossesForWord(word.trim()));
+          const batchResults = await Promise.all(batchPromises);
+          
+          // Add results to the main results array
+          results.push(...batchResults);
+          
+          // Update processed count and progress indicator
+          processedCount += batch.length;
+          loadingIndicator.querySelector('span').textContent = `Processing words (${processedCount}/${totalWords})...`;
+          
+          // If this isn't the last batch, add a delay before the next batch
+          if (i + batchSize < totalWords) {
+            await new Promise(resolve => setTimeout(resolve, delayBetweenBatches));
+          }
+        }
+        
+        return results;
+      }
+
+      // Event listener for Add Words button
+      submitBtn.addEventListener('click', async function() {
+        let selectedThema = '';
+        if (themaSelect.value === 'custom') {
+          selectedThema = customThema.value.trim();
+          if (!selectedThema) {
+            resultContainer.innerHTML = `
+              <div class="mantine-Alert-root" style="background-color: #fff5f5; color: #e03131; padding: 15px; border-radius: 4px; border-left: 4px solid #e03131;">
+                <p>Please enter a custom thema.</p>
+              </div>
+            `;
+            return;
+          }
+        } else if (!themaSelect.value) {
+          resultContainer.innerHTML = `
+            <div class="mantine-Alert-root" style="background-color: #fff5f5; color: #e03131; padding: 15px; border-radius: 4px; border-left: 4px solid #e03131;">
+              <p>Please select a thema.</p>
+            </div>
+          `;
+          return;
+        } else {
+          selectedThema = themaSelect.value;
+        }
+        
+        const words = wordList.value.trim();
+        if (!words) {
+          resultContainer.innerHTML = `
+            <div class="mantine-Alert-root" style="background-color: #fff5f5; color: #e03131; padding: 15px; border-radius: 4px; border-left: 4px solid #e03131;">
+              <p>Please enter at least one word to add.</p>
+            </div>
+          `;
+          return;
+        }
+        
+        const originalInput = words;
+        const originalLines = originalInput.split(/\r?\n/);
+        
+        // Get selected labels from the multi-select
+        const labelSelect = document.querySelector('#bootstrap-multiselect-container select');
+        const selectedLabels = labelSelect ? 
+          Array.from(labelSelect.selectedOptions).map(opt => opt.value) : [];
+        
+        // Get checkbox values
+        const checkDuplicatesWithSuffix = document.getElementById('checkDuplicatesWithSuffix').checked;
+        const linkWithSignbankID = document.getElementById('linkWithSignbankID').checked;
+        const checkWordExistsInSenses = document.getElementById('checkWordExistsInSenses').checked;
+        
+        loadingIndicator.style.display = 'block';
+        resultContainer.innerHTML = '';
+        
+        // Get the list of words
+        const wordLines = words.split(/\r?\n/).filter(line => line.trim());
+        
+        try {
+          // Process words in batches to avoid overwhelming the server
+          const glossResults = await processWordsInBatches(wordLines);
+          
+          // Update loading indicator to show submission progress
+          loadingIndicator.querySelector('span').textContent = 'Processing complete. Submitting data...';
+          
+          // Prepare form data with gloss information
+          const formData = new FormData();
+          formData.append('thema', selectedThema);
+          formData.append('labels', JSON.stringify(selectedLabels));
+          formData.append('userId', UserLoggedId);
+          formData.append('checkDuplicatesWithSuffix', checkDuplicatesWithSuffix);
+          formData.append('linkWithSignbankID', linkWithSignbankID);
+          formData.append('checkWordExistsInSenses', checkWordExistsInSenses);
+          
+          // Structure for storing words with their glosses
+          const wordData = {};
+          // Track glosses to prevent duplicates
+          const existingGlosses = new Set();
+          
+          // Process each word's glosses
+          wordLines.forEach((word, index) => {
+            const trimmedWord = word.trim();
+            if (!trimmedWord) return;
+            
+            const glossMatches = glossResults[index];
+            
+            // Initialize the word data
+            wordData[trimmedWord] = {
+              woord: trimmedWord,
+              glossFound: false,
+              updateLabelsOnly: false
+            };
+            
+            // If we found glosses for this word and linkWithSignbankID is checked
+            if (glossMatches && glossMatches.length > 0 && linkWithSignbankID) {
+              // First prioritize exact matches
+              const exactMatches = glossMatches.filter(g => g.ExactMatch === true);
+              
+              // Then exact sense matches
+              const exactSenseMatches = exactMatches.filter(g => 
+                g.Type === 'sense' && 
+                g.Sense && 
+                g.Sense.toLowerCase() === trimmedWord.toLowerCase()
+              );
+              
+              // Then exact lemma matches
+              const exactLemmaMatches = exactMatches.filter(g => 
+                g.Type === 'lemma' && 
+                g.Gloss.toLowerCase() === trimmedWord.toLowerCase()
+              );
+              
+              // Then partial matches
+              const partialMatches = glossMatches.filter(g => g.ExactMatch !== true);
+              
+              let bestMatch = null;
+              
+              // Choose the best match in order of priority
+              if (exactSenseMatches.length > 0) {
+                bestMatch = exactSenseMatches[0];
+                wordData[trimmedWord].matchType = 'exact_sense';
+              } else if (exactLemmaMatches.length > 0) {
+                bestMatch = exactLemmaMatches[0];
+                wordData[trimmedWord].matchType = 'exact_lemma';
+              } else if (partialMatches.length > 0) {
+                bestMatch = partialMatches[0];
+                wordData[trimmedWord].matchType = 'partial';
+              }
+              
+              if (bestMatch) {
+                const gloss = bestMatch.Gloss;
+                
+                // Check if this gloss already exists in our current batch
+                if (existingGlosses.has(gloss)) {
+                  // This gloss is already in our batch, so mark for label update only
+                  wordData[trimmedWord].glossFound = true;
+                  wordData[trimmedWord].updateLabelsOnly = true;
+                  wordData[trimmedWord].gloss = gloss;
+                  wordData[trimmedWord].signbankId = bestMatch['Signbank ID'];
+                } else {
+                  // This is a new gloss for our batch
+                  wordData[trimmedWord].glossFound = true;
+                  wordData[trimmedWord].gloss = gloss;
+                  wordData[trimmedWord].signbankId = bestMatch['Signbank ID'];
+                  wordData[trimmedWord].matchedTerm = bestMatch.MatchedTerm;
+                  
+                  // Add to set of found glosses
+                  existingGlosses.add(gloss);
+                }
+              }
+            }
+          });
+          
+          // Add the processed word data to the form
+          formData.append('wordList', words);
+          formData.append('wordData', JSON.stringify(wordData));
+          
+          // Send request using fetch
+          const response = await fetch('batch_add.php', {
+            method: 'POST',
+            body: formData
+          });
+          
+          // Check if the response is ok
+          if (!response.ok) {
+            const text = await response.text();
+            throw new Error(`Server returned ${response.status}: ${text}`);
+          }
+          
+          const data = await response.json();
+          
+          loadingIndicator.style.display = 'none';
+          console.log("Server response:", data);
+          
+          if (data.error) {
+            resultContainer.innerHTML = `
+              <div class="mantine-Alert-root" style="background-color: #fff5f5; color: #e03131; padding: 15px; border-radius: 4px; border-left: 4px solid #e03131;">
+                <p>${data.error}</p>
+              </div>
+            `;
+            return;
+          }
+          
+          let resultHTML = `
+            <div class="mantine-Alert-root" style="background-color: #e6f4ff; color: #0958d9; padding: 15px; border-radius: 4px; margin-bottom: 15px; border-left: 4px solid #0958d9;">
+              <p>Words added with thema: <strong>${selectedThema}</strong></p>
+            </div>
+          `;
+          
+          // Show information about updated labels
+          if (data.updatedLabels && data.updatedLabels.length > 0) {
+            resultHTML += `
+              <div class="mantine-Alert-root" style="background-color: #e6f4ff; color: #0958d9; padding: 15px; border-radius: 4px; margin-bottom: 15px; border-left: 4px solid #0958d9;">
+                <h4 style="margin-top: 0; margin-bottom: 10px;">The following entries already existed and had their labels updated:</h4>
+                <ul style="margin-bottom: 0;">
+                  ${data.updatedLabels.map(item => `<li>${item.word} (Glos: ${item.glos})</li>`).join('')}
+                </ul>
+              </div>
+            `;
+          }
+          
+          // Show information about found glosses
+          if (data.glossMatches && data.glossMatches.length > 0) {
+            resultHTML += `
+              <div class="mantine-Alert-root" style="background-color: #f1f9ee; color: #2b8a3e; padding: 15px; border-radius: 4px; margin-bottom: 15px; border-left: 4px solid #2b8a3e;">
+                <h4 style="margin-top: 0; margin-bottom: 10px;">The following words matched existing glosses:</h4>
+                <ul style="margin-bottom: 0;">
+                  ${data.glossMatches.map(match => `<li>${match.word} (Gloss: ${match.gloss}, Signbank ID: ${match.signbankId})</li>`).join('')}
+                </ul>
+              </div>
+            `;
+          }
+          
+          // Show information about glosses that were updated with labels only
+          if (data.labelsOnlyUpdated && data.labelsOnlyUpdated.length > 0) {
+            resultHTML += `
+              <div class="mantine-Alert-root" style="background-color: #e6f4ff; color: #0958d9; padding: 15px; border-radius: 4px; margin-bottom: 15px; border-left: 4px solid #0958d9;">
+                <h4 style="margin-top: 0; margin-bottom: 10px;">The following glosses already exist and had only their labels updated:</h4>
+                <ul style="margin-bottom: 0;">
+                  ${data.labelsOnlyUpdated.map(item => `<li>${item.word} (Glos: ${item.gloss})</li>`).join('')}
+                </ul>
+              </div>
+            `;
+          }
+          
+          if (data.specialChars && data.specialChars.length > 0) {
+            resultHTML += `
+              <div class="mantine-Alert-root" style="background-color: #fff8f0; color: #e67700; padding: 15px; border-radius: 4px; margin-bottom: 15px; border-left: 4px solid #e67700;">
+                <h4 style="margin-top: 0; margin-bottom: 10px;">The following words contain special characters and were not added:</h4>
+                <ul style="margin-bottom: 0;">
+                  ${data.specialChars.map(word => `<li>${word}</li>`).join('')}
+                </ul>
+              </div>
+            `;
+          }
+          
+          if (data.duplicatesInText && data.duplicatesInText.length > 0) {
+            resultHTML += `
+              <div class="mantine-Alert-root" style="background-color: #f3f0ff; color: #7048e8; padding: 15px; border-radius: 4px; margin-bottom: 15px; border-left: 4px solid #7048e8;">
+                <h4 style="margin-top: 0; margin-bottom: 10px;">The following words were duplicates in your input and were not added:</h4>
+                <ul style="margin-bottom: 0;">
+                  ${data.duplicatesInText.map(word => `<li>${word}</li>`).join('')}
+                </ul>
+              </div>
+            `;
+          }
+          
+          if (data.duplicatesWithSuffix && data.duplicatesWithSuffix.length > 0) {
+            resultHTML += `
+              <div class="mantine-Alert-root" style="background-color: #f1eaff; color: #5f3dc4; padding: 15px; border-radius: 4px; margin-bottom: 15px; border-left: 4px solid #5f3dc4;">
+                <h4 style="margin-top: 0; margin-bottom: 10px;">The following words exist with or without suffixes and were not added:</h4>
+                <ul style="margin-bottom: 0;">
+                  ${data.duplicatesWithSuffix.map(word => `<li>${word}</li>`).join('')}
+                </ul>
+              </div>
+            `;
+          }
+          
+          if (data.errors && data.errors.length > 0) {
+            resultHTML += `
+              <div class="mantine-Alert-root" style="background-color: #fff5f5; color: #e03131; padding: 15px; border-radius: 4px; margin-bottom: 15px; border-left: 4px solid #e03131;">
+                <h4 style="margin-top: 0; margin-bottom: 10px;">The following words already exist in the database:</h4>
+                <ul style="margin-bottom: 0;">
+                  ${data.errors.map(word => `<li>${word}</li>`).join('')}
+                </ul>
+              </div>
+            `;
+          }
+          
+          if (data.existsInSenses && data.existsInSenses.length > 0) {
+            resultHTML += `
+              <div class="mantine-Alert-root" style="background-color: #fff2e6; color: #cc7a00; padding: 15px; border-radius: 4px; margin-bottom: 15px; border-left: 4px solid #cc7a00;">
+                <h4 style="margin-top: 0; margin-bottom: 10px;">The following words already exist in senses and were not added:</h4>
+                <ul style="margin-bottom: 0;">
+                  ${data.existsInSenses.map(word => `<li>${word}</li>`).join('')}
+                </ul>
+              </div>
+            `;
+          }
+          
+          if (data.success && data.success.length > 0) {
+            resultHTML += `
+              <div class="mantine-Alert-root" style="background-color: #f1f9ee; color: #2b8a3e; padding: 15px; border-radius: 4px; border-left: 4px solid #2b8a3e;">
+                <h4 style="margin-top: 0; margin-bottom: 10px;">The following words were successfully added:</h4>
+                <ul style="margin-bottom: 0;">
+                  ${data.success.map(word => `<li>${word}</li>`).join('')}
+                </ul>
+              </div>
+            `;
+          }
+          
+          resultContainer.innerHTML = resultHTML || `
+            <div class="mantine-Alert-root" style="background-color: #f8f9fa; color: #495057; padding: 15px; border-radius: 4px; border-left: 4px solid #495057;">
+              <p>No words were processed.</p>
+            </div>
+          `;
+          
+          updateTextareaContent(data, originalLines);
+          
+        } catch (error) {
+          loadingIndicator.style.display = 'none';
+          console.error("Error details:", error);
+          resultContainer.innerHTML = `
+            <div class="mantine-Alert-root" style="background-color: #fff5f5; color: #e03131; padding: 15px; border-radius: 4px; border-left: 4px solid #e03131;">
+              <p>Error: ${error.message}</p>
+              <p>Please check the browser console for more details.</p>
+            </div>
+          `;
+        }
+      });
+    });
+
+    checkSession();
+    console.log("LOGIN", UserLoggedId);
+    var loggedInUser;
+    var UserLoggedIdNaam;
+
+    function checkSession() {
+      var cookies = decodeURIComponent(document.cookie);
+
+      // To extract and parse the session object
+      var sessionCookie = cookies.split('; ').find(row => row.startsWith('sessionObject='));
+      if (sessionCookie) {
+        var sessionData = JSON.parse(sessionCookie.split('=')[1]);
+        console.log(sessionData.userId, sessionData.username); // Should log the userId and username
+
+        loggedInUser = sessionData.username;
+        UserLoggedId = sessionData.userId;
+
+        console.log(loggedInUser);
+      } else {
+        window.location.href = 'login.html';
+      }
+    }
+  </script>
+</body>
+</html>
