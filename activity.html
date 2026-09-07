@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>signCollect - Gebruikersactiviteit</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/activity.css">
+    <!-- Same guard as users.html: bounces a caller with no session to the login
+         page, and logs this visit like every other page. The real access
+         decision is php_api/activity_log.php's, which reads the role from the
+         database; this only saves an admin-less browser a pointless round trip. -->
+    <script src="/userProtect.js"></script>
+</head>
+<body>
+
+<div class="page-card">
+    <div class="page-header">
+        <div class="page-header-left">
+            <i class="fas fa-chart-line"></i>
+            <h1 data-i18n="activity.title">Gebruikersactiviteit</h1>
+        </div>
+        <div>
+            <a href="/menu_beta/index.html" class="btn-back">
+                <i class="fas fa-arrow-left"></i> <span data-i18n="activity.back">Terug</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="denied" id="deniedBox" hidden>
+        <i class="fas fa-lock"></i>
+        <p data-i18n="activity.denied">Deze pagina is alleen voor beheerders.</p>
+    </div>
+
+    <div id="activityBody" hidden>
+        <form class="filter-bar" id="filterForm">
+            <label class="filter-field">
+                <span data-i18n="activity.filter.user">Gebruiker</span>
+                <select id="filterUser">
+                    <option value="" data-i18n="activity.filter.all_users">— alle gebruikers —</option>
+                </select>
+            </label>
+            <label class="filter-field">
+                <span data-i18n="activity.filter.from">Van</span>
+                <input type="date" id="filterFrom">
+            </label>
+            <label class="filter-field">
+                <span data-i18n="activity.filter.to">Tot en met</span>
+                <input type="date" id="filterTo">
+            </label>
+            <label class="filter-field">
+                <span data-i18n="activity.filter.page_size">Per pagina</span>
+                <select id="filterPageSize">
+                    <option value="25">25</option>
+                    <option value="50" selected>50</option>
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                </select>
+            </label>
+            <div class="filter-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter"></i> <span data-i18n="activity.filter.apply">Toepassen</span>
+                </button>
+                <button type="button" class="btn" id="resetBtn">
+                    <i class="fas fa-rotate-left"></i> <span data-i18n="activity.filter.reset">Reset</span>
+                </button>
+            </div>
+        </form>
+
+        <div class="cards" id="summaryCards"></div>
+
+        <div class="panels">
+            <section class="panel">
+                <h2><i class="fas fa-users"></i> <span data-i18n="activity.users.title">Per gebruiker</span></h2>
+                <div class="table-wrap">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th data-i18n="activity.users.col.user">Gebruiker</th>
+                                <th data-i18n="activity.users.col.role">Rol</th>
+                                <th data-i18n="activity.users.col.last_seen">Laatst gezien</th>
+                                <th data-i18n="activity.users.col.last_page">Laatste pagina</th>
+                                <th class="num" data-i18n="activity.users.col.visits">Bezoeken</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTable"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="panel">
+                <h2><i class="fas fa-file-lines"></i> <span data-i18n="activity.pages.title">Drukste pagina's</span></h2>
+                <div class="table-wrap">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th data-i18n="activity.pages.col.page">Pagina</th>
+                                <th data-i18n="activity.pages.col.last_visit">Laatste bezoek</th>
+                                <th class="num" data-i18n="activity.pages.col.visits">Bezoeken</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pagesTable"></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <section class="panel">
+            <h2><i class="fas fa-list-ul"></i> <span data-i18n="activity.events.title">Activiteitenlog</span></h2>
+            <div class="result-meta" id="resultMeta"></div>
+            <div class="table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th data-i18n="activity.events.col.when">Wanneer</th>
+                            <th data-i18n="activity.events.col.user">Gebruiker</th>
+                            <th data-i18n="activity.events.col.page">Pagina</th>
+                        </tr>
+                    </thead>
+                    <tbody id="eventsTable"></tbody>
+                </table>
+            </div>
+            <div class="empty-state" id="emptyState" hidden>
+                <i class="fas fa-folder-open"></i>
+                <p data-i18n="activity.events.empty">Geen activiteit in deze periode.</p>
+            </div>
+            <nav class="pager" id="pager"></nav>
+        </section>
+    </div>
+</div>
+
+<script type="module" src="js/activity.js"></script>
+</body>
+</html>
