@@ -1,4 +1,9 @@
 <?php
+
+// signcollect-lib's install-root resolver: sc_path(), sc_dir(), sc_root().
+// Vendored shim - it finds /web/lib/paths.php, or falls back to /web.
+require_once __DIR__ . '/../sc_paths.php';
+
 /**
  * The Signbank ECV export: one ~11MB JSON dump of every gloss in the
  * connected Signbank with its senses, phonology, dictionary link and video
@@ -21,13 +26,13 @@
 function signbank_ecv_path(): string {
     static $resolved = null;
     if ($resolved !== null) return $resolved;
-    foreach (['/web/signbank_data/glosses_transformed.json',
-              '/web/glosses_transformed.json'] as $candidate) {
+    foreach ([sc_path('signbank_data/glosses_transformed.json'),
+              sc_path('glosses_transformed.json')] as $candidate) {
         if (is_readable($candidate)) return $resolved = $candidate;
     }
     // Neither exists: name the one a rebuild would create, so the error a
     // caller reports points at where the file is supposed to be.
-    return $resolved = '/web/signbank_data/glosses_transformed.json';
+    return $resolved = sc_path('signbank_data/glosses_transformed.json');
 }
 
 function signbank_ecv_available(): bool {

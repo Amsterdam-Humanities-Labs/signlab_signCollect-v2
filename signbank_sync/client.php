@@ -1,4 +1,9 @@
 <?php
+
+// signcollect-lib's install-root resolver: sc_path(), sc_dir(), sc_root().
+// Vendored shim - it finds /web/lib/paths.php, or falls back to /web.
+require_once __DIR__ . '/../sc_paths.php';
+
 /**
  * Thin client for the Signbank Global Signbank API.
  * Spec: https://signbank.github.io/Global-signbank/
@@ -24,7 +29,7 @@ function signbank_key_placeholders(): array {
  */
 function signbank_state_dir(): string {
     $cfg = signbank_config();
-    return rtrim((string)($cfg['state_dir'] ?? '/web/signbank_data'), '/');
+    return rtrim((string)($cfg['state_dir'] ?? sc_path('signbank_data')), '/');
 }
 
 /**
@@ -81,7 +86,7 @@ function signbank_config(): array {
 
     // Resolved here rather than through signbank_state_dir(), which would
     // call back into this function before $cfg is cached.
-    $keyFile = rtrim((string)($cfg['state_dir'] ?? '/web/signbank_data'), '/') . '/.signbank_key';
+    $keyFile = rtrim((string)($cfg['state_dir'] ?? sc_path('signbank_data')), '/') . '/.signbank_key';
     $runtime = is_readable($keyFile) ? trim((string)@file_get_contents($keyFile)) : '';
     if ($runtime !== '' && !in_array($runtime, signbank_key_placeholders(), true)) {
         $cfg['api_key']    = $runtime;

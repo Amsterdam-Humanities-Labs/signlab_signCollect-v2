@@ -1,4 +1,9 @@
 <?php
+
+// signcollect-lib's install-root resolver: sc_path(), sc_dir(), sc_root().
+// Vendored shim - it finds /web/lib/paths.php, or falls back to /web.
+require_once __DIR__ . '/../sc_paths.php';
+
 /**
  * POST /menu_beta/php_api/lsm_video_upload.php
  *
@@ -70,7 +75,7 @@ $tmp  = $_FILES['file']['tmp_name'];
 $sha  = hash_file('sha256', $tmp);
 if (!$sha) json_response(['error' => 'hash_failed'], 500);
 
-$dir      = '/web/uploads/lsm';
+$dir      = sc_path('uploads/lsm');
 if (!is_dir($dir)) json_response(['error' => 'uploads_dir_missing', 'path' => $dir], 500);
 $filename = $glossId . '_' . substr($sha, 0, 16) . '.' . $ext;
 $dest     = $dir . '/' . $filename;

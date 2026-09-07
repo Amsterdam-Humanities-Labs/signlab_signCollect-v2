@@ -1,4 +1,9 @@
 <?php
+
+// signcollect-lib's install-root resolver: sc_path(), sc_dir(), sc_root().
+// Vendored shim - it finds /web/lib/paths.php, or falls back to /web.
+require_once __DIR__ . '/../sc_paths.php';
+
 /**
  * POST { id }  →  push *every* mappable field from form_data to Signbank.
  * Useful from the Compare modal when you want signCollect to win and
@@ -51,7 +56,7 @@ $videoLocalPath = null;
 if ($wantsVideoPush) {
     $zelf = signbank_decode_json_array($row['zelfopname'] ?? null);
     if (!empty($zelf)) {
-        $candidate = '/web/uploads/' . $zelf[0];
+        $candidate = sc_dir('uploads') . $zelf[0];
         if (is_file($candidate)) $videoLocalPath = $candidate;
     }
 }
