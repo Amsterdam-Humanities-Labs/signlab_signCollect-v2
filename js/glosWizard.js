@@ -23,9 +23,18 @@ const state = {
   results: [],
 };
 
-/** Gloss names are uppercase and hyphenated; normalise as the user types. */
+/** The gloss name a word makes: uppercase, hyphenated, no stray edges. */
 export function normaliseGlos(v) {
-  return String(v || '').toUpperCase().trim().replace(/\s+/g, '-');
+  return typeGlos(v).replace(/^-+|-+$/g, '');
+}
+
+/**
+ * The same rule applied mid-typing, which must not trim: a trailing space is
+ * how the user is on their way to a second word, and trimming it means
+ * "boek water" arrives as BOEKWATER instead of BOEK-WATER.
+ */
+function typeGlos(v) {
+  return String(v || '').toUpperCase().replace(/\s+/g, '-');
 }
 
 const $ = (sel) => document.querySelector(sel);
@@ -41,7 +50,7 @@ export function setupGlosWizard() {
   const input = $('#wizardGlosInput');
   input.addEventListener('input', () => {
     const caretAtEnd = input.selectionStart === input.value.length;
-    input.value = normaliseGlos(input.value);
+    input.value = typeGlos(input.value);
     if (caretAtEnd) input.setSelectionRange(input.value.length, input.value.length);
     state.suggestion = null;
     setCreateLabel(t('wizard.btn.create'));
@@ -164,7 +173,10 @@ function previewVideo(item) {
     ? '/uploads/' + encodeURIComponent(item.glos) + '.mp4'
     : item.video;
 
-  const video = el('video', { class: 'wizard-video', muted: true, preload: 'none', playsInline: true, src });
+  // preload="metadata" rather than "none": a Signbank sign with no local copy
+  // must fire `error` and take its element away, otherwise every such card
+  // carries a black rectangle that never plays.
+  const video = el('video', { class: 'wizard-video', muted: true, preload: 'metadata', playsInline: true, src });
   video.addEventListener('mouseover', () => { video.currentTime = 0; video.play().catch(() => {}); });
   video.addEventListener('mouseout',  () => { video.pause(); video.currentTime = 0; });
   video.addEventListener('error', () => video.remove());
