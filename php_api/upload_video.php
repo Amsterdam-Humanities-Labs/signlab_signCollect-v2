@@ -22,8 +22,19 @@ $tmp  = $_FILES['file']['tmp_name'];
 $hash = hash_file('sha256', $tmp);
 if (!$hash) json_response(['error' => 'hash_failed'], 500);
 
+// Self-recordings are served straight back out of the document root as
+// /uploads/<name>, so this path is fixed by the URL the page plays, not a
+// preference. It is a directory the application owns but never created:
+// production has had it forever (a symlink onto the media volume), so
+// nothing noticed that a host deployed from scratch has no /web/uploads at
+// all - and there every recording died on a 500 before a byte was written.
+// Create it instead of refusing, and when even that is impossible say which
+// path could not be made, so the answer is "chown the docroot" and not a
+// bare "uploads_dir_missing".
 $dir = '/web/uploads';
-if (!is_dir($dir)) json_response(['error' => 'uploads_dir_missing'], 500);
+if (!is_dir($dir) && !@mkdir($dir, 0775, true) && !is_dir($dir)) {
+    json_response(['error' => 'uploads_dir_unwritable', 'path' => $dir], 500);
+}
 
 $filename = $hash . '.webm';
 $dest     = $dir . '/' . $filename;
