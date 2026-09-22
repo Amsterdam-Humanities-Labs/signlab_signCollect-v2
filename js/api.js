@@ -65,17 +65,4 @@ export const api = {
   forcePushToSignbank: (id, onlyFields) => post('../signbank_sync/force_push.php',
     onlyFields ? { id, only_fields: onlyFields } : { id }),
   forcePullFromSignbank: (id) => post('../signbank_sync/force_pull.php', { id }),
-  pushToSignbank: (id) => fetch('signbank_sync/push_gloss.php', {
-    method: 'POST',
-    credentials: 'same-origin',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id, dataset: _dataset }),
-  }).then(async r => {
-    let data = null; try { data = await r.json(); } catch {}
-    if (!r.ok) {
-      const msg = (data && (data.message || data.error)) || r.statusText;
-      throw new Error(msg);
-    }
-    return data;
-  }),
 };

@@ -358,7 +358,6 @@ function makeCtx() {
     openLogbook:   (row)      => openLogbookModal(row),
     deleteAllZelfopname: (row) => deleteAllZelfopname(row),
     contextIsSignbank: ()     => state.context === 'signbank',
-    pushToSignbank: (row)     => pushGlossToSignbank(row),
     broadcastToSignbank: (row) => broadcastGloss(row),
     disconnectSignbank: (row)  => disconnectGloss(row),
     compareWithSignbank: (row) => compareGloss(row),
@@ -1083,55 +1082,8 @@ function setupSignbankModal() {
   });
 }
 
-let signbankCurrentRow = null;
-
-function pushGlossToSignbank(row) {
-  signbankCurrentRow = row;
-  $('#signbankTitle').textContent = t('sb.op_title.broadcast', { name: row.glos || '#' + row.id });
-  $('#signbankRetryBtn').onclick = () => firePush(row);
-  $('#signbankModal').classList.remove('hidden');
-  firePush(row);
-}
-
 function closeSignbankModal() {
-  signbankCurrentRow = null;
   $('#signbankModal').classList.add('hidden');
-}
-
-async function firePush(row) {
-  const body = $('#signbankBody');
-  const status = $('#signbankFooterStatus');
-  status.className = 'signbank-status busy';
-  status.textContent = t('sb.op.busy', { verb: 'Push' });
-  clearChildren(body);
-  body.appendChild(renderSourceSection(row));
-  const banner = el('div', { class: 'sb-banner info' },
-    el('i', { class: 'fas fa-paper-plane' }),
-    el('span', {}, t('sb.busy.broadcast')),
-  );
-  body.appendChild(banner);
-
-  let res;
-  try {
-    res = await api.pushToSignbank(row.id);
-  } catch (e) {
-    body.removeChild(banner);
-    body.appendChild(renderBanner('error', t('sb.error.request_failed'), e.message));
-    status.className = 'signbank-status';
-    status.textContent = '';
-    return;
-  }
-
-  body.removeChild(banner);
-  body.appendChild(renderResultBanner(res));
-  body.appendChild(renderLogSection(res.log || []));
-  body.appendChild(renderRequestSection(res.request));
-  body.appendChild(renderResponseSection(res));
-
-  status.className = 'signbank-status';
-  status.textContent = res.ok
-    ? t('sb.status.done_http', { status: res.status, ms: res.duration_ms })
-    : t('sb.status.failed_http', { status: res.status, ms: res.duration_ms });
 }
 
 function renderSourceSection(row) {
@@ -1210,19 +1162,6 @@ function renderBanner(kind, title, detail) {
       detail ? el('span', { class: 'banner-detail' }, detail) : null,
     ),
   );
-}
-
-function renderResultBanner(res) {
-  if (res.ok) {
-    return renderBanner('success', `Signbank antwoord: HTTP ${res.status}`, `Verzoek voltooid in ${res.duration_ms} ms.`);
-  }
-  let detail = `HTTP ${res.status} in ${res.duration_ms} ms`;
-  if (res.http_error) detail += ' · curl: ' + res.http_error;
-  if (res.response && typeof res.response === 'object' && res.response._html_error) {
-    const err = res.response;
-    detail = `${err.h1 || err.title || 'Server error'} — ${err.detail || ''}`.trim();
-  }
-  return renderBanner('error', 'Signbank gaf een fout', detail);
 }
 
 function renderLogSection(logEntries) {
@@ -1343,7 +1282,7 @@ function disconnectGloss(row) {
 
 /**
  * Run a Signbank operation and render its full result in the existing
- * #signbankModal (same one the push_gloss flow uses). Doesn't auto-close.
+ * #signbankModal. Doesn't auto-close.
  */
 async function runSignbankOperation({ title, busyMsg, row, call, onOk }) {
   $('#signbankTitle').textContent = title;
