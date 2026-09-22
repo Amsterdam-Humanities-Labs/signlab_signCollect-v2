@@ -4,6 +4,12 @@
 // Vendored shim - it finds /web/lib/paths.php, or falls back to /web.
 require_once __DIR__ . '/sc_paths.php';
 
+// Server-side gate: these write form_data / labels, so a logged-in session is
+// required - the page's /userProtect.js is only a browser redirect.
+require_once __DIR__ . '/php_api/db.php';
+require_once __DIR__ . '/php_api/session.php';
+require_session();                                    // 401 JSON without a valid session
+
 // Turn off PHP error reporting to avoid HTML in JSON response
 error_reporting(0);
 ini_set('display_errors', 0);
