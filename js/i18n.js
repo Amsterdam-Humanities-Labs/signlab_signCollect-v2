@@ -71,6 +71,18 @@ const STRINGS = {
   'menu.item.users':       { nl: 'Gebruikers Beheren',      en: 'Manage users' },
   'menu.item.user_stats':  { nl: 'Gebruikersactiviteit',    en: 'User activity' },
   'menu.logout':           { nl: 'Uitloggen',               en: 'Log out' },
+  'menu.change_password':  { nl: 'Wachtwoord wijzigen',     en: 'Change password' },
+  'password.title':        { nl: 'Wachtwoord wijzigen',     en: 'Change password' },
+  'password.current':      { nl: 'Huidig wachtwoord',       en: 'Current password' },
+  'password.new':          { nl: 'Nieuw wachtwoord',        en: 'New password' },
+  'password.repeat':       { nl: 'Herhaal nieuw wachtwoord', en: 'Repeat new password' },
+  'password.saved':        { nl: 'Wachtwoord gewijzigd',    en: 'Password changed' },
+  'password.err.mismatch': { nl: 'De nieuwe wachtwoorden zijn niet gelijk', en: 'The new passwords do not match' },
+  'password.err.too_short': { nl: 'Nieuw wachtwoord: minimaal 8 tekens', en: 'New password: at least 8 characters' },
+  'password.err.too_long': { nl: 'Nieuw wachtwoord is te lang', en: 'New password is too long' },
+  'password.err.same_as_old': { nl: 'Nieuw wachtwoord is gelijk aan het huidige', en: 'New password is the same as the current one' },
+  'password.err.wrong_current': { nl: 'Huidig wachtwoord klopt niet', en: 'Current password is wrong' },
+  'password.err.missing_fields': { nl: 'Vul alle velden in', en: 'Fill in all fields' },
 
   // ── Filter bar / search ───────────────────────────────────────────────
   'filter.search.placeholder': { nl: 'Zoek glos…',          en: 'Search gloss…' },

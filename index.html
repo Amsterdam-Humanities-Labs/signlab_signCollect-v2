@@ -73,6 +73,7 @@
 
     <section>
       <h4 data-i18n="menu.section.account">Account</h4>
+      <a href="#" id="navChangePassword"><i class="fas fa-key"></i> <span data-i18n="menu.change_password">Wachtwoord wijzigen</span></a>
       <a href="#" id="navLogout" class="logout"><i class="fas fa-sign-out-alt"></i> <span data-i18n="menu.logout">Uitloggen</span></a>
     </section>
   </nav>
@@ -164,6 +165,22 @@
       <footer>
         <button type="button" class="btn" data-close data-i18n="btn.cancel">Annuleren</button>
         <button type="submit" class="btn btn-primary" data-i18n="add.submit">Aanmaken</button>
+      </footer>
+    </form>
+  </div>
+</div>
+
+<!-- Change password modal -->
+<div class="modal-backdrop hidden" id="passwordModal">
+  <div class="modal">
+    <header><h3 data-i18n="password.title">Wachtwoord wijzigen</h3><button class="close" data-close>&times;</button></header>
+    <form id="passwordForm">
+      <label><span data-i18n="password.current">Huidig wachtwoord</span> <span class="req">*</span><input type="password" name="current" required autocomplete="current-password"></label>
+      <label><span data-i18n="password.new">Nieuw wachtwoord</span> <span class="req">*</span><input type="password" name="new" required minlength="8" maxlength="255" autocomplete="new-password"></label>
+      <label><span data-i18n="password.repeat">Herhaal nieuw wachtwoord</span> <span class="req">*</span><input type="password" name="repeat" required minlength="8" maxlength="255" autocomplete="new-password"></label>
+      <footer>
+        <button type="button" class="btn" data-close data-i18n="btn.cancel">Annuleren</button>
+        <button type="submit" class="btn btn-primary" data-i18n="btn.save">Opslaan</button>
       </footer>
     </form>
   </div>
