@@ -40,6 +40,7 @@ export const api = {
   save:           (id, fields) => post('glosses_save.php', { id, fields }),
   create:         (fields)     => post('glosses_create.php', fields),
   remove:         (id)         => post('glosses_delete.php', { id }),
+  changePassword: (current, next) => post('change_password.php', { current, new: next }),
   uploadVideo: (id, blob) => {
     const fd = new FormData();
     fd.append('id', id);

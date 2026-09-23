@@ -1853,8 +1853,48 @@ function setupNavDrawer() {
     location.href = '/logout.html';
   });
 
+  $('#navChangePassword').addEventListener('click', (ev) => {
+    ev.preventDefault();
+    close();
+    $('#passwordForm').reset();
+    $('#passwordModal').classList.remove('hidden');
+    $('#passwordForm [name=current]').focus();
+  });
+  setupPasswordModal();
+
   // Default closed
   close();
+}
+
+/* ---------- Change password modal ---------- */
+function setupPasswordModal() {
+  const modal = $('#passwordModal');
+  const form  = $('#passwordForm');
+  modal.addEventListener('click', ev => {
+    if (ev.target.matches('[data-close]') || ev.target === modal) closeModal('#passwordModal');
+  });
+  form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const current = form.elements.current.value;
+    const next    = form.elements.new.value;
+    if (next !== form.elements.repeat.value) { toast(t('password.err.mismatch'), 'error'); return; }
+    if (next.length < 8)  { toast(t('password.err.too_short'), 'error'); return; }
+    if (next === current) { toast(t('password.err.same_as_old'), 'error'); return; }
+    const submitBtn = form.querySelector('[type=submit]');
+    submitBtn.disabled = true;
+    try {
+      await api.changePassword(current, next);
+      closeModal('#passwordModal');
+      form.reset();
+      toast(t('password.saved'), 'success');
+    } catch (err) {
+      const key = 'password.err.' + err.message;
+      const msg = t(key);
+      toast(msg === key ? err.message : msg, 'error');
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
 }
 
 /* ---------- Phonology modal ---------- */
