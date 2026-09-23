@@ -38,4 +38,4 @@ The deploy does not run `migrations/`. Apply them by hand.
 - Signbank (`https://signbank.cls.ru.nl`, third party). Only `signbank_sync/` uses it.
 - Shared `/login.html` and `/logout.html` from `web_extra/` in [signlab_signcollect-stack](https://github.com/Amsterdam-Humanities-Labs/signlab_signcollect-stack).
 - Media: `<root>/gebarenoverleg_media/studioFilesMini/` and `<root>/uploads/lsm/`.
-- More docs: `docs/spec.md` (data model and endpoints) and `docs/architecture/` (architecture pages in HTML).
+- More docs: `docs/architecture/` (architecture pages in HTML: endpoints, database map, workflows).
