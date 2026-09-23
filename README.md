@@ -4,7 +4,8 @@ The SignCollect main menu and gloss editor, plus the Signbank connector.
 ## What it does
 - `index.html` is the gloss table (`form_data`). You can filter, page and edit inline: senses, phonology, labels and themes (`thema`).
 - It also records self-capture video in the browser and shows linked studio videos (`matched_transcriptions`). Its menu is the navigation for all SignCollect pages.
-- Admin pages: `labels_add.html`, `batch_add.html`, `users.html`, `activity.html` and `signbank.php`. Of the pages, only `signbank.php` checks the login on the server. Most PHP endpoints call `require_session()`.
+- Admin pages: `labels_add.html`, `batch_add.html`, `users.html`, `activity.html` and `signbank.php`.
+- Login checks: of the pages, only `signbank.php` checks the login on the server. Most PHP endpoints call `require_session()`. `users_api.php` checks for the admin role itself. `get_glosses.php` (the Signbank lookup for `batch_add.html`) has no login check.
 - Datasets: `php_api/datasets.php` registers `ngt` (`form_data`) and `lsm`. NGT also has a Signio/Signbank switch (`extern` column).
 - `signbank_sync/`: `ecv_refresh.php` rebuilds `glosses_transformed.json` (about 11 MB; zin, hh, nmm and this repo read it). `broadcast_gloss`, `fetch_gloss`, `force_push`, `force_pull` and `delete_gloss` sync one gloss at a time.
 
