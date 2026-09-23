@@ -26,7 +26,7 @@ The deploy does not run `migrations/`. Apply them by hand.
 |---|---|
 | `<root>/mysql_config.php` | DB credentials (a shim over signcollect-lib on migrated hosts). Most endpoints use `php_api/db.php`. `batch_add.php`, `labels_add.php`, `uniqueThema.php` and `users_api.php` include it directly |
 | `<root>/.session_secret` | HMAC key for the `sessionObject` cookie. Without it, signatures are not required |
-| `signbank_sync/config.php` | Signbank URL, dataset id, acronym. Gitignored; copy `config.example.php`. `config.production.php` is committed, so keep secrets out of it |
+| `signbank_sync/config.php` | Signbank URL, dataset id, acronym. Gitignored; copy `config.example.php`. Never commit a key |
 | `<root>/signbank_data/.signbank_key` | Signbank API token, set through `signbank.php` |
 | `<root>/signbank_data/glosses_transformed.json` | ECV dump from `ecv_refresh.php`. The old location `<root>/glosses_transformed.json` is also read |
 

@@ -44,3 +44,4 @@ __pycache__/
 .mcp.json
 .playwright-mcp/
 .superpowers/
+signbank_sync/config.production.php
