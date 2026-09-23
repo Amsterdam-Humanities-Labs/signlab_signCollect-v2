@@ -7,7 +7,7 @@ The SignCollect main menu and gloss editor, plus the Signbank connector.
 - Admin pages: `labels_add.html`, `batch_add.html`, `users.html`, `activity.html` and `signbank.php`.
 - Login checks: of the pages, only `signbank.php` checks the login on the server. Most PHP endpoints call `require_session()`. `users_api.php` checks for the admin role itself. `get_glosses.php` (the Signbank lookup for `batch_add.html`) has no login check.
 - Datasets: `php_api/datasets.php` registers `ngt` (`form_data`) and `lsm`. NGT also has a Signio/Signbank switch (`extern` column).
-- `signbank_sync/`: `ecv_refresh.php` rebuilds `glosses_transformed.json` (about 11 MB; zin, hh, nmm and this repo read it). `broadcast_gloss`, `fetch_gloss`, `force_push`, `force_pull` and `delete_gloss` sync one gloss at a time.
+- `signbank_sync/`: `ecv_refresh.php` rebuilds `glosses_transformed.json` (about 11 MB; [signlab_zinnen-annotation](https://github.com/Amsterdam-Humanities-Labs/signlab_zinnen-annotation), [signlab_patient-info](https://github.com/Amsterdam-Humanities-Labs/signlab_patient-info), nmm and this repo read it). `broadcast_gloss`, `fetch_gloss`, `force_push`, `force_pull` and `delete_gloss` sync one gloss at a time.
 
 ## Where it runs
 - Production: core server, `/web/menu_beta`, <https://signcollect.nl/menu_beta/>. Demo hosts: `<root>/menu_beta`.
