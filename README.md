@@ -39,3 +39,10 @@ The deploy does not run `migrations/`. Apply them by hand.
 - Shared `/login.html` and `/logout.html` from `web_extra/` in [signlab_signcollect-stack](https://github.com/Amsterdam-Humanities-Labs/signlab_signcollect-stack).
 - Media: `<root>/gebarenoverleg_media/studioFilesMini/` and `<root>/uploads/lsm/`.
 - More docs: `docs/architecture/` (architecture pages in HTML: endpoints, database map, workflows).
+
+## License and citation
+
+Apache License 2.0, copyright University of Amsterdam: see [LICENSE](LICENSE) and
+[NOTICE](NOTICE). You may use it, also commercially, as long as you credit
+Gomer Otterspeer / University of Amsterdam as the source. To cite it, use
+[CITATION.cff](CITATION.cff) (the *Cite this repository* button on GitHub) or the DOI [10.21942/uva.33980380](https://doi.org/10.21942/uva.33980380).
